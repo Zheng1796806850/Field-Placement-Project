@@ -38,6 +38,6 @@ public class PlayerMovementController : MonoBehaviour
         animator.SetFloat("InputX", stopX);
         animator.SetFloat("InputY", stopY);
 
-        Camera.main.transform.position = transform.position + offset;
+        //Camera.main.transform.position = transform.position + offset;
     }
 }
