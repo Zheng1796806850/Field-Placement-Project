@@ -22,7 +22,7 @@ public class CameraFollowBounds2D : MonoBehaviour
         cam = GetComponent<Camera>();
     }
 
-    private void LateUpdate()
+    private void FixedUpdate()
     {
         if (target == null) return;
 
