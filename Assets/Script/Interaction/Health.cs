@@ -11,7 +11,7 @@ public class Health : MonoBehaviour
     public event Action<int, int> OnHealthChanged;
     public event Action OnDied;
 
-    private bool dead;
+    public bool dead;
 
     private void Awake()
     {
