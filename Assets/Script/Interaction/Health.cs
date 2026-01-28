@@ -43,4 +43,27 @@ public class Health : MonoBehaviour
                 Destroy(gameObject);
         }
     }
+
+    public void SetMaxHP(int newMaxHP, bool fillToMax = true)
+    {
+        if (newMaxHP < 1) newMaxHP = 1;
+
+        maxHP = newMaxHP;
+
+        if (!dead)
+        {
+            if (fillToMax) currentHP = maxHP;
+            else currentHP = Mathf.Clamp(currentHP, 0, maxHP);
+
+            OnHealthChanged?.Invoke(currentHP, maxHP);
+        }
+    }
+
+    public void ApplyMaxHPMultiplier(float multiplier, bool fillToMax = true)
+    {
+        if (multiplier <= 0f) multiplier = 0.01f;
+
+        int newMax = Mathf.Max(1, Mathf.RoundToInt(maxHP * multiplier));
+        SetMaxHP(newMax, fillToMax);
+    }
 }

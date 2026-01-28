@@ -3,6 +3,7 @@ using UnityEngine;
 public class FacingCamera : MonoBehaviour
 {
     Transform[] childs;
+    public bool facingParent = false;
 
     void Start()
     {
@@ -12,6 +13,10 @@ public class FacingCamera : MonoBehaviour
             childs[i] = transform.GetChild(i);
         }
 
+        if (facingParent)
+        {
+            transform.rotation = Camera.main.transform.rotation;
+        }
     }
 
 

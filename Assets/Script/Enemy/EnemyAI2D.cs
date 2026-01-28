@@ -68,7 +68,6 @@ public class EnemyAI2D : MonoBehaviour
         currentWall = null;
     }
 
-
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!attackRange || other != attackRange) return;
@@ -97,5 +96,11 @@ public class EnemyAI2D : MonoBehaviour
         {
             StopAttack();
         }
+    }
+
+    public void ApplySpeedMultiplier(float multiplier)
+    {
+        if (multiplier <= 0f) multiplier = 0.01f;
+        moveSpeed *= multiplier;
     }
 }
