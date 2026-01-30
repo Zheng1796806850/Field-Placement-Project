@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Interactable
   - Wall
+  - House
+  - Obstacles
   layers:
   - Default
   - TransparentFX
@@ -14,10 +16,10 @@ TagManager:
   - Water
   - UI
   - Wall
-  - 
-  - 
-  - 
-  - 
+  - Obstacles
+  - Enemies
+  - Player
+  - Door
   - 
   - 
   - 

@@ -22,6 +22,10 @@ public class GameFlowManager : MonoBehaviour
     [Tooltip("负责刷怪（由 waveProgress 的 OnWaveStarted 驱动）。")]
     public WaveSpawnController2D waveSpawner;
 
+    [Header("Economy (Optional)")]
+    [Tooltip("如果你场景里有 PlayerResourceInventory，会在胜负结算时自动保存资源。")]
+    public PlayerResourceInventory resourceInventory;
+
     [Header("Runtime")]
     public GameResult result = GameResult.None;
 
@@ -37,12 +41,17 @@ public class GameFlowManager : MonoBehaviour
         if (gameStateManager == null) gameStateManager = GameStateManager.Instance;
         if (waveProgress == null) waveProgress = FindFirstObjectByType<WaveProgressTracker>();
         if (waveSpawner == null) waveSpawner = FindFirstObjectByType<WaveSpawnController2D>();
+
+        if (resourceInventory == null) resourceInventory = PlayerResourceInventory.Instance;
     }
 
     private void Start()
     {
         TrySubscribe();
         WireSpawnerToTracker();
+
+        if (resourceInventory == null)
+            resourceInventory = PlayerResourceInventory.Instance;
     }
 
     private void OnDisable()
@@ -137,6 +146,12 @@ public class GameFlowManager : MonoBehaviour
     private void EndGame(GameResult r, string reason)
     {
         result = r;
+
+        if (resourceInventory == null)
+            resourceInventory = PlayerResourceInventory.Instance;
+
+        if (resourceInventory != null)
+            resourceInventory.SaveInMemory();
 
         if (gameStateManager != null)
             gameStateManager.SetPaused(true);
