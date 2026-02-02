@@ -18,6 +18,7 @@ public class WaveSpawnController2D : MonoBehaviour
     [Min(0)] public int fallbackSpawnCount = 5;
     [Min(0f)] public float fallbackHpMultiplier = 1f;
     [Min(0f)] public float fallbackSpeedMultiplier = 1f;
+    [Min(0f)] public float fallbackWallDamageMultiplier = 1f;
 
     [Header("Debug")]
     public bool logSpawn = true;
@@ -104,26 +105,28 @@ public class WaveSpawnController2D : MonoBehaviour
         int spawnCount = fallbackSpawnCount;
         float hpMul = fallbackHpMultiplier;
         float speedMul = fallbackSpeedMultiplier;
+        float wallDmgMul = fallbackWallDamageMultiplier;
 
         if (waveConfig != null && waveConfig.TryGetWave(waveId, out var def) && def != null)
         {
             spawnCount = def.spawnCount;
             hpMul = def.hpMultiplier;
             speedMul = def.speedMultiplier;
+            wallDmgMul = def.wallDamageMultiplier;
         }
 
         if (logSpawn)
-            Debug.Log($"[WaveSpawn] Wave {waveId}: spawn={spawnCount}, hpMul={hpMul}, speedMul={speedMul}");
+            Debug.Log($"[WaveSpawn] Wave {waveId}: spawn={spawnCount}, hpMul={hpMul}, speedMul={speedMul}, wallDmgMul={wallDmgMul}");
 
         for (int i = 0; i < spawnCount; i++)
         {
             Transform p = spawnPoints[i % spawnPoints.Length];
             var go = Instantiate(enemyPrefab, p.position, p.rotation);
-            ApplyMultipliers(go, hpMul, speedMul);
+            ApplyMultipliers(go, hpMul, speedMul, wallDmgMul);
         }
     }
 
-    private void ApplyMultipliers(GameObject enemy, float hpMul, float speedMul)
+    private void ApplyMultipliers(GameObject enemy, float hpMul, float speedMul, float wallDmgMul)
     {
         if (enemy == null) return;
 
@@ -137,6 +140,7 @@ public class WaveSpawnController2D : MonoBehaviour
         if (ai != null)
         {
             ai.ApplySpeedMultiplier(speedMul);
+            ai.ApplyWallDamageMultiplier(wallDmgMul);
         }
     }
 }

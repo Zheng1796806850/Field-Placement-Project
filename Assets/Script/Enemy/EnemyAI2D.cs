@@ -49,8 +49,8 @@ public class EnemyAI2D : MonoBehaviour
     public bool lockYMovement = false;
 
     [Header("Attack - Damage")]
-    [Min(1)] public int damageToWall = 5;
-    [Min(1)] public int damageToPlayer = 5;
+    [Min(0)] public int damageToWall = 5;
+    [Min(0)] public int damageToPlayer = 5;
 
     [Header("Attack - Timing (seconds)")]
     [Tooltip("¹¥»÷ÀäÈ´£¨Á½´Î¹¥»÷¼ä¸ô£©")]
@@ -96,14 +96,30 @@ public class EnemyAI2D : MonoBehaviour
     private float _scheduledHitTime;
     private bool _hitPending;
 
+    // --------- Stats baseline (AI-02) ---------
+    private bool _baseCaptured;
+    private float _baseMoveSpeed;
+    private int _baseWallDamage;
+
     private void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
         _seeker = GetComponent<Seeker>();
         if (animator == null) animator = GetComponent<Animator>();
 
+        CaptureBaseIfNeeded();
+
         if (sensorTrigger == null)
             Debug.LogWarning($"{name}: sensorTrigger Î´°ó¶¨£¨AttackSensor µÄ Trigger Collider£©");
+    }
+
+    private void CaptureBaseIfNeeded()
+    {
+        if (_baseCaptured) return;
+        _baseCaptured = true;
+
+        _baseMoveSpeed = Mathf.Max(0f, moveSpeed);
+        _baseWallDamage = Mathf.Max(0, damageToWall);
     }
 
     private void OnEnable()
@@ -442,9 +458,33 @@ public class EnemyAI2D : MonoBehaviour
         _rb.linearVelocity = Vector2.zero;
     }
 
+    // ---------------- AI-02: Stats API ----------------
+    public void SetBaseMoveSpeed(float baseSpeed)
+    {
+        CaptureBaseIfNeeded();
+        _baseMoveSpeed = Mathf.Max(0f, baseSpeed);
+        moveSpeed = _baseMoveSpeed;
+    }
+
+    public void SetBaseWallDamage(int baseDamage)
+    {
+        CaptureBaseIfNeeded();
+        _baseWallDamage = Mathf.Max(0, baseDamage);
+        damageToWall = _baseWallDamage;
+    }
+
+    // Wave multipliers
     public void ApplySpeedMultiplier(float multiplier)
     {
+        CaptureBaseIfNeeded();
         if (multiplier <= 0f) multiplier = 0.01f;
-        moveSpeed *= multiplier;
+        moveSpeed = _baseMoveSpeed * multiplier;
+    }
+
+    public void ApplyWallDamageMultiplier(float multiplier)
+    {
+        CaptureBaseIfNeeded();
+        if (multiplier <= 0f) multiplier = 0.01f;
+        damageToWall = Mathf.Max(0, Mathf.RoundToInt(_baseWallDamage * multiplier));
     }
 }

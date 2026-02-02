@@ -13,6 +13,8 @@ public class WaveConfigSO : ScriptableObject
 
         [Min(0f)] public float hpMultiplier = 1f;
         [Min(0f)] public float speedMultiplier = 1f;
+
+        [Min(0f)] public float wallDamageMultiplier = 1f;
     }
 
     [Header("Wave Table")]

@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 3125651829959158979}
   - component: {fileID: 8602533380366581256}
   - component: {fileID: 4635939761855836329}
+  - component: {fileID: 3012804100501015051}
   m_Layer: 0
   m_Name: Enemy_normal
   m_TagString: Untagged
@@ -333,6 +334,21 @@ MonoBehaviour:
   tagPenalties: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   graphMask:
     value: -1
+--- !u!114 &3012804100501015051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4297858224867008055}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bc9cfefda6df454db699d272cc57726, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyStatsApplier
+  statsSO: {fileID: 11400000, guid: 9f9f8108f01ea4d4d963f3b9fa414ef5, type: 2}
+  applyOnAwake: 1
+  fillHPToMaxOnApply: 1
 --- !u!1 &5576198059197684396
 GameObject:
   m_ObjectHideFlags: 0
