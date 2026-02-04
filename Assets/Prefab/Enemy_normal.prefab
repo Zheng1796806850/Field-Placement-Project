@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: 8602533380366581256}
   - component: {fileID: 4635939761855836329}
   - component: {fileID: 3012804100501015051}
+  - component: {fileID: 2896671886319183912}
   m_Layer: 0
   m_Name: Enemy_normal
   m_TagString: Untagged
@@ -349,6 +350,27 @@ MonoBehaviour:
   statsSO: {fileID: 11400000, guid: 9f9f8108f01ea4d4d963f3b9fa414ef5, type: 2}
   applyOnAwake: 1
   fillHPToMaxOnApply: 1
+--- !u!114 &2896671886319183912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4297858224867008055}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb2ec0adbcb905a46a6684ee8b34e3c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDropOnDeath
+  health: {fileID: 1949475503890342462}
+  searchHealthInChildren: 1
+  dropTable: {fileID: 11400000, guid: 4b00fc2e9b347df44af77bc0505111b6, type: 2}
+  dropPrefab: {fileID: 9034432252685281967, guid: 18adf4fc49352e14ebe5ba88fcd6650c, type: 3}
+  spawnOffset: {x: 0, y: 0.2}
+  scatterRadius: 0.25
+  randomRotation: 0
+  spawnOnlyOnce: 1
+  logDrops: 0
 --- !u!1 &5576198059197684396
 GameObject:
   m_ObjectHideFlags: 0
