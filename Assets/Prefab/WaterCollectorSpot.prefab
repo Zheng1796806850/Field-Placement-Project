@@ -95,12 +95,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WaterCollectorBuildSpot
   requireBuild: 1
   planksCost: 5
+  productionMode: 0
+  secondsPerWater: 5
+  phaseTrigger: 1
+  useUnscaledTime: 0
+  waterPerProduction: 1
+  storageCap: 3
+  collectAllAtOnce: 1
+  collectAmountPerInteract: 1
   isBuilt: 0
+  storedWater: 0
   priority: 6
   debugLogs: 1
   unbuiltVisual: {fileID: 6852724636309245735}
   builtVisual: {fileID: 6407787455991276411}
-  autoSaveInventoryOnBuild: 1
+  builtEmptyVisual: {fileID: 0}
+  builtHasWaterVisual: {fileID: 0}
+  autoSaveInventoryOnChange: 1
+  collectorSaveKey: 
 --- !u!1 &6407787455991276411
 GameObject:
   m_ObjectHideFlags: 0
