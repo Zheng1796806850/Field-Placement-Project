@@ -391,6 +391,12 @@ MonoBehaviour:
   harvestDropPrefab: {fileID: 240201751570076137, guid: 39f9bc27d964061478115c4825abba7f, type: 3}
   harvestGoesToInventoryDirectly: 0
   restrictActionsToDay: 1
+  plantDuration: 2
+  waterDuration: 1
+  holdToComplete: 1
+  maxActionDistance: 2.5
+  lockPlayerMovementWhileActing: 1
+  autoSaveInventoryOnAction: 1
   priority: 5
   emptyVisual: {fileID: 167511265345884647}
   plantedVisual: {fileID: 202260439410095831}

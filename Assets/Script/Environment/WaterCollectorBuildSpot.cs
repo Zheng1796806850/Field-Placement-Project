@@ -15,66 +15,51 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
         OnNightStarted = 1
     }
 
-    [Header("Build")]
-    [Tooltip("If true, player must build using Planks. If false, starts built at game start.")]
+    [Header("Build Requirements")]
     public bool requireBuild = true;
+    public int planksCost = 10;
 
-    [Min(0)] public int planksCost = 10;
+    [Header("Timed Build Settings")]
+    public float buildDuration = 4f;
+    public bool buildHoldToComplete = true;
+    public float maxBuildDistance = 2.5f;
+    public bool lockPlayerMovementWhileBuilding = false;
 
-    [Header("Production")]
+    [Header("Production Settings")]
     public ProductionMode productionMode = ProductionMode.RealTimeSeconds;
-
-    [Tooltip("Used when ProductionMode = RealTimeSeconds")]
-    [Min(0.1f)] public float secondsPerWater = 30f;
-
-    [Tooltip("Used when ProductionMode = PhaseTick")]
+    public float secondsPerWater = 30f;
     public PhaseTrigger phaseTrigger = PhaseTrigger.OnNightStarted;
-
-    [Tooltip("If true, uses unscaled time for RealTimeSeconds (pause won't advance).")]
     public bool useUnscaledTime = false;
+    public int waterPerProduction = 1;
 
-    [Min(1)] public int waterPerProduction = 1;
-
-    [Header("Storage")]
-    [Min(1)] public int storageCap = 3;
-
-    [Tooltip("If true, one interact collects ALL stored water. If false, collects collectAmountPerInteract each time.")]
+    [Header("Storage & Collection Settings")]
+    public int storageCap = 3;
     public bool collectAllAtOnce = true;
+    public int collectAmountPerInteract = 1;
 
-    [Min(1)] public int collectAmountPerInteract = 1;
-
-    [Header("State (Read Only)")]
+    [Header("Runtime State (Serialized)")]
     [SerializeField] private bool isBuilt = false;
     [SerializeField] private int storedWater = 0;
 
-    [Header("Interact")]
-    [Tooltip("Higher means PlayerInteractor2D will prefer this when multiple interactables are in range.")]
+    [Header("Interaction Settings")]
     public int priority = 6;
-
     public bool debugLogs = false;
 
-    [Header("Visual Placeholders")]
+    [Header("Visual References")]
     public GameObject unbuiltVisual;
     public GameObject builtVisual;
 
-    [Header("Optional: built but empty indicator")]
-    [Tooltip("Optional. If assigned, shown when built AND storedWater==0.")]
     public GameObject builtEmptyVisual;
-
-    [Tooltip("Optional. If assigned, shown when built AND storedWater>0.")]
     public GameObject builtHasWaterVisual;
 
-    [Header("Persistence (Optional)")]
-    [Tooltip("If true, after build/collect it will call PlayerResourceInventory.SaveInMemory().")]
+    [Header("Save Settings")]
     public bool autoSaveInventoryOnChange = true;
-
-    [Tooltip("Optional PlayerPrefs key for saving collector state (built + stored). Leave empty to disable.")]
     public string collectorSaveKey = "";
 
     public event Action<bool> OnBuiltChanged;
     public event Action<int, int> OnStoredWaterChanged;
     public event Action<int> OnWaterCollected;
-    public event Action<int> OnWaterProduced; 
+    public event Action<int> OnWaterProduced;
 
     private float _secTimer = 0f;
 
@@ -139,13 +124,11 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
         Unsubscribe();
     }
 
-
     public string GetPrompt()
     {
         if (!isBuilt)
             return planksCost <= 0 ? "Build Water Collector" : $"Build Water Collector (-{planksCost} Planks)";
 
-        // built
         if (storedWater > 0)
             return $"Collect Water (+{storedWater})";
 
@@ -168,7 +151,7 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
     {
         if (!isBuilt)
         {
-            TryBuild(interactor);
+            StartTimedBuild(interactor);
             return;
         }
 
@@ -176,18 +159,82 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
             TryCollect(interactor);
     }
 
-
-    private void TryBuild(GameObject interactor)
+    private void StartTimedBuild(GameObject interactor)
     {
         var inv = ResolveInventory(interactor);
         if (inv == null) return;
 
-        if (!inv.Spend(ResourceType.Planks, planksCost))
+        if (!inv.CanSpend(ResourceType.Planks, planksCost)) return;
+
+        var runner = interactor != null ? interactor.GetComponentInParent<TimedActionController>() : null;
+        if (runner == null)
         {
-            if (debugLogs)
-                Debug.Log($"[WaterCollector] Not enough planks to build on {name}");
+            TryBuildImmediate(inv);
             return;
         }
+
+        if (runner.IsBusy) return;
+
+        bool spent = false;
+        var pi = interactor != null ? interactor.GetComponentInParent<PlayerInteractor2D>() : null;
+        KeyCode holdKey = pi != null ? pi.interactKey : KeyCode.E;
+
+        var req = new TimedActionRequest();
+        req.label = "Building...";
+        req.duration = Mathf.Max(0.05f, buildDuration);
+        req.requireHold = buildHoldToComplete;
+        req.holdKey = holdKey;
+        req.lockPlayerMovement = lockPlayerMovementWhileBuilding;
+        req.target = transform;
+        req.maxDistance = maxBuildDistance;
+        req.cancelIfPhaseNotDay = false;
+
+        req.onBegin = () =>
+        {
+            spent = inv.Spend(ResourceType.Planks, planksCost);
+            if (!spent)
+                runner.CancelActive();
+        };
+
+        req.onCancel = () =>
+        {
+            if (spent)
+            {
+                inv.Add(ResourceType.Planks, planksCost);
+                if (autoSaveInventoryOnChange) inv.SaveInMemory();
+            }
+        };
+
+        req.onComplete = () =>
+        {
+            if (!spent) return;
+
+            isBuilt = true;
+            _secTimer = 0f;
+
+            ApplyVisuals();
+            OnBuiltChanged?.Invoke(true);
+
+            if (autoSaveInventoryOnChange)
+                inv.SaveInMemory();
+
+            SaveCollectorStateIfEnabled();
+
+            if (debugLogs)
+                Debug.Log($"[WaterCollector] Built on {name}. Spent Planks={planksCost}");
+
+            EnsureSubscribedIfNeeded();
+        };
+
+        runner.TryBegin(req);
+    }
+
+    private void TryBuildImmediate(PlayerResourceInventory inv)
+    {
+        if (inv == null) return;
+
+        if (!inv.Spend(ResourceType.Planks, planksCost))
+            return;
 
         isBuilt = true;
         _secTimer = 0f;
@@ -279,7 +326,6 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
     }
 
     private bool IsStorageFull() => storedWater >= storageCap;
-
 
     private void TryCollect(GameObject interactor)
     {

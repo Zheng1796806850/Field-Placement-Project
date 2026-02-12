@@ -25,18 +25,44 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
 
     public string GetPrompt() => promptText;
 
+    private Transform ResolvePlayerTransform(GameObject interactor)
+    {
+        if (interactor == null) return null;
+
+        var mover = interactor.GetComponentInParent<PlayerMovementController>();
+        if (mover != null) return mover.transform;
+
+        var root = interactor.transform.root;
+        return root != null ? root : interactor.transform;
+    }
+
     public bool CanInteract(GameObject interactor)
     {
-        if (interactor == null) return false;
-        if (!interactor.CompareTag(playerTag)) return false;
-        return teleportTarget != null;
+        if (teleportTarget == null) return false;
+
+        var playerT = ResolvePlayerTransform(interactor);
+        if (playerT == null) return false;
+
+        if (!string.IsNullOrWhiteSpace(playerTag))
+        {
+            if (!playerT.CompareTag(playerTag))
+                return false;
+        }
+
+        return true;
     }
 
     public void Interact(GameObject interactor)
     {
         if (!CanInteract(interactor)) return;
 
-        interactor.transform.position = teleportTarget.position;
+        var playerT = ResolvePlayerTransform(interactor);
+        if (playerT == null) return;
+
+        playerT.position = teleportTarget.position;
+
+        if (cameraController == null && Camera.main != null)
+            cameraController = Camera.main.GetComponent<CameraFollowBounds2D>();
 
         if (cameraController != null)
             cameraController.SetBounds(switchToBounds, snapCameraInstant);

@@ -10,42 +10,39 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         ReadyToHarvest = 3
     }
 
-    [Header("State")]
     [SerializeField] private PlotState state = PlotState.Empty;
 
-    [Header("Crop (Demo)")]
     public CropConfigSO cropToPlant;
 
     [SerializeField] private CropConfigSO plantedCrop;
     [SerializeField] private int growthDaysCompleted = 0;
 
-    [Tooltip("Set true when player waters during the day. Evaluated at next DayStart, then reset.")]
     [SerializeField] private bool wateredSinceLastDayStart = false;
 
-    [Header("Plant Cost (Demo)")]
-    [Min(0)] public int seedCost = 1;
+    public int seedCost = 1;
 
-    [Header("Harvest (Optional)")]
     public ResourceDrop2D harvestDropPrefab;
     public bool harvestGoesToInventoryDirectly = true;
 
-    [Header("Rules")]
     public bool restrictActionsToDay = true;
 
-    [Header("Interact")]
+    public float plantDuration = 2f;
+    public float waterDuration = 1f;
+    public bool holdToComplete = true;
+    public float maxActionDistance = 2.5f;
+    public bool lockPlayerMovementWhileActing = false;
+    public bool autoSaveInventoryOnAction = true;
+
     public int priority = 5;
     public int Priority => priority;
 
-    [Header("Visual Placeholders (Optional)")]
     public GameObject emptyVisual;
     public GameObject plantedVisual;
     public GameObject wateredVisual;
     public GameObject matureVisual;
 
-    [Header("Debug")]
     public bool debugLogs = false;
 
-    // --- Day system subscription (robust) ---
     private GameStateManager _gsm;
     private bool _subscribed;
 
@@ -53,7 +50,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
     {
         AutoWireVisualsIfNull();
         ApplyVisuals();
-        TrySubscribe(); // in case GSM already exists
+        TrySubscribe();
     }
 
     private void OnEnable()
@@ -68,7 +65,6 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
     private void Update()
     {
-        // If GSM spawns later or execution order makes Instance not ready in Awake/OnEnable.
         if (!_subscribed) TrySubscribe();
     }
 
@@ -109,7 +105,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         {
             case PlotState.Empty:
                 {
-                    if (cropToPlant == null) return "Plant (No Crop Config)";
+                    if (cropToPlant == null) return "Plant";
                     string days = cropToPlant.daysToMature <= 0 ? "Instant" : $"{cropToPlant.daysToMature} days";
                     return seedCost <= 0
                         ? $"Plant {cropToPlant.displayName} ({days})"
@@ -118,7 +114,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
             case PlotState.PlantedDry:
                 {
-                    if (plantedCrop == null) return "Planted (Invalid Crop)";
+                    if (plantedCrop == null) return "Planted";
                     return plantedCrop.requiresDailyWater
                         ? $"Water ({growthDaysCompleted}/{plantedCrop.daysToMature})"
                         : $"Growing... ({growthDaysCompleted}/{plantedCrop.daysToMature})";
@@ -161,7 +157,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
             case PlotState.PlantedDry:
                 if (plantedCrop == null) return false;
                 if (!plantedCrop.requiresDailyWater) return false;
-                if (wateredSinceLastDayStart) return false; // already watered today
+                if (wateredSinceLastDayStart) return false;
                 return inv != null && inv.CanSpend(ResourceType.Water, plantedCrop.waterCostPerDay);
 
             case PlotState.PlantedWatered:
@@ -183,11 +179,11 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         switch (state)
         {
             case PlotState.Empty:
-                TryPlant(interactor);
+                StartTimedPlant(interactor);
                 break;
 
             case PlotState.PlantedDry:
-                TryWater(interactor);
+                StartTimedWater(interactor);
                 break;
 
             case PlotState.ReadyToHarvest:
@@ -196,11 +192,143 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         }
     }
 
-    private void TryPlant(GameObject interactor)
+    private void StartTimedPlant(GameObject interactor)
     {
         if (cropToPlant == null) return;
 
         var inv = ResolveInventory(interactor);
+        if (inv == null) return;
+
+        if (!inv.CanSpend(ResourceType.Seeds, seedCost)) return;
+
+        var runner = interactor != null ? interactor.GetComponentInParent<TimedActionController>() : null;
+        if (runner == null)
+        {
+            TryPlantImmediate(inv);
+            return;
+        }
+
+        if (runner.IsBusy) return;
+
+        bool spent = false;
+        var pi = interactor != null ? interactor.GetComponentInParent<PlayerInteractor2D>() : null;
+        KeyCode holdKey = pi != null ? pi.interactKey : KeyCode.E;
+
+        var req = new TimedActionRequest();
+        req.label = "Planting...";
+        req.duration = Mathf.Max(0.05f, plantDuration);
+        req.requireHold = holdToComplete;
+        req.holdKey = holdKey;
+        req.lockPlayerMovement = lockPlayerMovementWhileActing;
+        req.target = transform;
+        req.maxDistance = maxActionDistance;
+        req.cancelIfPhaseNotDay = restrictActionsToDay;
+
+        req.onBegin = () =>
+        {
+            spent = inv.Spend(ResourceType.Seeds, seedCost);
+            if (!spent)
+                runner.CancelActive();
+        };
+
+        req.onCancel = () =>
+        {
+            if (spent)
+            {
+                inv.Add(ResourceType.Seeds, seedCost);
+                if (autoSaveInventoryOnAction) inv.SaveInMemory();
+            }
+        };
+
+        req.onComplete = () =>
+        {
+            if (!spent) return;
+
+            plantedCrop = cropToPlant;
+            growthDaysCompleted = 0;
+            wateredSinceLastDayStart = false;
+
+            SetState(PlotState.PlantedDry);
+
+            if (autoSaveInventoryOnAction) inv.SaveInMemory();
+
+            if (debugLogs)
+                Debug.Log($"[FarmlandPlot] Plant -> {plantedCrop.displayName} on {name} (daysToMature={plantedCrop.daysToMature})");
+        };
+
+        runner.TryBegin(req);
+    }
+
+    private void StartTimedWater(GameObject interactor)
+    {
+        if (plantedCrop == null) return;
+        if (!plantedCrop.requiresDailyWater) return;
+        if (wateredSinceLastDayStart) return;
+
+        var inv = ResolveInventory(interactor);
+        if (inv == null) return;
+
+        int waterCost = plantedCrop.waterCostPerDay;
+        if (!inv.CanSpend(ResourceType.Water, waterCost)) return;
+
+        var runner = interactor != null ? interactor.GetComponentInParent<TimedActionController>() : null;
+        if (runner == null)
+        {
+            TryWaterImmediate(inv);
+            return;
+        }
+
+        if (runner.IsBusy) return;
+
+        bool spent = false;
+        var pi = interactor != null ? interactor.GetComponentInParent<PlayerInteractor2D>() : null;
+        KeyCode holdKey = pi != null ? pi.interactKey : KeyCode.E;
+
+        var req = new TimedActionRequest();
+        req.label = "Watering...";
+        req.duration = Mathf.Max(0.05f, waterDuration);
+        req.requireHold = holdToComplete;
+        req.holdKey = holdKey;
+        req.lockPlayerMovement = lockPlayerMovementWhileActing;
+        req.target = transform;
+        req.maxDistance = maxActionDistance;
+        req.cancelIfPhaseNotDay = restrictActionsToDay;
+
+        req.onBegin = () =>
+        {
+            spent = inv.Spend(ResourceType.Water, waterCost);
+            if (!spent)
+                runner.CancelActive();
+        };
+
+        req.onCancel = () =>
+        {
+            if (spent)
+            {
+                inv.Add(ResourceType.Water, waterCost);
+                if (autoSaveInventoryOnAction) inv.SaveInMemory();
+            }
+        };
+
+        req.onComplete = () =>
+        {
+            if (!spent) return;
+
+            wateredSinceLastDayStart = true;
+            SetState(PlotState.PlantedWatered);
+
+            if (autoSaveInventoryOnAction) inv.SaveInMemory();
+
+            if (debugLogs)
+                Debug.Log($"[FarmlandPlot] Water -> {name} (will be counted at next DayStart)");
+        };
+
+        runner.TryBegin(req);
+    }
+
+    private void TryPlantImmediate(PlayerResourceInventory inv)
+    {
+        if (cropToPlant == null) return;
         if (inv == null) return;
 
         if (!inv.Spend(ResourceType.Seeds, seedCost))
@@ -212,17 +340,17 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         SetState(PlotState.PlantedDry);
 
+        if (autoSaveInventoryOnAction) inv.SaveInMemory();
+
         if (debugLogs)
             Debug.Log($"[FarmlandPlot] Plant -> {plantedCrop.displayName} on {name} (daysToMature={plantedCrop.daysToMature})");
     }
 
-    private void TryWater(GameObject interactor)
+    private void TryWaterImmediate(PlayerResourceInventory inv)
     {
         if (plantedCrop == null) return;
         if (!plantedCrop.requiresDailyWater) return;
         if (wateredSinceLastDayStart) return;
-
-        var inv = ResolveInventory(interactor);
         if (inv == null) return;
 
         if (!inv.Spend(ResourceType.Water, plantedCrop.waterCostPerDay))
@@ -230,6 +358,8 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         wateredSinceLastDayStart = true;
         SetState(PlotState.PlantedWatered);
+
+        if (autoSaveInventoryOnAction) inv.SaveInMemory();
 
         if (debugLogs)
             Debug.Log($"[FarmlandPlot] Water -> {name} (will be counted at next DayStart)");
@@ -247,7 +377,6 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         {
             var inv = ResolveInventory(interactor);
             if (inv != null) inv.Add(plantedCrop.harvestResource, plantedCrop.harvestAmount);
-            else Debug.LogWarning($"[FarmlandPlot] No inventory found; harvest lost on {name}");
         }
         else
         {
@@ -261,10 +390,8 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         ResetPlot();
     }
 
-    // --- Timer system: grow at DayStart ---
     private void HandleDayStarted()
     {
-        // Only active crops
         if (state != PlotState.PlantedDry && state != PlotState.PlantedWatered)
             return;
 
@@ -285,7 +412,6 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         if (canGrowToday)
             growthDaysCompleted++;
 
-        // New day begins: reset watered requirement
         wateredSinceLastDayStart = false;
 
         int target = Mathf.Max(0, plantedCrop.daysToMature);
@@ -328,7 +454,6 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
     private void AutoWireVisualsIfNull()
     {
-        // Prevent ¡°state changed but visuals didn't¡± due to missing inspector references.
         if (emptyVisual == null) emptyVisual = transform.Find("EmptyVisual")?.gameObject;
         if (plantedVisual == null) plantedVisual = transform.Find("PlantedVisual")?.gameObject;
         if (wateredVisual == null) wateredVisual = transform.Find("WateredVisual")?.gameObject;
