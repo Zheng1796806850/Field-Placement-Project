@@ -4,14 +4,10 @@ public class WaveSpawnController2D : MonoBehaviour
 {
     [Header("Wave Data")]
     public WaveConfigSO waveConfig;
-
-    [Tooltip("由 GameFlowManager 自动注入/或手动拖拽。")]
     public WaveProgressTracker waveProgress;
 
     [Header("Spawning")]
     public GameObject enemyPrefab;
-
-    [Tooltip("敌人出生点列表（Transform 位置）。")]
     public Transform[] spawnPoints;
 
     [Header("Fallback (if waveId not found)")]
@@ -19,6 +15,9 @@ public class WaveSpawnController2D : MonoBehaviour
     [Min(0f)] public float fallbackHpMultiplier = 1f;
     [Min(0f)] public float fallbackSpeedMultiplier = 1f;
     [Min(0f)] public float fallbackWallDamageMultiplier = 1f;
+
+    [Header("Enemy Tracking")]
+    public bool autoAddWaveEnemyAgent = true;
 
     [Header("Debug")]
     public bool logSpawn = true;
@@ -115,6 +114,11 @@ public class WaveSpawnController2D : MonoBehaviour
             wallDmgMul = def.wallDamageMultiplier;
         }
 
+        spawnCount = Mathf.Max(0, spawnCount);
+
+        if (waveProgress != null)
+            waveProgress.SetExpectedEnemiesForWave(waveId, spawnCount);
+
         if (logSpawn)
             Debug.Log($"[WaveSpawn] Wave {waveId}: spawn={spawnCount}, hpMul={hpMul}, speedMul={speedMul}, wallDmgMul={wallDmgMul}");
 
@@ -123,6 +127,13 @@ public class WaveSpawnController2D : MonoBehaviour
             Transform p = spawnPoints[i % spawnPoints.Length];
             var go = Instantiate(enemyPrefab, p.position, p.rotation);
             ApplyMultipliers(go, hpMul, speedMul, wallDmgMul);
+
+            if (autoAddWaveEnemyAgent && waveProgress != null)
+            {
+                var agent = go.GetComponent<WaveEnemyAgent>();
+                if (agent == null) agent = go.AddComponent<WaveEnemyAgent>();
+                agent.Initialize(waveProgress, waveId);
+            }
         }
     }
 

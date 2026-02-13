@@ -1,17 +1,20 @@
+using System;
 using UnityEngine;
 using Pathfinding;
 
 public class WallDeathHandler : MonoBehaviour
 {
+    public static event Action<WallDeathHandler> OnAnyWallDestroyed;
+
     public Health health;
 
     [Header("A* Graph Update")]
     public bool updateGraphOnDeath = true;
 
-    [Tooltip("更新区域额外扩张，避免边缘节点没刷新到。")]
     [Min(0f)] public float boundsPadding = 0.25f;
 
     private Collider2D[] _colliders;
+    private bool _fired;
 
     private void Awake()
     {
@@ -30,6 +33,11 @@ public class WallDeathHandler : MonoBehaviour
 
     private void OnWallDestroyed()
     {
+        if (_fired) return;
+        _fired = true;
+
+        OnAnyWallDestroyed?.Invoke(this);
+
         Bounds b = new Bounds(transform.position, Vector3.zero);
         bool hasBounds = false;
 

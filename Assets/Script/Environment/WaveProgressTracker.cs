@@ -1,28 +1,30 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class WaveProgressTracker : MonoBehaviour
 {
     [Header("Config")]
-    [Tooltip("用于决定胜利波次（以及可选的 wave 数据一致性）。")]
     public WaveConfigSO waveConfig;
 
     [Header("Runtime")]
-    [Tooltip("当前夜晚的波次。白天管理阶段也保持这个数值（代表上一晚/即将到来晚上的波次进度）。")]
     public int currentWave = 0;
-
-    [Tooltip("从 WaveConfigSO 推导出的胜利波次（只读概念）。")]
     public int winWaveNumber = 1;
 
-    public event Action<int> OnWaveChanged;
+    public int enemiesAlive = 0;
+    public int enemiesTotalThisWave = 0;
+    public bool waveInProgress = false;
 
+    public event Action<int> OnWaveChanged;
     public event Action<int> OnWaveStarted;
+    public event Action<int, int> OnEnemyCountChanged;
+    public event Action<int> OnWaveCompleted;
 
     [Header("Debug")]
     public bool enableDebugHotkey = true;
-
-    [Tooltip("手动触发 StartNextWave（等同“强制进入下一晚并刷下一波”的逻辑触发）。")]
     public KeyCode debugStartNextWaveKey = KeyCode.F3;
+
+    private readonly HashSet<int> _enemyIds = new HashSet<int>(256);
 
     private void Awake()
     {
@@ -55,8 +57,15 @@ public class WaveProgressTracker : MonoBehaviour
         RefreshWinWaveFromConfig();
 
         currentWave = Mathf.Max(0, currentWave) + 1;
+        waveInProgress = true;
+
+        enemiesAlive = 0;
+        enemiesTotalThisWave = GetPlannedSpawnCountFromConfig(currentWave);
+        _enemyIds.Clear();
+
         OnWaveChanged?.Invoke(currentWave);
         OnWaveStarted?.Invoke(currentWave);
+        OnEnemyCountChanged?.Invoke(enemiesAlive, enemiesTotalThisWave);
     }
 
     public void HandleDayStarted()
@@ -75,5 +84,52 @@ public class WaveProgressTracker : MonoBehaviour
 
         currentWave = Mathf.Max(0, waveNumber);
         OnWaveChanged?.Invoke(currentWave);
+    }
+
+    public void SetExpectedEnemiesForWave(int waveId, int total)
+    {
+        if (waveId != currentWave) return;
+        enemiesTotalThisWave = Mathf.Max(0, total);
+        OnEnemyCountChanged?.Invoke(enemiesAlive, enemiesTotalThisWave);
+    }
+
+    public void RegisterEnemy(GameObject enemy, int waveId)
+    {
+        if (enemy == null) return;
+        if (!waveInProgress) return;
+        if (waveId != currentWave) return;
+
+        int id = enemy.GetInstanceID();
+        if (_enemyIds.Add(id))
+        {
+            enemiesAlive = Mathf.Max(0, enemiesAlive + 1);
+            OnEnemyCountChanged?.Invoke(enemiesAlive, enemiesTotalThisWave);
+        }
+    }
+
+    public void UnregisterEnemy(GameObject enemy, int waveId)
+    {
+        if (enemy == null) return;
+        if (waveId != currentWave) return;
+
+        int id = enemy.GetInstanceID();
+        if (_enemyIds.Remove(id))
+        {
+            enemiesAlive = Mathf.Max(0, enemiesAlive - 1);
+            OnEnemyCountChanged?.Invoke(enemiesAlive, enemiesTotalThisWave);
+
+            if (waveInProgress && enemiesAlive <= 0 && enemiesTotalThisWave > 0)
+            {
+                waveInProgress = false;
+                OnWaveCompleted?.Invoke(currentWave);
+            }
+        }
+    }
+
+    private int GetPlannedSpawnCountFromConfig(int waveId)
+    {
+        if (waveConfig != null && waveConfig.TryGetWave(waveId, out var def) && def != null)
+            return Mathf.Max(0, def.spawnCount);
+        return 0;
     }
 }

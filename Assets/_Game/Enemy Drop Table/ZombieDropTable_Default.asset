@@ -15,14 +15,14 @@ MonoBehaviour:
   entries:
   - type: 0
     minAmount: 1
+    maxAmount: 5
+    chance: 0.6
+    maxSpawnsPerKill: 5
+  - type: 1
+    minAmount: 1
     maxAmount: 3
     chance: 0.3
-    maxSpawnsPerKill: 2
-  - type: 2
-    minAmount: 1
-    maxAmount: 2
-    chance: 0.3
-    maxSpawnsPerKill: 2
+    maxSpawnsPerKill: 3
   rollsPerKill: 2
-  maxTotalDropsPerKill: 3
-  forceAtLeastOneDrop: 0
+  maxTotalDropsPerKill: 5
+  forceAtLeastOneDrop: 1
