@@ -10,29 +10,17 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
     [Min(1)] public int amount = 1;
 
     [Header("Pickup")]
-    [Tooltip("If true, pickup only happens when Interact() is called (e.g., Press E). If false, touching the player auto-picks.")]
     public bool requireInteractKey = false;
-
-    [Tooltip("Player tag used for auto-pickup and CanInteract checks.")]
     public string playerTag = "Player";
-
-    [Tooltip("Distance threshold to auto-pick once attracted to the player.")]
     [Min(0.01f)] public float pickupDistance = 0.2f;
-
-    [Tooltip("Destroy the drop after this many seconds. 0 = never.")]
     [Min(0f)] public float lifetimeSeconds = 120f;
 
     [Header("Magnet (Attraction)")]
     public bool allowMagnet = true;
-
-    [Tooltip("If PlayerPickupMagnet2D provides a speed, it overrides this.")]
     [Min(0f)] public float defaultMagnetSpeed = 7f;
-
-    [Tooltip("0 = constant speed. >0 = accelerate towards target speed.")]
     [Min(0f)] public float magnetAcceleration = 0f;
 
     [Header("Interactable")]
-    [Tooltip("Higher means PlayerInteractor2D prioritizes this more.")]
     public int interactPriority = 1;
 
     private Rigidbody2D _rb;
@@ -44,6 +32,7 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
     private float _currentSpeed;
 
     private bool _picked;
+    private bool _magnetSfxPlayed;
 
     private void Reset()
     {
@@ -123,6 +112,8 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
         if (_picked) return;
         if (target == null) return;
 
+        bool firstStart = !_attracting;
+
         _attractTarget = target;
         _attracting = true;
 
@@ -130,6 +121,12 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
         if (_targetSpeed <= 0f) _targetSpeed = 0.01f;
 
         if (_currentSpeed <= 0f) _currentSpeed = _targetSpeed;
+
+        if (firstStart && !_magnetSfxPlayed)
+        {
+            _magnetSfxPlayed = true;
+            SfxPlayer.TryPlay(SfxId.Economy_DropMagnet, transform.position);
+        }
     }
 
     public void CancelAttract()
@@ -162,6 +159,11 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
         {
             Debug.LogWarning($"[ResourceDrop2D] No PlayerResourceInventory found in scene. Drop not applied: {resourceType} x{amount}");
         }
+
+        if (resourceType == ResourceType.Planks)
+            SfxPlayer.TryPlay(SfxId.Economy_PlankPickup, transform.position);
+        else
+            SfxPlayer.TryPlay(SfxId.Economy_DropPickup, transform.position);
 
         _picked = true;
         Destroy(gameObject);

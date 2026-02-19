@@ -25,6 +25,11 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
     public float maxBuildDistance = 2.5f;
     public bool lockPlayerMovementWhileBuilding = false;
 
+    [Header("Build Loop SFX")]
+    public bool enableBuildLoopSfx = true;
+    public TimedActionLoopSfxEmitter buildLoopSfx;
+    public SfxId buildLoopSfxId = SfxId.Action_BuildLoop;
+
     [Header("Production Settings")]
     public ProductionMode productionMode = ProductionMode.RealTimeSeconds;
     public float secondsPerWater = 30f;
@@ -74,6 +79,9 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
         if (!requireBuild)
             isBuilt = true;
 
+        if (buildLoopSfx == null)
+            buildLoopSfx = GetComponentInChildren<TimedActionLoopSfxEmitter>(true);
+
         if (!string.IsNullOrWhiteSpace(collectorSaveKey) && PlayerPrefs.HasKey(collectorSaveKey))
             LoadCollectorState();
 
@@ -121,6 +129,7 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
 
     private void OnDisable()
     {
+        StopBuildLoopSfx();
         Unsubscribe();
     }
 
@@ -193,11 +202,23 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
         {
             spent = inv.Spend(ResourceType.Planks, planksCost);
             if (!spent)
+            {
                 runner.CancelActive();
+                return;
+            }
+
+            StartBuildLoopSfx();
+        };
+
+        req.onProgress = (p) =>
+        {
+            if (p <= 0f) StopBuildLoopSfx();
         };
 
         req.onCancel = () =>
         {
+            StopBuildLoopSfx();
+
             if (spent)
             {
                 inv.Add(ResourceType.Planks, planksCost);
@@ -207,6 +228,8 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
 
         req.onComplete = () =>
         {
+            StopBuildLoopSfx();
+
             if (!spent) return;
 
             isBuilt = true;
@@ -227,6 +250,19 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
         };
 
         runner.TryBegin(req);
+    }
+
+    private void StartBuildLoopSfx()
+    {
+        if (!enableBuildLoopSfx) return;
+        if (buildLoopSfx == null) return;
+        buildLoopSfx.PlayLoop(buildLoopSfxId);
+    }
+
+    private void StopBuildLoopSfx()
+    {
+        if (buildLoopSfx == null) return;
+        buildLoopSfx.StopLoop();
     }
 
     private void TryBuildImmediate(PlayerResourceInventory inv)
@@ -347,6 +383,8 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
         OnStoredWaterChanged?.Invoke(storedWater, storageCap);
 
         SaveCollectorStateIfEnabled();
+
+        SfxPlayer.TryPlay(SfxId.Economy_WaterCollect, transform.position);
 
         if (debugLogs)
             Debug.Log($"[WaterCollector] Collected Water +{take}. Stored now {storedWater}/{storageCap} ({name})");

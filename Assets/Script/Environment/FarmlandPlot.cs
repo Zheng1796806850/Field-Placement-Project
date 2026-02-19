@@ -43,24 +43,34 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
     public bool debugLogs = false;
 
+    public bool enableActionLoopSfx = true;
+    public AudioClip[] plantActionLoopClips;
+    public AudioClip[] waterActionLoopClips;
+    public float actionLoopVolumeMultiplier = 1f;
+
     private GameStateManager _gsm;
     private bool _subscribed;
+
+    private AudioSource _actionLoopSource;
 
     private void Awake()
     {
         AutoWireVisualsIfNull();
         ApplyVisuals();
         TrySubscribe();
+        EnsureActionLoopSource();
     }
 
     private void OnEnable()
     {
         TrySubscribe();
+        EnsureActionLoopSource();
     }
 
     private void Start()
     {
         TrySubscribe();
+        EnsureActionLoopSource();
     }
 
     private void Update()
@@ -70,7 +80,78 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
     private void OnDisable()
     {
+        StopActionLoop();
         TryUnsubscribe();
+    }
+
+    private void EnsureActionLoopSource()
+    {
+        if (!enableActionLoopSfx) return;
+        if (_actionLoopSource != null) return;
+
+        var go = new GameObject("ActionLoopSFX");
+        go.transform.SetParent(transform, false);
+
+        _actionLoopSource = go.AddComponent<AudioSource>();
+        _actionLoopSource.playOnAwake = false;
+        _actionLoopSource.loop = true;
+        _actionLoopSource.spatialBlend = 0f;
+        _actionLoopSource.volume = 1f;
+        _actionLoopSource.pitch = 1f;
+    }
+
+    private void BeginActionLoop(SfxId id, AudioClip[] overrideClips)
+    {
+        if (!enableActionLoopSfx) return;
+        EnsureActionLoopSource();
+        if (_actionLoopSource == null) return;
+
+        StopActionLoop();
+
+        AudioClip clip = null;
+
+        if (overrideClips != null && overrideClips.Length > 0)
+        {
+            clip = overrideClips.Length == 1 ? overrideClips[0] : overrideClips[Random.Range(0, overrideClips.Length)];
+        }
+        else
+        {
+            var sp = SfxPlayer.Instance;
+            if (sp != null) clip = sp.PickClip(id);
+        }
+
+        if (clip == null) return;
+
+        float volume = 1f;
+        Vector2 pitchRange = new Vector2(1f, 1f);
+        float spatialBlend = 0f;
+
+        var player = SfxPlayer.Instance;
+        if (player != null && player.TryGetEntry(id, out var entry) && entry != null)
+        {
+            volume = entry.volume;
+            pitchRange = entry.pitchRange;
+            spatialBlend = entry.spatialBlend;
+        }
+
+        float pMin = pitchRange.x <= 0f ? 0.01f : pitchRange.x;
+        float pMax = pitchRange.y <= 0f ? 0.01f : pitchRange.y;
+        if (pMax < pMin) { float t = pMin; pMin = pMax; pMax = t; }
+        float pitch = (pMin == pMax) ? pMin : Random.Range(pMin, pMax);
+
+        _actionLoopSource.clip = clip;
+        _actionLoopSource.loop = true;
+        _actionLoopSource.spatialBlend = Mathf.Clamp01(spatialBlend);
+        _actionLoopSource.volume = Mathf.Clamp01(volume * Mathf.Max(0f, actionLoopVolumeMultiplier));
+        _actionLoopSource.pitch = pitch;
+        _actionLoopSource.Play();
+    }
+
+    private void StopActionLoop()
+    {
+        if (_actionLoopSource == null) return;
+        if (_actionLoopSource.isPlaying) _actionLoopSource.Stop();
+        _actionLoopSource.clip = null;
     }
 
     private void TrySubscribe()
@@ -228,11 +309,23 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         {
             spent = inv.Spend(ResourceType.Seeds, seedCost);
             if (!spent)
+            {
                 runner.CancelActive();
+                return;
+            }
+
+            BeginActionLoop(SfxId.Farming_Plant, plantActionLoopClips);
+        };
+
+        req.onProgress = (p) =>
+        {
+            if (p <= 0f) StopActionLoop();
         };
 
         req.onCancel = () =>
         {
+            StopActionLoop();
+
             if (spent)
             {
                 inv.Add(ResourceType.Seeds, seedCost);
@@ -242,6 +335,8 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         req.onComplete = () =>
         {
+            StopActionLoop();
+
             if (!spent) return;
 
             plantedCrop = cropToPlant;
@@ -298,11 +393,23 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         {
             spent = inv.Spend(ResourceType.Water, waterCost);
             if (!spent)
+            {
                 runner.CancelActive();
+                return;
+            }
+
+            BeginActionLoop(SfxId.Farming_Water, waterActionLoopClips);
+        };
+
+        req.onProgress = (p) =>
+        {
+            if (p <= 0f) StopActionLoop();
         };
 
         req.onCancel = () =>
         {
+            StopActionLoop();
+
             if (spent)
             {
                 inv.Add(ResourceType.Water, waterCost);
@@ -312,6 +419,8 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         req.onComplete = () =>
         {
+            StopActionLoop();
+
             if (!spent) return;
 
             wateredSinceLastDayStart = true;
@@ -340,6 +449,8 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         SetState(PlotState.PlantedDry);
 
+        SfxPlayer.TryPlay(SfxId.Farming_Plant, transform.position);
+
         if (autoSaveInventoryOnAction) inv.SaveInMemory();
 
         if (debugLogs)
@@ -359,6 +470,8 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         wateredSinceLastDayStart = true;
         SetState(PlotState.PlantedWatered);
 
+        SfxPlayer.TryPlay(SfxId.Farming_Water, transform.position);
+
         if (autoSaveInventoryOnAction) inv.SaveInMemory();
 
         if (debugLogs)
@@ -372,6 +485,8 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
             ResetPlot();
             return;
         }
+
+        SfxPlayer.TryPlay(SfxId.Farming_Harvest, transform.position);
 
         if (harvestGoesToInventoryDirectly || harvestDropPrefab == null)
         {

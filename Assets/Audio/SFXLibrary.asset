@@ -1,0 +1,127 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fea3b14036575142aa482f173b2916c, type: 3}
+  m_Name: SFXLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::SfxLibrarySO
+  entries:
+  - id: 0
+    clips:
+    - {fileID: 8300000, guid: cfef672fd96919e478ddf4fd2f76ee56, type: 3}
+    volume: 0.8
+    minInterval: 0.05
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 1
+    clips:
+    - {fileID: 8300000, guid: 8aa3abd3e5fe6344baca0cbcb6aa4f53, type: 3}
+    volume: 0.8
+    minInterval: 0.05
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 2
+    clips:
+    - {fileID: 8300000, guid: 58b761ec497ee3c4ebe224dea7b20a7b, type: 3}
+    volume: 0.8
+    minInterval: 0.05
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 10
+    clips:
+    - {fileID: 8300000, guid: a6621fa8444ee4f4e8385efd408e59ad, type: 3}
+    volume: 0.8
+    minInterval: 0.05
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 11
+    clips:
+    - {fileID: 8300000, guid: a6621fa8444ee4f4e8385efd408e59ad, type: 3}
+    volume: 0.8
+    minInterval: 0.05
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 12
+    clips:
+    - {fileID: 8300000, guid: a6621fa8444ee4f4e8385efd408e59ad, type: 3}
+    volume: 0.8
+    minInterval: 0.05
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 13
+    clips:
+    - {fileID: 8300000, guid: a6621fa8444ee4f4e8385efd408e59ad, type: 3}
+    volume: 0.8
+    minInterval: 0.05
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 20
+    clips:
+    - {fileID: 8300000, guid: 379c7a5ee9bc6a64fa9f6806ca334bd1, type: 3}
+    volume: 0.8
+    minInterval: 0.05
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 21
+    clips:
+    - {fileID: 8300000, guid: 4b537ea0da80afc44a0b3162f8a1c9d4, type: 3}
+    volume: 0.8
+    minInterval: 0.05
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 22
+    clips:
+    - {fileID: 8300000, guid: 406d47f11ddc3da49a076259f25f264a, type: 3}
+    - {fileID: 8300000, guid: d21117d06e79feb44bedda791d322516, type: 3}
+    volume: 0.8
+    minInterval: 0.05
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 30
+    clips:
+    - {fileID: 8300000, guid: af9ada04852811d43bb07e29ff83b0e8, type: 3}
+    - {fileID: 8300000, guid: 360313e32b9681b4a91a2a0f211a44a6, type: 3}
+    - {fileID: 8300000, guid: c009c47b50a59aa449e28f9693d373d6, type: 3}
+    - {fileID: 8300000, guid: 4c56f4f427d61444aa923c9eac66e3dc, type: 3}
+    - {fileID: 8300000, guid: 53f434e6ef869cb4ca12359cd197c112, type: 3}
+    - {fileID: 8300000, guid: 676290e7c34ae704dad6c7505889aa7e, type: 3}
+    - {fileID: 8300000, guid: 596540c51acb2d546b786fe356231be9, type: 3}
+    - {fileID: 8300000, guid: 3426da040c2defa4db5e539567b89b4b, type: 3}
+    - {fileID: 8300000, guid: a2b4ae0b29ede6c498bc63184f88b4f2, type: 3}
+    - {fileID: 8300000, guid: 69a9178b16681e3489aa88bdb166455a, type: 3}
+    - {fileID: 8300000, guid: f041c82550c4798409c06317c7c45dbc, type: 3}
+    - {fileID: 8300000, guid: 042ecde1584f96f4997b66512ebad09a, type: 3}
+    - {fileID: 8300000, guid: 81a1dd2769b55ac4097f7b344f70da3f, type: 3}
+    - {fileID: 8300000, guid: debc842ed3f751846a8d3ac919fd10f9, type: 3}
+    - {fileID: 8300000, guid: 0299e78b986def74fb4dbc252b4d7f83, type: 3}
+    - {fileID: 8300000, guid: e335db763707ed74ebaa1393f8d92d24, type: 3}
+    - {fileID: 8300000, guid: c930339ca71e9d14893b82c115a2c12e, type: 3}
+    - {fileID: 8300000, guid: 5bc2e6c67fbc4524bb71efd8f89e0ee0, type: 3}
+    - {fileID: 8300000, guid: 939bcfbfb0abfb2498bf46ab4897d026, type: 3}
+    - {fileID: 8300000, guid: 73a94c9308828fa4aa8d7611a02f34d7, type: 3}
+    - {fileID: 8300000, guid: 8632e431aaa520d4387f8de9449f27fe, type: 3}
+    volume: 0.5
+    minInterval: 0
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 40
+    clips:
+    - {fileID: 8300000, guid: b0b98c616205ea2448c36b0f5d68a333, type: 3}
+    volume: 1
+    minInterval: 0
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
+  - id: 41
+    clips:
+    - {fileID: 8300000, guid: b0b98c616205ea2448c36b0f5d68a333, type: 3}
+    volume: 1
+    minInterval: 0
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0

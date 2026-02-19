@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 4635939761855836329}
   - component: {fileID: 3012804100501015051}
   - component: {fileID: 2896671886319183912}
+  - component: {fileID: 6651201952049726991}
   m_Layer: 0
   m_Name: Enemy_normal
   m_TagString: Untagged
@@ -314,7 +315,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4297858224867008055}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 373b52eb9bf8c40f785bb6947a1aee66, type: 3}
   m_Name: 
@@ -371,6 +372,25 @@ MonoBehaviour:
   randomRotation: 0
   spawnOnlyOnce: 1
   logDrops: 0
+--- !u!114 &6651201952049726991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4297858224867008055}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ec3ccb51e30c941b9c3e29e0de6985, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDeathSFX2D
+  health: {fileID: 1949475503890342462}
+  deathClips: []
+  volume: 0.75
+  pitchRange: {x: 1, y: 1}
+  spatialBlend: 0
+  minInterval: 0.03
+  deathSfxId: 22
 --- !u!1 &5576198059197684396
 GameObject:
   m_ObjectHideFlags: 0

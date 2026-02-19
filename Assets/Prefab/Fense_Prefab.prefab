@@ -327,6 +327,7 @@ GameObject:
   - component: {fileID: 3209846539876348697}
   - component: {fileID: 3243179422609684116}
   - component: {fileID: 191564052680784202}
+  - component: {fileID: 2796454413554705878}
   m_Layer: 7
   m_Name: Fense_Prefab
   m_TagString: Wall
@@ -511,7 +512,32 @@ MonoBehaviour:
   holdRepairInterval: 3
   maxRepairDistance: 2.5
   lockPlayerMovementWhileRepairing: 1
+  enableRepairLoopSfx: 1
+  repairLoopSfx: {fileID: 2796454413554705878}
+  repairLoopSfxId: 41
   lowDurabilityThreshold01: 0.25
   priority: 1
   debugLogs: 0
   autoSaveInventoryOnRepair: 1
+--- !u!114 &2796454413554705878
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8182331800364297307}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 659191b815351474db88088cecd34dbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimedActionLoopSfxEmitter
+  audioSource: {fileID: 0}
+  useLibrary: 1
+  sfxId: 41
+  volumeMultiplier: 1
+  clips: []
+  volume: 1
+  pitchRange: {x: 1, y: 1}
+  spatialBlend: 0
+  loop: 1
+  stopOnDisable: 1

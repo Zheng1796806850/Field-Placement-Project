@@ -79,7 +79,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -214,6 +214,7 @@ GameObject:
   - component: {fileID: 7545031342684364423}
   - component: {fileID: 4452319588708932384}
   - component: {fileID: 6180384242341235040}
+  - component: {fileID: 4592746992785603676}
   m_Layer: 0
   m_Name: WaterCollectorSpot
   m_TagString: Interactable
@@ -303,6 +304,9 @@ MonoBehaviour:
   buildHoldToComplete: 1
   maxBuildDistance: 2.5
   lockPlayerMovementWhileBuilding: 1
+  enableBuildLoopSfx: 1
+  buildLoopSfx: {fileID: 4592746992785603676}
+  buildLoopSfxId: 40
   productionMode: 0
   secondsPerWater: 5
   phaseTrigger: 1
@@ -321,6 +325,28 @@ MonoBehaviour:
   builtHasWaterVisual: {fileID: 1735839877280415402}
   autoSaveInventoryOnChange: 0
   collectorSaveKey: 
+--- !u!114 &4592746992785603676
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4552219531590130918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 659191b815351474db88088cecd34dbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimedActionLoopSfxEmitter
+  audioSource: {fileID: 0}
+  useLibrary: 1
+  sfxId: 40
+  volumeMultiplier: 1
+  clips: []
+  volume: 1
+  pitchRange: {x: 1, y: 1}
+  spatialBlend: 0
+  loop: 1
+  stopOnDisable: 1
 --- !u!1 &8810137269250272090
 GameObject:
   m_ObjectHideFlags: 0

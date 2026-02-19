@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Health))]
@@ -27,6 +26,11 @@ public class WoodenWallDurability : MonoBehaviour, IInteractable
     public float maxRepairDistance = 2.5f;
 
     public bool lockPlayerMovementWhileRepairing = false;
+
+    [Header("Repair Loop SFX")]
+    public bool enableRepairLoopSfx = true;
+    public TimedActionLoopSfxEmitter repairLoopSfx;
+    public SfxId repairLoopSfxId = SfxId.Action_RepairLoop;
 
     [Header("Low Durability Warning")]
     [Range(0f, 1f)] public float lowDurabilityThreshold01 = 0.25f;
@@ -57,11 +61,13 @@ public class WoodenWallDurability : MonoBehaviour, IInteractable
     }
 
     private bool _lastLow;
-    private Coroutine _repairCo;
 
     private void Awake()
     {
         if (health == null) health = GetComponent<Health>();
+
+        if (repairLoopSfx == null)
+            repairLoopSfx = GetComponentInChildren<TimedActionLoopSfxEmitter>(true);
 
         if (health != null)
         {
@@ -86,6 +92,8 @@ public class WoodenWallDurability : MonoBehaviour, IInteractable
 
     private void OnDestroy()
     {
+        StopRepairLoopSfx();
+
         if (health != null)
         {
             health.OnHealthChanged -= HandleHealthChanged;
@@ -177,7 +185,12 @@ public class WoodenWallDurability : MonoBehaviour, IInteractable
 
             spent = inv.Spend(ResourceType.Planks, planksPerRepairStep);
             if (!spent)
+            {
                 runner.CancelActive();
+                return;
+            }
+
+            StartRepairLoopSfx();
         };
 
         req.onProgress = (p) =>
@@ -187,10 +200,14 @@ public class WoodenWallDurability : MonoBehaviour, IInteractable
                 repairProgressHUD.SetVisible(true);
                 repairProgressHUD.SetProgress(p);
             }
+
+            if (p <= 0f) StopRepairLoopSfx();
         };
 
         req.onCancel = () =>
         {
+            StopRepairLoopSfx();
+
             if (repairProgressHUD != null)
             {
                 repairProgressHUD.SetProgress(0f);
@@ -206,6 +223,8 @@ public class WoodenWallDurability : MonoBehaviour, IInteractable
 
         req.onComplete = () =>
         {
+            StopRepairLoopSfx();
+
             if (repairProgressHUD != null)
             {
                 repairProgressHUD.SetProgress(0f);
@@ -231,6 +250,19 @@ public class WoodenWallDurability : MonoBehaviour, IInteractable
         };
 
         runner.TryBegin(req);
+    }
+
+    private void StartRepairLoopSfx()
+    {
+        if (!enableRepairLoopSfx) return;
+        if (repairLoopSfx == null) return;
+        repairLoopSfx.PlayLoop(repairLoopSfxId);
+    }
+
+    private void StopRepairLoopSfx()
+    {
+        if (repairLoopSfx == null) return;
+        repairLoopSfx.StopLoop();
     }
 
     private void TryRepairImmediate(PlayerResourceInventory inv)
@@ -266,6 +298,7 @@ public class WoodenWallDurability : MonoBehaviour, IInteractable
 
     private void HandleDied()
     {
+        StopRepairLoopSfx();
         OnWallDestroyed?.Invoke();
     }
 }

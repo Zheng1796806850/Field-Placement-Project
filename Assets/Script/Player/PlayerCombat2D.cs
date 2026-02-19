@@ -62,6 +62,8 @@ public class PlayerCombat2D : MonoBehaviour
             spriteRenderer.flipX = dir.x < 0;
 
         SelectAttackCollider(dir);
+
+        SfxPlayer.TryPlay(SfxId.Combat_AttackSwing, transform.position);
     }
 
     private void EndAttack()
@@ -93,7 +95,6 @@ public class PlayerCombat2D : MonoBehaviour
         attackRight.enabled = false;
         currentCollider = null;
     }
-
 
     public void AnimEvent_EnableHitbox()
     {

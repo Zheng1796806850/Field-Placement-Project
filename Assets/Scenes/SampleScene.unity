@@ -2177,6 +2177,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &429581807
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 429581809}
+  - component: {fileID: 429581808}
+  m_Layer: 0
+  m_Name: _SfxPlayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &429581808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 429581807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7adeacf8eb5740542a2e54f7a3be7366, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxPlayer
+  library: {fileID: 11400000, guid: b11965b109c8aa945bfbacce50898863, type: 2}
+  initialPoolSize: 20
+  dontDestroyOnLoad: 1
+--- !u!4 &429581809
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 429581807}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10.55311, y: 2.12091, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &473022891
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2697,6 +2744,9 @@ MonoBehaviour:
   holdRepairInterval: 0.25
   maxRepairDistance: 2.5
   lockPlayerMovementWhileRepairing: 0
+  enableRepairLoopSfx: 1
+  repairLoopSfx: {fileID: 0}
+  repairLoopSfxId: 41
   lowDurabilityThreshold01: 0.25
   priority: 8
   debugLogs: 0
@@ -48026,6 +48076,11 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!4 &735465035 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7545031342684364423, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+  m_PrefabInstance: {fileID: 6976641228796009562}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &765542498
 GameObject:
   m_ObjectHideFlags: 0
@@ -48173,6 +48228,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackHitbox
   damage: 2
+  playHitConfirm: 1
+  hitConfirmSfx: 21
+  requireEnemyComponent: 1
+  minHitConfirmInterval: 0.03
 --- !u!61 &799596402
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -67311,7 +67370,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.18841672, g: 1, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -67319,7 +67378,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: -5177388603050735206, guid: 8884154dfe85442a3a3578be807dbcdf, type: 3}
-  m_Type: 1
+  m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 0
@@ -109252,6 +109311,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackHitbox
   damage: 2
+  playHitConfirm: 1
+  hitConfirmSfx: 21
+  requireEnemyComponent: 1
+  minHitConfirmInterval: 0.03
 --- !u!61 &1470222575
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -109574,6 +109637,38 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8409afd7b8537e94fb87ef49e31acc69, type: 3}
+--- !u!1 &1508587298
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1508587299}
+  m_Layer: 0
+  m_Name: All_WaterSpot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1508587299
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1508587298}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 735465035}
+  m_Father: {fileID: 1970353202}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1537366282
 GameObject:
   m_ObjectHideFlags: 0
@@ -111483,6 +111578,7 @@ GameObject:
   - component: {fileID: 1817910278}
   - component: {fileID: 1817910279}
   - component: {fileID: 1817910280}
+  - component: {fileID: 1817910281}
   m_Layer: 9
   m_Name: Player
   m_TagString: Player
@@ -111850,6 +111946,29 @@ MonoBehaviour:
   useUnscaledTime: 0
   defaultCancelKey: 27
   cancelIfTargetDisabled: 1
+--- !u!114 &1817910281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1817910266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82b4b23945ac19c46b1b2f28d9af7352, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFootstepSFX2D
+  rb: {fileID: 1817910270}
+  footstepClips: []
+  volume: 1
+  pitchRange: {x: 0.95, y: 1.05}
+  spatialBlend: 0
+  footstepId: 30
+  minMoveSpeed: 0.05
+  speedForFastSteps: 2
+  minStepInterval: 0.21
+  maxStepInterval: 0.47
+  audioSource: {fileID: 0}
 --- !u!1 &1818293206
 GameObject:
   m_ObjectHideFlags: 0
@@ -112046,6 +112165,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackHitbox
   damage: 2
+  playHitConfirm: 1
+  hitConfirmSfx: 21
+  requireEnemyComponent: 1
+  minHitConfirmInterval: 0.03
 --- !u!61 &1848167798
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -112664,6 +112787,7 @@ Transform:
   - {fileID: 1704653008}
   - {fileID: 962103809}
   - {fileID: 21457639}
+  - {fileID: 1508587299}
   m_Father: {fileID: 1537366283}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2013463333
@@ -113207,6 +113331,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackHitbox
   damage: 2
+  playHitConfirm: 1
+  hitConfirmSfx: 21
+  requireEnemyComponent: 1
+  minHitConfirmInterval: 0.03
 --- !u!61 &2137623201
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -113339,41 +113467,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 21457639}
     m_Modifications:
-    - target: {fileID: 468919922979915670, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
-      propertyPath: m_SortingOrder
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1545380843464396704, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
-      propertyPath: m_IsTrigger
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2477417075352900357, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
-      propertyPath: m_SortingOrder
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4406895349652622519, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
-      propertyPath: m_Color.g
-      value: 0.6924707
-      objectReference: {fileID: 0}
-    - target: {fileID: 4406895349652622519, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
-      propertyPath: m_SortingOrder
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4773637604158566866, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
-      propertyPath: m_SortingOrder
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01
-      objectReference: {fileID: 0}
-    - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
-      propertyPath: m_TagString
-      value: Interactable
-      objectReference: {fileID: 0}
-    - target: {fileID: 8960172141940833733, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
-      propertyPath: m_SortingOrder
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9209099348432214484, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_LocalPosition.x
@@ -113491,7 +113587,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 1508587299}
     m_Modifications:
     - target: {fileID: 4552219531590130918, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_Name
@@ -113515,15 +113611,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7545031342684364423, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 7545031342684364423, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 7545031342684364423, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 7545031342684364423, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -113561,7 +113657,7 @@ SceneRoots:
   - {fileID: 1694639985}
   - {fileID: 403308086}
   - {fileID: 1564998948}
+  - {fileID: 429581809}
   - {fileID: 728446062}
   - {fileID: 1330362786}
   - {fileID: 1468649198}
-  - {fileID: 6976641228796009562}
