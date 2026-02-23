@@ -9,8 +9,14 @@ public class AttackHitbox : MonoBehaviour
     public bool requireEnemyComponent = true;
     public float minHitConfirmInterval = 0.03f;
 
+    public Transform attackerRoot;
+
     private float _lastHitSfxTime;
 
+    private void Awake()
+    {
+        if (attackerRoot == null) attackerRoot = transform.root;
+    }
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other == null) return;
@@ -32,6 +38,13 @@ public class AttackHitbox : MonoBehaviour
                 _lastHitSfxTime = now;
                 SfxPlayer.TryPlay(hitConfirmSfx, other.transform.position);
             }
+        }
+
+        EnemyAI2D ai = other.GetComponentInParent<EnemyAI2D>();
+        if (ai != null)
+        {
+            GameObject attacker = attackerRoot != null ? attackerRoot.gameObject : null;
+            ai.NotifyAttacked(attacker);
         }
     }
 

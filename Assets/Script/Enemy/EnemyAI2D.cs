@@ -1,6 +1,11 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Pathfinding;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Seeker))]
@@ -8,58 +13,46 @@ public class EnemyAI2D : MonoBehaviour
 {
     private enum State
     {
-        MoveToHouse,
+        MoveToGoal,
         Attack,
         Dead
     }
 
     [Header("Goal (House)")]
-    [Tooltip("如果不填，会自动使用 HouseObjective.Instance。")]
     public Transform houseOverride;
 
     [Header("Sensor / Target Filter")]
-    [Tooltip("攻击/检测范围 Trigger Collider（一般在子物体 AttackSensor 上）。")]
     public Collider2D sensorTrigger;
-
-    [Tooltip("只把这些 Layer 视为可选目标（可留空表示不过滤）。")]
     public LayerMask targetLayers = ~0;
-
-    [Tooltip("玩家 Tag")]
     public string playerTag = "Player";
-
-    [Tooltip("墙 Tag")]
     public string wallTag = "Wall";
-
-    [Tooltip("是否允许攻击玩家")]
+    public string coreTag = "Core";
     public bool canTargetPlayer = true;
-
-    [Tooltip("范围内同时有玩家+墙：true=优先打玩家；false=优先打墙")]
+    public bool canTargetCore = true;
     public bool preferPlayerOverWall = true;
+    public bool preferWallOverCore = true;
+
+    [Header("Reactive Targeting")]
+    [Min(0f)] public float playerAggroRange = 6f;
+    [Min(0f)] public float playerDisengageRange = 7f;
+    [Min(0f)] public float hitAggroDuration = 3f;
+    [Min(0f)] public float hitAggroMaxDistance = 12f;
+    public bool breakWallAttackWhenAggroPlayer = true;
 
     [Header("Movement")]
     [Min(0f)] public float moveSpeed = 2.0f;
-
-    [Tooltip("多久重算一次路径（秒）。怪多时建议 0.5~1.0")]
     [Min(0.05f)] public float repathInterval = 0.5f;
-
-    [Tooltip("距离路径点多近算到达")]
     [Min(0.01f)] public float nextWaypointDistance = 0.2f;
-
-    [Tooltip("如果你是纯横向关卡，可以锁定Y轴移动（只走X）")]
     public bool lockYMovement = false;
 
     [Header("Attack - Damage")]
     [Min(0)] public int damageToWall = 5;
     [Min(0)] public int damageToPlayer = 5;
+    [Min(0)] public int damageToCore = 8;
 
     [Header("Attack - Timing (seconds)")]
-    [Tooltip("攻击冷却（两次攻击间隔）")]
     [Min(0.05f)] public float attackCooldown = 1.0f;
-
-    [Tooltip("从触发攻击到造成伤害的延迟（风起时间）")]
     [Min(0f)] public float attackWindup = 0.25f;
-
-    [Tooltip("若为 true：命中由动画事件 AnimEvent_DealDamage() 触发；否则用 attackWindup 计时")]
     public bool useAnimationEventForHit = false;
 
     [Header("Animation (Optional)")]
@@ -71,35 +64,45 @@ public class EnemyAI2D : MonoBehaviour
     public bool logStateChanges = false;
     public bool drawDebugPath = false;
 
+    [Header("Debug Gizmos")]
+    public bool drawReactiveGizmos = true;
+    public bool drawTargetLines = true;
+    public Color gizmoAggroColor = new Color(0.25f, 1f, 0.25f, 0.75f);
+    public Color gizmoDisengageColor = new Color(1f, 0.9f, 0.2f, 0.75f);
+    public Color gizmoHitAggroMaxColor = new Color(1f, 0.25f, 0.25f, 0.75f);
+    public Color gizmoLineToPlayerColor = new Color(1f, 0.35f, 0.35f, 0.9f);
+    public Color gizmoLineToHouseColor = new Color(0.35f, 0.8f, 1f, 0.9f);
+    [Min(0f)] public float gizmoZOffset = 0f;
+
     private Rigidbody2D _rb;
     private Seeker _seeker;
 
     private State _state;
 
-    // Path
     private Path _path;
     private int _waypointIndex;
     private float _nextRepathTime;
 
-    // Goal
     private Transform _house;
+    private Transform _player;
+    private Transform _moveGoal;
 
-    // Sensor candidates
     private readonly List<Collider2D> _candidates = new List<Collider2D>(8);
 
-    // Attack target
     private Collider2D _attackTargetCol;
     private Health _attackTargetHp;
 
-    // Attack timing
     private float _nextAttackAllowedTime;
     private float _scheduledHitTime;
     private bool _hitPending;
 
-    // --------- Stats baseline (AI-02) ---------
     private bool _baseCaptured;
     private float _baseMoveSpeed;
     private int _baseWallDamage;
+
+    private float _forcedAggroUntil;
+    private bool _proximityAggro;
+    private float _nextPlayerFindTime;
 
     private void Awake()
     {
@@ -110,7 +113,7 @@ public class EnemyAI2D : MonoBehaviour
         CaptureBaseIfNeeded();
 
         if (sensorTrigger == null)
-            Debug.LogWarning($"{name}: sensorTrigger 未绑定（AttackSensor 的 Trigger Collider）");
+            Debug.LogWarning($"{name}: sensorTrigger 未绑定(AttackSensor 的 Trigger Collider)");
     }
 
     private void CaptureBaseIfNeeded()
@@ -125,7 +128,10 @@ public class EnemyAI2D : MonoBehaviour
     private void OnEnable()
     {
         CacheHouse();
-        SetState(State.MoveToHouse);
+        CachePlayer(true);
+
+        _moveGoal = _house;
+        SetState(State.MoveToGoal);
         _nextRepathTime = 0f;
     }
 
@@ -139,17 +145,58 @@ public class EnemyAI2D : MonoBehaviour
         if (_state == State.Dead) return;
 
         CacheHouseIfLost();
+        CachePlayer(false);
+
         PruneCandidates();
 
-        ResolveAttackTarget();
+        UpdateReactiveAggro();
 
-        if (_attackTargetHp != null)
+        bool chasePlayer = ShouldChasePlayer();
+        Transform desiredGoal = chasePlayer ? _player : _house;
+
+        if (_moveGoal != desiredGoal)
         {
-            if (_state != State.Attack) SetState(State.Attack);
+            _moveGoal = desiredGoal;
+            _path = null;
+            _waypointIndex = 0;
+            _nextRepathTime = 0f;
+        }
+
+        bool forcePlayerAttack = chasePlayer;
+        ResolveAttackTarget(forcePlayerAttack);
+
+        bool playerInAttackRange = _attackTargetCol != null && canTargetPlayer && _attackTargetCol.CompareTag(playerTag);
+
+        if (chasePlayer)
+        {
+            if (playerInAttackRange)
+            {
+                if (_state != State.Attack) SetState(State.Attack);
+            }
+            else
+            {
+                if (breakWallAttackWhenAggroPlayer && _state == State.Attack)
+                {
+                    if (_attackTargetCol != null && (_attackTargetCol.CompareTag(wallTag) || _attackTargetCol.CompareTag(coreTag)))
+                    {
+                        _attackTargetCol = null;
+                        _attackTargetHp = null;
+                    }
+                }
+
+                if (_state != State.MoveToGoal) SetState(State.MoveToGoal);
+            }
         }
         else
         {
-            if (_state != State.MoveToHouse) SetState(State.MoveToHouse);
+            if (_attackTargetHp != null)
+            {
+                if (_state != State.Attack) SetState(State.Attack);
+            }
+            else
+            {
+                if (_state != State.MoveToGoal) SetState(State.MoveToGoal);
+            }
         }
 
         if (!useAnimationEventForHit && _hitPending && Time.time >= _scheduledHitTime)
@@ -158,15 +205,15 @@ public class EnemyAI2D : MonoBehaviour
             TryDealDamage();
         }
 
-        if (_state == State.MoveToHouse && _house != null && Time.time >= _nextRepathTime)
+        if (_state == State.MoveToGoal && _moveGoal != null && Time.time >= _nextRepathTime)
         {
             _nextRepathTime = Time.time + repathInterval;
-            RequestPathToHouse();
+            RequestPathTo(_moveGoal);
         }
 
         if (animator != null && !string.IsNullOrWhiteSpace(animSpeedParam))
         {
-            float speed01 = (_state == State.MoveToHouse && _attackTargetHp == null) ? 1f : 0f;
+            float speed01 = (_state == State.MoveToGoal && _attackTargetHp == null) ? 1f : 0f;
             animator.SetFloat(animSpeedParam, speed01);
         }
 
@@ -183,7 +230,7 @@ public class EnemyAI2D : MonoBehaviour
 
         switch (_state)
         {
-            case State.MoveToHouse:
+            case State.MoveToGoal:
                 TickMove();
                 break;
 
@@ -195,7 +242,7 @@ public class EnemyAI2D : MonoBehaviour
 
     private void TickMove()
     {
-        if (_house == null)
+        if (_moveGoal == null)
         {
             _rb.linearVelocity = Vector2.zero;
             return;
@@ -203,7 +250,7 @@ public class EnemyAI2D : MonoBehaviour
 
         if (_path == null || _path.vectorPath == null || _path.vectorPath.Count == 0)
         {
-            Vector2 dirFallback = ((Vector2)_house.position - _rb.position).normalized;
+            Vector2 dirFallback = ((Vector2)_moveGoal.position - _rb.position).normalized;
             if (lockYMovement) dirFallback.y = 0f;
             _rb.linearVelocity = dirFallback * moveSpeed;
             return;
@@ -236,12 +283,12 @@ public class EnemyAI2D : MonoBehaviour
         _rb.linearVelocity = dir * moveSpeed;
     }
 
-    private void RequestPathToHouse()
+    private void RequestPathTo(Transform goal)
     {
-        if (_seeker == null || !_seeker.IsDone() || _house == null) return;
+        if (_seeker == null || !_seeker.IsDone() || goal == null) return;
 
         Vector3 start = _rb.position;
-        Vector3 end = _house.position;
+        Vector3 end = goal.position;
 
         _seeker.StartPath(start, end, OnPathComplete);
     }
@@ -296,10 +343,13 @@ public class EnemyAI2D : MonoBehaviour
         if (_attackTargetHp == null || _attackTargetCol == null) return;
 
         int dmg = 0;
+
         if (canTargetPlayer && _attackTargetCol.CompareTag(playerTag))
             dmg = damageToPlayer;
         else if (_attackTargetCol.CompareTag(wallTag))
             dmg = damageToWall;
+        else if (canTargetCore && _attackTargetCol.CompareTag(coreTag))
+            dmg = damageToCore;
         else
             return;
 
@@ -313,9 +363,9 @@ public class EnemyAI2D : MonoBehaviour
         TryDealDamage();
     }
 
-    private void ResolveAttackTarget()
+    private void ResolveAttackTarget(bool forcePlayer)
     {
-        Collider2D chosen = ChooseTargetByPriority();
+        Collider2D chosen = ChooseTargetByPriority(forcePlayer);
         if (chosen == null)
         {
             _attackTargetCol = null;
@@ -336,13 +386,15 @@ public class EnemyAI2D : MonoBehaviour
         _attackTargetHp = hp;
     }
 
-    private Collider2D ChooseTargetByPriority()
+    private Collider2D ChooseTargetByPriority(bool forcePlayer)
     {
         Collider2D bestPlayer = null;
         Collider2D bestWall = null;
+        Collider2D bestCore = null;
 
         float bestPlayerDist = float.MaxValue;
         float bestWallDist = float.MaxValue;
+        float bestCoreDist = float.MaxValue;
 
         for (int i = 0; i < _candidates.Count; i++)
         {
@@ -367,12 +419,26 @@ public class EnemyAI2D : MonoBehaviour
                     bestWall = c;
                 }
             }
+            else if (canTargetCore && c.CompareTag(coreTag))
+            {
+                if (d < bestCoreDist)
+                {
+                    bestCoreDist = d;
+                    bestCore = c;
+                }
+            }
         }
 
-        if (preferPlayerOverWall)
-            return bestPlayer != null ? bestPlayer : bestWall;
+        if (forcePlayer)
+            return bestPlayer != null ? bestPlayer : null;
+
+        if (preferPlayerOverWall && bestPlayer != null)
+            return bestPlayer;
+
+        if (preferWallOverCore)
+            return bestWall != null ? bestWall : bestCore;
         else
-            return bestWall != null ? bestWall : bestPlayer;
+            return bestCore != null ? bestCore : bestWall;
     }
 
     private void PruneCandidates()
@@ -391,7 +457,9 @@ public class EnemyAI2D : MonoBehaviour
 
         bool isPlayer = canTargetPlayer && other.CompareTag(playerTag);
         bool isWall = other.CompareTag(wallTag);
-        if (!isPlayer && !isWall) return;
+        bool isCore = canTargetCore && other.CompareTag(coreTag);
+
+        if (!isPlayer && !isWall && !isCore) return;
 
         if (!_candidates.Contains(other))
             _candidates.Add(other);
@@ -436,6 +504,56 @@ public class EnemyAI2D : MonoBehaviour
         CacheHouse();
     }
 
+    private void CachePlayer(bool immediate)
+    {
+        if (!canTargetPlayer) { _player = null; return; }
+
+        if (_player != null) return;
+
+        if (!immediate && Time.time < _nextPlayerFindTime) return;
+        _nextPlayerFindTime = Time.time + 0.5f;
+
+        GameObject p = null;
+        try { p = GameObject.FindGameObjectWithTag(playerTag); } catch { p = null; }
+        _player = p != null ? p.transform : null;
+    }
+
+    private void UpdateReactiveAggro()
+    {
+        if (!canTargetPlayer || _player == null)
+        {
+            _proximityAggro = false;
+            return;
+        }
+
+        float sqr = ((Vector2)_player.position - _rb.position).sqrMagnitude;
+        float enter = Mathf.Max(0f, playerAggroRange);
+        float exit = Mathf.Max(enter, playerDisengageRange);
+
+        float enterSqr = enter * enter;
+        float exitSqr = exit * exit;
+
+        if (_proximityAggro)
+            _proximityAggro = sqr <= exitSqr;
+        else
+            _proximityAggro = sqr <= enterSqr;
+    }
+
+    private bool ShouldChasePlayer()
+    {
+        if (!canTargetPlayer || _player == null) return false;
+
+        bool hitAggro = false;
+        if (Time.time < _forcedAggroUntil)
+        {
+            float maxD = Mathf.Max(0f, hitAggroMaxDistance);
+            float sqr = ((Vector2)_player.position - _rb.position).sqrMagnitude;
+            hitAggro = sqr <= (maxD * maxD);
+        }
+
+        return _proximityAggro || hitAggro;
+    }
+
     private void SetState(State next)
     {
         if (_state == next) return;
@@ -448,6 +566,12 @@ public class EnemyAI2D : MonoBehaviour
         {
             _rb.linearVelocity = Vector2.zero;
             _path = null;
+            _waypointIndex = 0;
+            _hitPending = false;
+        }
+        else if (_state == State.MoveToGoal)
+        {
+            _hitPending = false;
         }
     }
 
@@ -458,7 +582,28 @@ public class EnemyAI2D : MonoBehaviour
         _rb.linearVelocity = Vector2.zero;
     }
 
-    // ---------------- AI-02: Stats API ----------------
+    public void NotifyAttacked(GameObject attacker)
+    {
+        if (!canTargetPlayer) return;
+
+        if (attacker != null)
+        {
+            if (_player == null && attacker.CompareTag(playerTag))
+                _player = attacker.transform;
+
+            if (_player == null && attacker.transform != null)
+            {
+                if (attacker.CompareTag(playerTag))
+                    _player = attacker.transform;
+            }
+        }
+
+        if (_player == null) CachePlayer(true);
+        if (_player == null) return;
+
+        _forcedAggroUntil = Time.time + Mathf.Max(0f, hitAggroDuration);
+    }
+
     public void SetBaseMoveSpeed(float baseSpeed)
     {
         CaptureBaseIfNeeded();
@@ -473,7 +618,6 @@ public class EnemyAI2D : MonoBehaviour
         damageToWall = _baseWallDamage;
     }
 
-    // Wave multipliers
     public void ApplySpeedMultiplier(float multiplier)
     {
         CaptureBaseIfNeeded();
@@ -487,4 +631,63 @@ public class EnemyAI2D : MonoBehaviour
         if (multiplier <= 0f) multiplier = 0.01f;
         damageToWall = Mathf.Max(0, Mathf.RoundToInt(_baseWallDamage * multiplier));
     }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        if (!drawReactiveGizmos) return;
+
+        Vector3 pos = transform.position;
+        pos.z += gizmoZOffset;
+
+        float rAggro = Mathf.Max(0f, playerAggroRange);
+        float rDis = Mathf.Max(rAggro, playerDisengageRange);
+        float rHit = Mathf.Max(0f, hitAggroMaxDistance);
+
+        Gizmos.color = gizmoAggroColor;
+        Gizmos.DrawWireSphere(pos, rAggro);
+
+        Gizmos.color = gizmoDisengageColor;
+        Gizmos.DrawWireSphere(pos, rDis);
+
+        Gizmos.color = gizmoHitAggroMaxColor;
+        Gizmos.DrawWireSphere(pos, rHit);
+
+        if (drawTargetLines)
+        {
+            Transform player = _player;
+            if (player == null)
+            {
+                GameObject p = null;
+                try { p = GameObject.FindGameObjectWithTag(playerTag); } catch { p = null; }
+                player = p != null ? p.transform : null;
+            }
+
+            Transform house = _house;
+            if (house == null)
+            {
+                if (houseOverride != null) house = houseOverride;
+                else if (HouseObjective.Instance != null)
+                    house = HouseObjective.Instance.targetPoint != null ? HouseObjective.Instance.targetPoint : HouseObjective.Instance.transform;
+            }
+
+            if (player != null)
+            {
+                Gizmos.color = gizmoLineToPlayerColor;
+                Vector3 ppos = player.position;
+                ppos.z = pos.z;
+                Gizmos.DrawLine(pos, ppos);
+                Handles.Label(pos + Vector3.up * 0.25f, $"Aggro:{rAggro:F1}  Dis:{rDis:F1}  HitMax:{rHit:F1}");
+            }
+
+            if (house != null)
+            {
+                Gizmos.color = gizmoLineToHouseColor;
+                Vector3 hpos = house.position;
+                hpos.z = pos.z;
+                Gizmos.DrawLine(pos, hpos);
+            }
+        }
+    }
+#endif
 }

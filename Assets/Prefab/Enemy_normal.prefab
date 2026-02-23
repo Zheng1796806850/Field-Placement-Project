@@ -281,6 +281,11 @@ MonoBehaviour:
   wallTag: Wall
   canTargetPlayer: 1
   preferPlayerOverWall: 1
+  playerAggroRange: 1
+  playerDisengageRange: 1.2
+  hitAggroDuration: 1
+  hitAggroMaxDistance: 1.2
+  breakWallAttackWhenAggroPlayer: 1
   moveSpeed: 0.8
   repathInterval: 0.5
   nextWaypointDistance: 0.2
@@ -295,6 +300,14 @@ MonoBehaviour:
   animAttackTrigger: Attack
   logStateChanges: 0
   drawDebugPath: 0
+  drawReactiveGizmos: 1
+  drawTargetLines: 1
+  gizmoAggroColor: {r: 0.25, g: 1, b: 0.25, a: 0.75}
+  gizmoDisengageColor: {r: 1, g: 0.9, b: 0.2, a: 0.75}
+  gizmoHitAggroMaxColor: {r: 1, g: 0.25, b: 0.25, a: 0.75}
+  gizmoLineToPlayerColor: {r: 1, g: 0.35, b: 0.35, a: 0.9}
+  gizmoLineToHouseColor: {r: 0.35, g: 0.8, b: 1, a: 0.9}
+  gizmoZOffset: 0
 --- !u!114 &8602533380366581256
 MonoBehaviour:
   m_ObjectHideFlags: 0

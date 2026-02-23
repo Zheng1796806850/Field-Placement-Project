@@ -7,10 +7,13 @@ public class WaveProgressTracker : MonoBehaviour
     [Header("Config")]
     public WaveConfigSO waveConfig;
 
-    [Header("Runtime")]
-    public int currentWave = 0;
+    [Header("Wave Victory")]
+    public bool enableAutoVictoryOnDayStart = true;
     public int winWaveNumber = 1;
+    public string victoryReasonFormat = "Survived to Wave {0}!";
 
+    [Header("Wave Runtime")]
+    public int currentWave = 0;
     public int enemiesAlive = 0;
     public int enemiesTotalThisWave = 0;
     public bool waveInProgress = false;
@@ -70,11 +73,17 @@ public class WaveProgressTracker : MonoBehaviour
 
     public void HandleDayStarted()
     {
+        if (!enableAutoVictoryOnDayStart) return;
+
         RefreshWinWaveFromConfig();
 
         if (currentWave >= winWaveNumber)
         {
-            GameFlowManager.Instance?.TriggerVictory($"Survived to Wave {winWaveNumber}!");
+            string reason = string.IsNullOrWhiteSpace(victoryReasonFormat)
+                ? $"Survived to Wave {winWaveNumber}!"
+                : string.Format(victoryReasonFormat, winWaveNumber);
+
+            GameFlowManager.Instance?.TriggerVictory(reason);
         }
     }
 
