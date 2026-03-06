@@ -17,9 +17,18 @@ public class AttackHitbox : MonoBehaviour
     {
         if (attackerRoot == null) attackerRoot = transform.root;
     }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other == null) return;
+
+        var wall = other.GetComponentInParent<WoodenWallDurability>();
+        if (wall != null)
+        {
+            GameObject attacker = attackerRoot != null ? attackerRoot.gameObject : null;
+            wall.ApplyPlayerAttackDamage(damage, attacker);
+            return;
+        }
 
         Health hp = other.GetComponentInParent<Health>();
         if (hp == null) return;

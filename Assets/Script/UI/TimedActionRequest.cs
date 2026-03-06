@@ -8,6 +8,7 @@ public class TimedActionRequest
     public bool requireHold;
     public KeyCode holdKey;
     public KeyCode cancelKey;
+    public int suppressCancelInputFrames;
     public bool lockPlayerMovement;
     public Transform target;
     public float maxDistance;
@@ -16,5 +17,4 @@ public class TimedActionRequest
     public Action<float> onProgress;
     public Action onComplete;
     public Action onCancel;
-
 }

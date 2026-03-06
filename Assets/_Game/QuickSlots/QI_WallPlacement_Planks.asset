@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bae11e67c20ee746abb0d5e7458a508, type: 3}
+  m_Name: QI_WallPlacement_Planks
+  m_EditorClassIdentifier: Assembly-CSharp::WallPlacementQuickUseSO
+  displayName: Wood Wall
+  icon: {fileID: 21300426, guid: 95d22684aba5646d79a26b3287a692b6, type: 3}
+  resourceType: 0
+  consumeAmount: 3
+  cooldownSeconds: 0
+  addHunger: 0
+  addThirst: 0
+  addHP: 0
+  hpTarget: 0
+  showSuccessMessage: 0
+  showFailMessage: 0
+  successMessageOverride: 
+  insufficientMessageOverride: 
+  invalidTargetMessage: Cannot use now
+  wallPrefab: {fileID: 8182331800364297307, guid: 8409afd7b8537e94fb87ef49e31acc69, type: 3}
+  previewPrefab: {fileID: 8182331800364297307, guid: 040fd66b8de925f4486d9cc4b62968dc, type: 3}
+  placementCost: 4
+  buildDuration: 2
+  holdToBuild: 1
+  restrictBuildToDay: 0
+  maxBuildDistance: 0.5
+  lockPlayerMovementWhileBuilding: 0
+  placementBlockerLayers:
+    serializedVersion: 2
+    m_Bits: 193
+  previewCheckSize: {x: 0.9, y: 0.9}
+  ignoreTriggerCollidersWhenValidating: 1
+  previewWorldOffset: {x: 0, y: 0, z: 0}
+  builtWorldOffset: {x: 0, y: 0, z: 0}
+  validPreviewColor: {r: 1, g: 1, b: 1, a: 0.4}
+  invalidPreviewColor: {r: 1, g: 0.3, b: 0.3, a: 0.45}
+  buildLoopSfxId: 40
+  activateMessage: Wall placement ready
+  deactivateMessage: Wall placement cancelled
+  invalidPlacementMessage: Cannot place wall here

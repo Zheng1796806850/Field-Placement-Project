@@ -1,12 +1,20 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 public class PlayerHungerThirst : MonoBehaviour
 {
     public enum DecayMode
     {
-        RealTime = 0,   // decay every second
-        PhaseTick = 1   // decay on DayStart / NightStart
+        RealTime = 0,
+        PhaseTick = 1
+    }
+
+    [Serializable]
+    public class QuickSlot
+    {
+        public QuickUseItemSO item;
     }
 
     [Header("Refs")]
@@ -17,8 +25,6 @@ public class PlayerHungerThirst : MonoBehaviour
 
     [Header("Mode")]
     public DecayMode decayMode = DecayMode.RealTime;
-
-    [Tooltip("If true, uses unscaled time when in RealTime decay (pause won't advance if your pause uses timeScale).")]
     public bool useUnscaledTime = false;
 
     [Header("Max Values")]
@@ -36,11 +42,8 @@ public class PlayerHungerThirst : MonoBehaviour
     [Min(0f)] public float thirstDecayPerSec_Night = 0.20f;
 
     [Header("PhaseTick Decay (per phase start)")]
-    [Tooltip("Applied when GameStateManager.OnDayStarted fires (i.e., Night ended).")]
     [Min(0f)] public float hungerDecay_OnDayStarted = 8f;
     [Min(0f)] public float thirstDecay_OnDayStarted = 12f;
-
-    [Tooltip("Applied when GameStateManager.OnNightStarted fires (i.e., Day ended).")]
     [Min(0f)] public float hungerDecay_OnNightStarted = 10f;
     [Min(0f)] public float thirstDecay_OnNightStarted = 14f;
 
@@ -51,28 +54,28 @@ public class PlayerHungerThirst : MonoBehaviour
     [Header("Debuff Multipliers When Low")]
     [Range(0.05f, 1f)] public float hungerMoveMultiplier = 0.85f;
     [Range(0.05f, 1f)] public float hungerAttackMultiplier = 0.90f;
-
     [Range(0.05f, 1f)] public float thirstMoveMultiplier = 0.80f;
     [Range(0.05f, 1f)] public float thirstAttackMultiplier = 0.85f;
 
     [Header("Optional HP Drain at 0")]
     public bool enableHpDrainAtZero = true;
-
-    [Tooltip("HP drain rate per second when hunger==0 OR thirst==0 (RealTime only).")]
     [Min(0f)] public float hpDrainPerSec = 0.5f;
-
-    [Tooltip("HP drain amount per phase tick when hunger==0 OR thirst==0 (PhaseTick only).")]
     [Min(0)] public int hpDrainPerPhaseTick = 1;
 
-    [Header("Consumables (Inventory)")]
-    public KeyCode consumeFoodKey = KeyCode.Alpha1;
-    public KeyCode consumeWaterKey = KeyCode.Alpha2;
+    [Header("Quick Slots")]
+    public bool enableQuickSlotsInput = true;
+    public bool ignoreQuickSlotsWhenPaused = true;
+    public bool saveInventoryAfterQuickUse = true;
+    public bool loadQuickSlotKeysFromPlayerPrefs = false;
+    public string quickSlotPrefsKeyPrefix = "QuickSlotKey_";
+    public List<QuickSlot> quickSlots = new List<QuickSlot> { new QuickSlot(), new QuickSlot(), new QuickSlot(), new QuickSlot() };
+    public List<KeyCode> quickSlotKeys = new List<KeyCode> { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4 };
 
-    [Min(1)] public int foodCostPerUse = 1;
-    [Min(1)] public int waterCostPerUse = 1;
-
-    [Min(0f)] public float hungerRestorePerFood = 25f;
-    [Min(0f)] public float thirstRestorePerWater = 25f;
+    [Header("Quick Slots Feedback")]
+    public bool showCooldownMessage = true;
+    public string cooldownMessage = "On cooldown";
+    public bool showEmptySlotMessage = false;
+    public string emptySlotMessage = "Empty slot";
 
     [Header("Debug")]
     public bool debugLogs = false;
@@ -82,7 +85,11 @@ public class PlayerHungerThirst : MonoBehaviour
 
     public event Action<float, float> OnHungerChanged;
     public event Action<float, float> OnThirstChanged;
-    public event Action<float, float> OnDebuffChanged; 
+    public event Action<float, float> OnDebuffChanged;
+
+    public event Action OnQuickSlotsLayoutChanged;
+    public event Action<int> OnQuickSlotUsed;
+    public event Action<int> OnQuickSlotSelectionChanged;
 
     private float _baseMoveSpeed;
     private AttackHitbox[] _hitboxes;
@@ -94,11 +101,16 @@ public class PlayerHungerThirst : MonoBehaviour
 
     private float _hpDrainBuffer;
 
+    private readonly List<float> _quickSlotCooldownRemaining = new List<float>();
+
     public float Hunger => hunger;
     public float Thirst => thirst;
 
     public float Hunger01 => Mathf.Clamp01(hunger / Mathf.Max(1f, hungerMax));
     public float Thirst01 => Mathf.Clamp01(thirst / Mathf.Max(1f, thirstMax));
+
+    public int QuickSlotsSelectedIndex { get; private set; } = -1;
+    public int QuickSlotCount => quickSlots != null ? quickSlots.Count : 0;
 
     private void Awake()
     {
@@ -114,6 +126,10 @@ public class PlayerHungerThirst : MonoBehaviour
         hunger = Mathf.Clamp(hungerStart, 0f, hungerMax);
         thirst = Mathf.Clamp(thirstStart, 0f, thirstMax);
 
+        EnsureQuickSlotKeysSize();
+        EnsureQuickSlotCooldownSize();
+        if (loadQuickSlotKeysFromPlayerPrefs) LoadQuickSlotKeybinds();
+
         BroadcastAll();
         ApplyDebuffs();
     }
@@ -121,20 +137,20 @@ public class PlayerHungerThirst : MonoBehaviour
     private void OnEnable()
     {
         EnsureSubscribedIfNeeded();
+        EnsureInventoryHook();
+        OnQuickSlotsLayoutChanged?.Invoke();
     }
 
     private void Start()
     {
         EnsureSubscribedIfNeeded();
+        EnsureInventoryHook();
     }
 
     private void Update()
     {
-        // hotkeys for consumables
-        if (Input.GetKeyDown(consumeFoodKey)) TryConsumeFood();
-        if (Input.GetKeyDown(consumeWaterKey)) TryConsumeWater();
+        HandleQuickSlotsInputAndCooldown();
 
-        // RealTime decay
         if (decayMode == DecayMode.RealTime)
         {
             var gsm = GameStateManager.Instance;
@@ -154,7 +170,6 @@ public class PlayerHungerThirst : MonoBehaviour
                 HandleHpDrain_RealTime(dt);
         }
 
-        // PhaseTick subscription retry (if GSM created later)
         if (decayMode == DecayMode.PhaseTick && !_subscribed)
         {
             if (Time.unscaledTime >= _retryAt)
@@ -168,8 +183,8 @@ public class PlayerHungerThirst : MonoBehaviour
     private void OnDisable()
     {
         Unsubscribe();
+        RemoveInventoryHook();
     }
-
 
     private void EnsureSubscribedIfNeeded()
     {
@@ -217,7 +232,6 @@ public class PlayerHungerThirst : MonoBehaviour
         if (enableHpDrainAtZero)
             HandleHpDrain_PhaseTick();
     }
-
 
     private void ApplyDebuffs()
     {
@@ -269,7 +283,7 @@ public class PlayerHungerThirst : MonoBehaviour
         }
         else
         {
-            var list = new System.Collections.Generic.List<AttackHitbox>(8);
+            var list = new List<AttackHitbox>(8);
 
             TryAddHitbox(combat.attackUp, list);
             TryAddHitbox(combat.attackDown, list);
@@ -289,7 +303,7 @@ public class PlayerHungerThirst : MonoBehaviour
         }
     }
 
-    private void TryAddHitbox(Collider2D col, System.Collections.Generic.List<AttackHitbox> list)
+    private void TryAddHitbox(Collider2D col, List<AttackHitbox> list)
     {
         if (col == null) return;
         var hb = col.GetComponent<AttackHitbox>();
@@ -331,41 +345,6 @@ public class PlayerHungerThirst : MonoBehaviour
             Debug.Log($"[HungerThirst] HP drain (PhaseTick) -{hpDrainPerPhaseTick} (starving={starving})");
     }
 
-
-    public bool TryConsumeFood()
-    {
-        if (inventory == null) inventory = PlayerResourceInventory.Instance;
-        if (inventory == null) return false;
-
-        if (!inventory.Spend(ResourceType.Food, foodCostPerUse))
-            return false;
-
-        RestoreHunger(hungerRestorePerFood);
-        inventory.SaveInMemory();
-
-        if (debugLogs)
-            Debug.Log($"[HungerThirst] Consumed Food x{foodCostPerUse} (+Hunger {hungerRestorePerFood})");
-
-        return true;
-    }
-
-    public bool TryConsumeWater()
-    {
-        if (inventory == null) inventory = PlayerResourceInventory.Instance;
-        if (inventory == null) return false;
-
-        if (!inventory.Spend(ResourceType.Water, waterCostPerUse))
-            return false;
-
-        RestoreThirst(thirstRestorePerWater);
-        inventory.SaveInMemory();
-
-        if (debugLogs)
-            Debug.Log($"[HungerThirst] Consumed Water x{waterCostPerUse} (+Thirst {thirstRestorePerWater})");
-
-        return true;
-    }
-
     public void RestoreHunger(float amount)
     {
         if (amount <= 0f) return;
@@ -402,5 +381,297 @@ public class PlayerHungerThirst : MonoBehaviour
     {
         OnHungerChanged?.Invoke(hunger, hungerMax);
         OnThirstChanged?.Invoke(thirst, thirstMax);
+    }
+
+    private void HandleQuickSlotsInputAndCooldown()
+    {
+        EnsureQuickSlotKeysSize();
+        EnsureQuickSlotCooldownSize();
+
+        var gsm = GameStateManager.Instance;
+        bool paused = gsm != null && gsm.IsPaused;
+
+        if (!(ignoreQuickSlotsWhenPaused && paused))
+        {
+            float dt = Time.deltaTime;
+            for (int i = 0; i < _quickSlotCooldownRemaining.Count; i++)
+            {
+                if (_quickSlotCooldownRemaining[i] > 0f)
+                    _quickSlotCooldownRemaining[i] = Mathf.Max(0f, _quickSlotCooldownRemaining[i] - dt);
+            }
+        }
+
+        if (!enableQuickSlotsInput) return;
+        if (ignoreQuickSlotsWhenPaused && paused) return;
+
+        int max = Mathf.Min(QuickSlotCount, quickSlotKeys.Count);
+        for (int i = 0; i < max; i++)
+        {
+            if (Input.GetKeyDown(quickSlotKeys[i]))
+                TryUseQuickSlot(i);
+        }
+    }
+
+    private void EnsureInventoryHook()
+    {
+        if (inventory == null) inventory = PlayerResourceInventory.Instance;
+        if (inventory == null) return;
+        inventory.OnAnyResourceChanged -= HandleInventoryChanged;
+        inventory.OnAnyResourceChanged += HandleInventoryChanged;
+    }
+
+    private void RemoveInventoryHook()
+    {
+        if (inventory == null) return;
+        inventory.OnAnyResourceChanged -= HandleInventoryChanged;
+    }
+
+    private void HandleInventoryChanged()
+    {
+        OnQuickSlotsLayoutChanged?.Invoke();
+    }
+
+    private void PushInventoryMessage(string msg)
+    {
+        if (string.IsNullOrWhiteSpace(msg)) return;
+
+        if (inventory == null) inventory = PlayerResourceInventory.Instance;
+        if (inventory != null) inventory.PushMessage(msg);
+        else if (debugLogs) Debug.Log(msg);
+    }
+
+    private bool LegacyTryUseQuickItem(QuickUseItemSO item)
+    {
+        if (item == null) return false;
+
+        if (inventory == null) inventory = PlayerResourceInventory.Instance;
+        if (inventory == null) return false;
+
+        if (item.consumeAmount > 0)
+        {
+            if (!inventory.Spend(item.resourceType, item.consumeAmount))
+            {
+                PushInventoryMessage($"Not enough {item.resourceType}");
+                return false;
+            }
+        }
+
+        ApplyQuickUseEffects(item);
+
+        if (!string.IsNullOrWhiteSpace(item.displayName))
+            PushInventoryMessage($"Used {item.displayName}");
+        else
+            PushInventoryMessage("Used item");
+
+        return true;
+    }
+
+    private void EnsureQuickSlotKeysSize()
+    {
+        if (quickSlots == null) quickSlots = new List<QuickSlot>();
+        if (quickSlotKeys == null) quickSlotKeys = new List<KeyCode>();
+
+        int target = quickSlots.Count;
+        while (quickSlotKeys.Count < target) quickSlotKeys.Add(KeyCode.None);
+        while (quickSlotKeys.Count > target) quickSlotKeys.RemoveAt(quickSlotKeys.Count - 1);
+
+        for (int i = 0; i < quickSlotKeys.Count; i++)
+        {
+            if (quickSlotKeys[i] == KeyCode.None)
+            {
+                if (i == 0) quickSlotKeys[i] = KeyCode.Alpha1;
+                else if (i == 1) quickSlotKeys[i] = KeyCode.Alpha2;
+                else if (i == 2) quickSlotKeys[i] = KeyCode.Alpha3;
+                else if (i == 3) quickSlotKeys[i] = KeyCode.Alpha4;
+            }
+        }
+    }
+
+    private void EnsureQuickSlotCooldownSize()
+    {
+        if (quickSlots == null) return;
+        while (_quickSlotCooldownRemaining.Count < quickSlots.Count) _quickSlotCooldownRemaining.Add(0f);
+        while (_quickSlotCooldownRemaining.Count > quickSlots.Count) _quickSlotCooldownRemaining.RemoveAt(_quickSlotCooldownRemaining.Count - 1);
+    }
+
+    public QuickUseItemSO GetQuickSlotItem(int index)
+    {
+        if (quickSlots == null) return null;
+        if (index < 0 || index >= quickSlots.Count) return null;
+        return quickSlots[index] != null ? quickSlots[index].item : null;
+    }
+
+    public void SetQuickSlotItem(int index, QuickUseItemSO item)
+    {
+        if (quickSlots == null) return;
+        if (index < 0 || index >= quickSlots.Count) return;
+        if (quickSlots[index] == null) quickSlots[index] = new QuickSlot();
+        quickSlots[index].item = item;
+        EnsureQuickSlotCooldownSize();
+        OnQuickSlotsLayoutChanged?.Invoke();
+    }
+
+    public float GetQuickSlotCooldownRemaining(int index)
+    {
+        if (index < 0 || index >= _quickSlotCooldownRemaining.Count) return 0f;
+        return _quickSlotCooldownRemaining[index];
+    }
+
+    public float GetQuickSlotCooldownDuration(int index)
+    {
+        var item = GetQuickSlotItem(index);
+        return item != null ? Mathf.Max(0f, item.cooldownSeconds) : 0f;
+    }
+
+    public int GetQuickSlotAvailableCount(int index)
+    {
+        var item = GetQuickSlotItem(index);
+        if (item == null) return 0;
+        if (inventory == null) inventory = PlayerResourceInventory.Instance;
+        if (inventory == null) return 0;
+        return Mathf.Max(0, inventory.Get(item.resourceType));
+    }
+
+    public bool TryUseQuickSlot(int index)
+    {
+        SetQuickSlotSelectedIndex(index);
+
+        var item = GetQuickSlotItem(index);
+        if (item == null)
+        {
+            if (showEmptySlotMessage)
+                PushInventoryMessage(string.IsNullOrWhiteSpace(emptySlotMessage) ? "Empty slot" : emptySlotMessage);
+
+            return false;
+        }
+
+        EnsureQuickSlotCooldownSize();
+        if (index < 0 || index >= _quickSlotCooldownRemaining.Count) return false;
+
+        if (_quickSlotCooldownRemaining[index] > 0f)
+        {
+            if (showCooldownMessage)
+                PushInventoryMessage(string.IsNullOrWhiteSpace(cooldownMessage) ? "On cooldown" : cooldownMessage);
+
+            return false;
+        }
+
+        if (inventory == null) inventory = PlayerResourceInventory.Instance;
+        if (inventory == null)
+        {
+            PushInventoryMessage("No inventory");
+            return false;
+        }
+
+        bool used = false;
+
+        if (item is IUsableItem usable)
+        {
+            UseContext ctx = new UseContext
+            {
+                user = gameObject,
+                vitals = this,
+                inventory = inventory,
+                slotIndex = index,
+                pushMessage = inventory.PushMessage
+            };
+            used = usable.Use(ctx);
+        }
+        else
+        {
+            used = LegacyTryUseQuickItem(item);
+        }
+
+        if (!used) return false;
+
+        if (saveInventoryAfterQuickUse)
+            inventory.SaveInMemory();
+
+        _quickSlotCooldownRemaining[index] = Mathf.Max(0f, item.cooldownSeconds);
+        OnQuickSlotUsed?.Invoke(index);
+        OnQuickSlotsLayoutChanged?.Invoke();
+
+        return true;
+    }
+
+    private void SetQuickSlotSelectedIndex(int index)
+    {
+        if (index < -1 || index >= QuickSlotCount) return;
+        if (QuickSlotsSelectedIndex == index) return;
+        QuickSlotsSelectedIndex = index;
+        OnQuickSlotSelectionChanged?.Invoke(index);
+    }
+
+    private void ApplyQuickUseEffects(QuickUseItemSO item)
+    {
+        if (item.addHunger != 0f) RestoreHunger(item.addHunger);
+        if (item.addThirst != 0f) RestoreThirst(item.addThirst);
+
+        if (item.addHP != 0)
+        {
+            if (health == null) health = GetComponent<Health>();
+            if (health != null) ApplyHealthDelta(health, item.addHP);
+        }
+    }
+
+    private static void ApplyHealthDelta(Health target, int delta)
+    {
+        if (target == null) return;
+
+        if (delta < 0)
+        {
+            target.TakeDamage(-delta);
+            return;
+        }
+
+        Type t = target.GetType();
+
+        var mi = t.GetMethod("Heal", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new[] { typeof(int) }, null);
+        if (mi != null) { mi.Invoke(target, new object[] { delta }); return; }
+
+        mi = t.GetMethod("Heal", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new[] { typeof(float) }, null);
+        if (mi != null) { mi.Invoke(target, new object[] { (float)delta }); return; }
+
+        string[] props = { "currentHP", "hp", "CurrentHP" };
+        foreach (var pName in props)
+        {
+            var p = t.GetProperty(pName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (p != null && p.CanRead && p.CanWrite && p.PropertyType == typeof(int))
+            {
+                int cur = (int)p.GetValue(target);
+                p.SetValue(target, cur + delta);
+                return;
+            }
+
+            var f = t.GetField(pName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (f != null && f.FieldType == typeof(int))
+            {
+                int cur = (int)f.GetValue(target);
+                f.SetValue(target, cur + delta);
+                return;
+            }
+        }
+    }
+
+    public void SaveQuickSlotKeybinds()
+    {
+        if (string.IsNullOrWhiteSpace(quickSlotPrefsKeyPrefix)) return;
+        EnsureQuickSlotKeysSize();
+        for (int i = 0; i < quickSlotKeys.Count; i++)
+            PlayerPrefs.SetString(quickSlotPrefsKeyPrefix + i, quickSlotKeys[i].ToString());
+        PlayerPrefs.Save();
+    }
+
+    public void LoadQuickSlotKeybinds()
+    {
+        if (string.IsNullOrWhiteSpace(quickSlotPrefsKeyPrefix)) return;
+        EnsureQuickSlotKeysSize();
+        for (int i = 0; i < quickSlotKeys.Count; i++)
+        {
+            string k = quickSlotPrefsKeyPrefix + i;
+            if (!PlayerPrefs.HasKey(k)) continue;
+            string v = PlayerPrefs.GetString(k);
+            if (Enum.TryParse(v, out KeyCode parsed)) quickSlotKeys[i] = parsed;
+        }
     }
 }

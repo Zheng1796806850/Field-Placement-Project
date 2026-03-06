@@ -2,9 +2,25 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct BackpackStackView
+{
+    public ResourceType type;
+    public int amountInStack;
+    public int stackSize;
+}
+
 public class PlayerResourceInventory : MonoBehaviour
 {
     public static PlayerResourceInventory Instance { get; private set; }
+
+    [Header("Backpack Rules")]
+    public BackpackRulesSO rules;
+    public BackpackOverflowMode overflowModeOverride = BackpackOverflowMode.DenyPickup;
+    public bool useRulesOverflowMode = true;
+
+    [Header("Overflow Drop")]
+    public ResourceDrop2D overflowDropPrefab;
+    public float overflowDropScatterRadius = 0.25f;
 
     [Header("Defaults (used if no save exists yet)")]
     public int defaultPlanks = 0;
@@ -13,18 +29,32 @@ public class PlayerResourceInventory : MonoBehaviour
     public int defaultFood = 0;
 
     [Header("Persistence")]
-    [Tooltip("PlayerPrefs key used to store inventory JSON.")]
     public string saveKey = "PLAYER_RESOURCE_INVENTORY_V1";
     public bool autoLoadOnAwake = true;
     public bool dontDestroyOnLoad = true;
 
+    [Header("Editor Debug")]
+    public bool clearSaveOnAwakeInEditor = false;
+
     public event Action<ResourceType, int> OnResourceChanged;
     public event Action OnAnyResourceChanged;
+    public event Action<string> OnInventoryMessage;
 
     private readonly Dictionary<ResourceType, int> _amounts = new Dictionary<ResourceType, int>();
+    private readonly Dictionary<ResourceType, int> _overflowBuffer = new Dictionary<ResourceType, int>();
+    private readonly List<BackpackStackView> _stackCache = new List<BackpackStackView>();
+
+    private bool _flushingBuffer;
 
     [Serializable]
-    private class SaveData
+    private class SaveDataV2
+    {
+        public List<Entry> entries = new List<Entry>();
+        public List<Entry> overflow = new List<Entry>();
+    }
+
+    [Serializable]
+    private class SaveDataV1
     {
         public List<Entry> entries = new List<Entry>();
     }
@@ -35,6 +65,8 @@ public class PlayerResourceInventory : MonoBehaviour
         public ResourceType type;
         public int amount;
     }
+
+    public int MaxSlots => Mathf.Max(1, rules != null ? rules.maxSlots : 16);
 
     private void Awake()
     {
@@ -47,6 +79,11 @@ public class PlayerResourceInventory : MonoBehaviour
 
         if (dontDestroyOnLoad)
             DontDestroyOnLoad(gameObject);
+
+#if UNITY_EDITOR
+        if (clearSaveOnAwakeInEditor)
+            ClearSave();
+#endif
 
         InitDefaultsIfNeeded();
 
@@ -71,6 +108,14 @@ public class PlayerResourceInventory : MonoBehaviour
         _amounts[ResourceType.Seeds] = Mathf.Max(0, defaultSeeds);
         _amounts[ResourceType.Water] = Mathf.Max(0, defaultWater);
         _amounts[ResourceType.Food] = Mathf.Max(0, defaultFood);
+
+        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+        {
+            if (!_overflowBuffer.ContainsKey(t))
+                _overflowBuffer[t] = 0;
+        }
+
+        EnsureWithinCapacityToBuffer(false);
     }
 
     public int Get(ResourceType type)
@@ -79,19 +124,82 @@ public class PlayerResourceInventory : MonoBehaviour
         return 0;
     }
 
+    public int GetOverflowBuffer(ResourceType type)
+    {
+        if (_overflowBuffer.TryGetValue(type, out int v)) return v;
+        return 0;
+    }
+
+    public int GetStackSize(ResourceType type) => rules != null ? rules.GetStackSize(type) : 20;
+    public int GetMaxCarry(ResourceType type) => rules != null ? rules.GetMaxCarry(type) : -1;
+
+    public BackpackOverflowMode GetOverflowMode()
+    {
+        if (useRulesOverflowMode && rules != null) return rules.overflowMode;
+        return overflowModeOverride;
+    }
+
+    public int GetUsedSlots()
+    {
+        int total = 0;
+        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+            total += StacksFor(Get(t), GetStackSize(t));
+        return total;
+    }
+
+    public int GetFreeSlots() => Mathf.Max(0, MaxSlots - GetUsedSlots());
+
+    public int PreviewMaxAddable(ResourceType type, int request) => ComputeMaxAddable(type, request);
+    public bool CanAcceptAny(ResourceType type, int request) => PreviewMaxAddable(type, request) > 0;
+
+    public IReadOnlyList<BackpackStackView> GetStackViewsSnapshot()
+    {
+        _stackCache.Clear();
+
+        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+        {
+            int count = Get(t);
+            if (count <= 0) continue;
+
+            int s = GetStackSize(t);
+            while (count > 0)
+            {
+                int take = Mathf.Min(s, count);
+                _stackCache.Add(new BackpackStackView { type = t, amountInStack = take, stackSize = s });
+                count -= take;
+            }
+        }
+
+        return _stackCache;
+    }
+
     public void Set(ResourceType type, int amount)
     {
         amount = Mathf.Max(0, amount);
+
+        int maxCarry = GetMaxCarry(type);
+        if (maxCarry >= 0) amount = Mathf.Min(amount, maxCarry);
+
         _amounts[type] = amount;
-        OnResourceChanged?.Invoke(type, amount);
-        OnAnyResourceChanged?.Invoke();
+        EnsureWithinCapacityToBuffer(false);
+        TryFlushOverflowBuffer(false);
+        Broadcast(type);
     }
 
     public void Add(ResourceType type, int delta)
     {
         if (delta == 0) return;
-        int next = Mathf.Max(0, Get(type) + delta);
-        Set(type, next);
+
+        if (delta < 0)
+        {
+            int next = Mathf.Max(0, Get(type) + delta);
+            _amounts[type] = next;
+            TryFlushOverflowBuffer(false);
+            Broadcast(type);
+            return;
+        }
+
+        TryAdd(type, delta, transform.position, out _, out _, true);
     }
 
     public bool CanSpend(ResourceType type, int cost)
@@ -120,22 +228,239 @@ public class PlayerResourceInventory : MonoBehaviour
         }
 
         foreach (var kv in costs)
-        {
             Spend(kv.Key, kv.Value);
-        }
+
         return true;
+    }
+
+    public bool TryAdd(ResourceType type, int amount, out int accepted, out int rejected) =>
+        TryAdd(type, amount, transform.position, out accepted, out rejected, true);
+
+    public bool TryAdd(ResourceType type, int amount, Vector3 worldPos, out int accepted, out int rejected, bool showMessages)
+    {
+        accepted = 0;
+        rejected = 0;
+
+        if (amount <= 0) return true;
+
+        int maxAccepted = ComputeMaxAddable(type, amount);
+        var mode = GetOverflowMode();
+
+        if (mode == BackpackOverflowMode.DenyPickup && maxAccepted < amount)
+        {
+            accepted = 0;
+            rejected = amount;
+            if (showMessages) RaiseMessage("Backpack full");
+            return false;
+        }
+
+        accepted = Mathf.Max(0, maxAccepted);
+        rejected = Mathf.Max(0, amount - accepted);
+
+        if (accepted > 0)
+            _amounts[type] = Get(type) + accepted;
+
+        if (rejected > 0)
+            HandleOverflow(type, rejected, worldPos, mode, showMessages);
+
+        EnsureWithinCapacityToBuffer(showMessages);
+        TryFlushOverflowBuffer(false);
+
+        if (accepted > 0 || rejected > 0)
+            Broadcast(type);
+
+        return rejected == 0;
+    }
+
+    public void TryFlushOverflowBuffer(bool showMessage)
+    {
+        if (_flushingBuffer) return;
+        _flushingBuffer = true;
+
+        bool movedAny = false;
+
+        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+        {
+            int buf = GetOverflowBuffer(t);
+            if (buf <= 0) continue;
+
+            int can = ComputeMaxAddable(t, buf);
+            if (can <= 0) continue;
+
+            _overflowBuffer[t] = buf - can;
+            _amounts[t] = Get(t) + can;
+            movedAny = true;
+        }
+
+        if (movedAny)
+        {
+            EnsureWithinCapacityToBuffer(false);
+            if (showMessage) RaiseMessage("Moved items from overflow buffer");
+            BroadcastAll();
+        }
+
+        _flushingBuffer = false;
+    }
+
+    private void HandleOverflow(ResourceType type, int rejected, Vector3 worldPos, BackpackOverflowMode mode, bool showMessages)
+    {
+        if (rejected <= 0) return;
+
+        if (mode == BackpackOverflowMode.DropOverflow)
+        {
+            if (overflowDropPrefab != null)
+            {
+                Vector2 scatter = UnityEngine.Random.insideUnitCircle * Mathf.Max(0f, overflowDropScatterRadius);
+                Vector3 pos = worldPos + new Vector3(scatter.x, scatter.y, 0f);
+                var drop = Instantiate(overflowDropPrefab, pos, Quaternion.identity);
+                drop.Configure(type, rejected);
+            }
+            else
+            {
+                _overflowBuffer[type] = GetOverflowBuffer(type) + rejected;
+            }
+
+            if (showMessages) RaiseMessage("Backpack full: overflow dropped");
+            return;
+        }
+
+        if (mode == BackpackOverflowMode.TempBuffer)
+        {
+            _overflowBuffer[type] = GetOverflowBuffer(type) + rejected;
+            if (showMessages) RaiseMessage("Backpack full: overflow buffered");
+            return;
+        }
+
+        if (showMessages) RaiseMessage("Backpack full");
+    }
+
+    private void EnsureWithinCapacityToBuffer(bool showMessage)
+    {
+        int maxSlots = MaxSlots;
+        int used = GetUsedSlots();
+        if (used <= maxSlots) return;
+
+        int safety = 0;
+        while (used > maxSlots && safety++ < 10000)
+        {
+            bool reduced = false;
+
+            var values = (ResourceType[])Enum.GetValues(typeof(ResourceType));
+            for (int i = values.Length - 1; i >= 0; i--)
+            {
+                var t = values[i];
+                int c = Get(t);
+                if (c <= 0) continue;
+
+                int s = GetStackSize(t);
+                int stacks = StacksFor(c, s);
+                if (stacks <= 0) continue;
+
+                int target = Mathf.Max(0, (stacks - 1) * s);
+                int move = c - target;
+                if (move <= 0) continue;
+
+                _amounts[t] = target;
+                _overflowBuffer[t] = GetOverflowBuffer(t) + move;
+
+                used -= 1;
+                reduced = true;
+                break;
+            }
+
+            if (!reduced) break;
+        }
+
+        if (showMessage) RaiseMessage("Backpack capacity exceeded: moved to overflow buffer");
+    }
+
+    private int ComputeMaxAddable(ResourceType type, int request)
+    {
+        if (request <= 0) return 0;
+
+        int s = GetStackSize(type);
+        int current = Get(type);
+
+        int maxCarry = GetMaxCarry(type);
+        if (maxCarry >= 0)
+        {
+            int byCarry = Mathf.Max(0, maxCarry - current);
+            request = Mathf.Min(request, byCarry);
+            if (request <= 0) return 0;
+        }
+
+        int maxTotalItems = rules != null ? rules.maxTotalItems : -1;
+        if (maxTotalItems >= 0)
+        {
+            int total = 0;
+            foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+                total += Get(t);
+
+            int byTotal = Mathf.Max(0, maxTotalItems - total);
+            request = Mathf.Min(request, byTotal);
+            if (request <= 0) return 0;
+        }
+
+        int maxSlots = MaxSlots;
+        int usedSlots = GetUsedSlots();
+        int freeSlots = Mathf.Max(0, maxSlots - usedSlots);
+
+        int stacksBefore = StacksFor(current, s);
+        int capBySlots;
+
+        if (stacksBefore <= 0)
+        {
+            capBySlots = freeSlots * s;
+        }
+        else
+        {
+            int partialCap = (stacksBefore * s) - current;
+            capBySlots = partialCap + (freeSlots * s);
+        }
+
+        if (capBySlots <= 0) return 0;
+        return Mathf.Min(request, capBySlots);
+    }
+
+    private static int StacksFor(int count, int stackSize)
+    {
+        if (count <= 0) return 0;
+        stackSize = Mathf.Max(1, stackSize);
+        return (count + stackSize - 1) / stackSize;
+    }
+
+    private void Broadcast(ResourceType type)
+    {
+        OnResourceChanged?.Invoke(type, Get(type));
+        OnAnyResourceChanged?.Invoke();
+    }
+
+    private void BroadcastAll()
+    {
+        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+            OnResourceChanged?.Invoke(t, Get(t));
+        OnAnyResourceChanged?.Invoke();
+    }
+
+    public void PushMessage(string msg)
+    {
+        RaiseMessage(msg);
+    }
+
+    private void RaiseMessage(string msg)
+    {
+        if (string.IsNullOrWhiteSpace(msg)) return;
+        OnInventoryMessage?.Invoke(msg);
     }
 
     public void SaveInMemory()
     {
-        SaveData data = new SaveData();
+        SaveDataV2 data = new SaveDataV2();
+
         foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
         {
-            data.entries.Add(new Entry
-            {
-                type = t,
-                amount = Get(t)
-            });
+            data.entries.Add(new Entry { type = t, amount = Get(t) });
+            data.overflow.Add(new Entry { type = t, amount = GetOverflowBuffer(t) });
         }
 
         string json = JsonUtility.ToJson(data);
@@ -160,48 +485,64 @@ public class PlayerResourceInventory : MonoBehaviour
             return;
         }
 
-        SaveData data = null;
         try
         {
-            data = JsonUtility.FromJson<SaveData>(json);
+            if (json.Contains("\"overflow\""))
+            {
+                var data = JsonUtility.FromJson<SaveDataV2>(json);
+                if (data != null && data.entries != null)
+                {
+                    _amounts.Clear();
+                    foreach (var e in data.entries)
+                        _amounts[e.type] = Mathf.Max(0, e.amount);
+                }
+
+                if (data != null && data.overflow != null)
+                {
+                    _overflowBuffer.Clear();
+                    foreach (var e in data.overflow)
+                        _overflowBuffer[e.type] = Mathf.Max(0, e.amount);
+                }
+            }
+            else
+            {
+                var data = JsonUtility.FromJson<SaveDataV1>(json);
+                if (data != null && data.entries != null)
+                {
+                    _amounts.Clear();
+                    foreach (var e in data.entries)
+                        _amounts[e.type] = Mathf.Max(0, e.amount);
+                }
+
+                foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+                {
+                    if (!_overflowBuffer.ContainsKey(t))
+                        _overflowBuffer[t] = 0;
+                }
+            }
         }
         catch
         {
-            data = null;
-        }
-
-        if (data == null || data.entries == null)
-        {
             InitDefaultsIfNeeded();
-            BroadcastAll();
-            return;
         }
 
-        _amounts.Clear();
-        foreach (var e in data.entries)
-        {
-            if (e == null) continue;
-            _amounts[e.type] = Mathf.Max(0, e.amount);
-        }
-
-        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
-        {
-            if (!_amounts.ContainsKey(t))
-                _amounts[t] = 0;
-        }
-
+        EnsureWithinCapacityToBuffer(false);
+        TryFlushOverflowBuffer(false);
         BroadcastAll();
-    }
-
-    public void ClearSave()
-    {
-        PlayerPrefs.DeleteKey(saveKey);
-        PlayerPrefs.Save();
     }
 
     public bool HasSave()
     {
         return PlayerPrefs.HasKey(saveKey);
+    }
+
+    public void ClearSave()
+    {
+        if (PlayerPrefs.HasKey(saveKey))
+        {
+            PlayerPrefs.DeleteKey(saveKey);
+            PlayerPrefs.Save();
+        }
     }
 
     public void ResetToDefaults(bool alsoClearSave = false)
@@ -210,16 +551,8 @@ public class PlayerResourceInventory : MonoBehaviour
             ClearSave();
 
         _amounts.Clear();
+        _overflowBuffer.Clear();
         InitDefaultsIfNeeded();
         BroadcastAll();
-    }
-
-    private void BroadcastAll()
-    {
-        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
-        {
-            OnResourceChanged?.Invoke(t, Get(t));
-        }
-        OnAnyResourceChanged?.Invoke();
     }
 }

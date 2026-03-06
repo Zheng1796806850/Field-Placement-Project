@@ -23,6 +23,9 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
     [Header("Interactable")]
     public int interactPriority = 1;
 
+    [Header("Cooldown")]
+    [Min(0f)] public float retryCooldownSeconds = 0.35f;
+
     private Rigidbody2D _rb;
     private Collider2D _col;
 
@@ -33,6 +36,9 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
 
     private bool _picked;
     private bool _magnetSfxPlayed;
+
+    private float _pickupBlockedUntil;
+    private float _magnetBlockedUntil;
 
     private void Reset()
     {
@@ -71,28 +77,29 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
     private void FixedUpdate()
     {
         if (_picked) return;
-
         if (!_attracting || _attractTarget == null) return;
+
+        var inv = PlayerResourceInventory.Instance;
+        if (inv != null && !inv.CanAcceptAny(resourceType, amount))
+        {
+            CancelAttract();
+            _magnetBlockedUntil = Time.time + retryCooldownSeconds;
+            return;
+        }
 
         Vector2 current = _rb.position;
         Vector2 target = (Vector2)_attractTarget.position;
 
         if (magnetAcceleration > 0f)
-        {
             _currentSpeed = Mathf.MoveTowards(_currentSpeed, _targetSpeed, magnetAcceleration * Time.fixedDeltaTime);
-        }
         else
-        {
             _currentSpeed = _targetSpeed;
-        }
 
         Vector2 next = Vector2.MoveTowards(current, target, _currentSpeed * Time.fixedDeltaTime);
         _rb.MovePosition(next);
 
         if (Vector2.Distance(next, target) <= pickupDistance)
-        {
             TryPickup(_attractTarget.gameObject);
-        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -101,9 +108,7 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
         if (other == null) return;
 
         if (!requireInteractKey && other.CompareTag(playerTag))
-        {
             TryPickup(other.gameObject);
-        }
     }
 
     public void BeginAttract(Transform target, float speed)
@@ -111,6 +116,15 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
         if (!allowMagnet) return;
         if (_picked) return;
         if (target == null) return;
+        if (Time.time < _magnetBlockedUntil) return;
+
+        var inv = PlayerResourceInventory.Instance;
+        if (inv != null && !inv.CanAcceptAny(resourceType, amount))
+        {
+            CancelAttract();
+            _magnetBlockedUntil = Time.time + retryCooldownSeconds;
+            return;
+        }
 
         bool firstStart = !_attracting;
 
@@ -146,27 +160,40 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
         if (_picked) return;
         if (interactor == null) return;
         if (!interactor.CompareTag(playerTag)) return;
+        if (Time.time < _pickupBlockedUntil) return;
 
         var inv = PlayerResourceInventory.Instance;
         if (inv == null)
             inv = FindFirstObjectByType<PlayerResourceInventory>();
 
-        if (inv != null)
+        if (inv == null)
+            return;
+
+        int accepted;
+        int rejected;
+
+        bool ok = inv.TryAdd(resourceType, amount, transform.position, out accepted, out rejected, true);
+
+        if (accepted > 0)
         {
-            inv.Add(resourceType, amount);
-        }
-        else
-        {
-            Debug.LogWarning($"[ResourceDrop2D] No PlayerResourceInventory found in scene. Drop not applied: {resourceType} x{amount}");
+            if (resourceType == ResourceType.Planks)
+                SfxPlayer.TryPlay(SfxId.Economy_PlankPickup, transform.position);
+            else
+                SfxPlayer.TryPlay(SfxId.Economy_DropPickup, transform.position);
         }
 
-        if (resourceType == ResourceType.Planks)
-            SfxPlayer.TryPlay(SfxId.Economy_PlankPickup, transform.position);
-        else
-            SfxPlayer.TryPlay(SfxId.Economy_DropPickup, transform.position);
+        if (ok || rejected <= 0)
+        {
+            _picked = true;
+            Destroy(gameObject);
+            return;
+        }
 
-        _picked = true;
-        Destroy(gameObject);
+        amount = Mathf.Max(1, rejected);
+
+        CancelAttract();
+        _pickupBlockedUntil = Time.time + retryCooldownSeconds;
+        _magnetBlockedUntil = Time.time + retryCooldownSeconds;
     }
 
     public string GetPrompt() => $"Pick up {resourceType} x{amount}";

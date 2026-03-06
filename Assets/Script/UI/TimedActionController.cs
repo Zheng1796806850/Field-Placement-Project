@@ -14,6 +14,7 @@ public class TimedActionController : MonoBehaviour
     private float _elapsed;
     private PlayerMovementController _mover;
     private bool _movementLocked;
+    private int _cancelInputUnlockedFrame = -1;
 
     private void Update()
     {
@@ -25,7 +26,7 @@ public class TimedActionController : MonoBehaviour
             return;
         }
 
-        if (_req.cancelKey != KeyCode.None && Input.GetKeyDown(_req.cancelKey))
+        if (_req.cancelKey != KeyCode.None && Time.frameCount > _cancelInputUnlockedFrame && Input.GetKeyDown(_req.cancelKey))
         {
             Cancel();
             return;
@@ -76,9 +77,7 @@ public class TimedActionController : MonoBehaviour
         _req.onProgress?.Invoke(p);
 
         if (_elapsed >= _req.duration)
-        {
             Complete();
-        }
     }
 
     public bool TryBegin(TimedActionRequest request)
@@ -89,8 +88,10 @@ public class TimedActionController : MonoBehaviour
         _req = request;
         _elapsed = 0f;
         _active = true;
+        _cancelInputUnlockedFrame = Time.frameCount + Mathf.Max(0, _req.suppressCancelInputFrames);
 
-        if (_req.cancelKey == KeyCode.None) _req.cancelKey = defaultCancelKey;
+        if (_req.cancelKey == KeyCode.None)
+            _req.cancelKey = defaultCancelKey;
 
         if (_req.holdKey == KeyCode.None)
         {
@@ -117,10 +118,11 @@ public class TimedActionController : MonoBehaviour
 
         _req.onBegin?.Invoke();
 
+        if (!_active)
+            return false;
+
         if (_req.duration <= 0f)
-        {
             Complete();
-        }
 
         return true;
     }
@@ -151,9 +153,7 @@ public class TimedActionController : MonoBehaviour
     private void Cleanup()
     {
         if (_req != null)
-        {
             _req.onProgress?.Invoke(0f);
-        }
 
         if (hud != null)
         {
@@ -162,15 +162,14 @@ public class TimedActionController : MonoBehaviour
         }
 
         if (_movementLocked && _mover != null)
-        {
             _mover.SetCanMove(true);
-        }
 
         _movementLocked = false;
         _mover = null;
         _req = null;
         _active = false;
         _elapsed = 0f;
+        _cancelInputUnlockedFrame = -1;
     }
 
     private void OnDisable()

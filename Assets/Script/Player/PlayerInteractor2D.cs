@@ -8,6 +8,7 @@ public class PlayerInteractor2D : MonoBehaviour
     public KeyCode interactKey = KeyCode.E;
     public bool allowHoldToStartInteraction = true;
     public bool blockNewInteractionsWhileTimedActionActive = true;
+    public bool inputEnabled = true;
 
     [Header("Detection")]
     public string interactableTag = "Interactable";
@@ -28,6 +29,8 @@ public class PlayerInteractor2D : MonoBehaviour
 
     private TimedActionController _timed;
 
+    public bool InputEnabled => inputEnabled;
+
     private void Awake()
     {
         _timed = GetComponentInParent<TimedActionController>();
@@ -37,6 +40,12 @@ public class PlayerInteractor2D : MonoBehaviour
     private void Update()
     {
         SelectBestInteractable();
+
+        if (!inputEnabled)
+        {
+            _interactedThisHold = false;
+            return;
+        }
 
         bool keyHeld = Input.GetKey(interactKey);
         bool keyDown = Input.GetKeyDown(interactKey);
@@ -57,6 +66,13 @@ public class PlayerInteractor2D : MonoBehaviour
             if (TryInteractCurrent())
                 _interactedThisHold = true;
         }
+    }
+
+    public void SetInputEnabled(bool enabled)
+    {
+        inputEnabled = enabled;
+        if (!inputEnabled)
+            _interactedThisHold = false;
     }
 
     private bool TryInteractCurrent()

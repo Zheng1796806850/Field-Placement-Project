@@ -63,6 +63,6 @@ public class HungerThirstDebugUI : MonoBehaviour
             $"Thirst: {t:0}/{tm:0} ({system.Thirst01:P0})\n" +
             $"Move Mult: {_moveMult:0.00}\n" +
             $"Attack Mult: {_atkMult:0.00}\n" +
-            $"[1] Eat Food  |  [2] Drink Water";
+            $"Quick Slots: [1]-[4]";
     }
 }
