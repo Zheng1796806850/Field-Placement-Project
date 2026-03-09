@@ -23,6 +23,7 @@ public class EnemyAI2D : MonoBehaviour
 
     [Header("Sensor / Target Filter")]
     public Collider2D sensorTrigger;
+    public EnemyAISensor2D sensorProxy;
     public LayerMask targetLayers = ~0;
     public string playerTag = "Player";
     public string wallTag = "Wall";
@@ -31,6 +32,13 @@ public class EnemyAI2D : MonoBehaviour
     public bool canTargetCore = true;
     public bool preferPlayerOverWall = true;
     public bool preferWallOverCore = true;
+
+    [Header("Target Collider Filters")]
+    public bool ignoreTriggerTargets = true;
+    public bool ignoreDisabledTargets = true;
+
+    [Header("Attack Sensor Validation")]
+    public bool requireAssignedSensorOverlapForAttack = true;
 
     [Header("Reactive Targeting")]
     [Min(0f)] public float playerAggroRange = 6f;
@@ -55,6 +63,11 @@ public class EnemyAI2D : MonoBehaviour
     [Min(0f)] public float attackWindup = 0.25f;
     public bool useAnimationEventForHit = false;
 
+    [Header("Blocked Path Wall Breaking")]
+    public bool attackWallsOnlyWhenHousePathBlocked = true;
+    [Min(0f)] public float houseReachThreshold = 0.6f;
+    public bool keepRepathingWhileBlocked = true;
+
     [Header("Animation (Optional)")]
     public Animator animator;
     public string animSpeedParam = "Speed";
@@ -72,6 +85,8 @@ public class EnemyAI2D : MonoBehaviour
     public Color gizmoHitAggroMaxColor = new Color(1f, 0.25f, 0.25f, 0.75f);
     public Color gizmoLineToPlayerColor = new Color(1f, 0.35f, 0.35f, 0.9f);
     public Color gizmoLineToHouseColor = new Color(0.35f, 0.8f, 1f, 0.9f);
+    public Color gizmoBlockedHousePathColor = new Color(1f, 0.25f, 0.25f, 0.9f);
+    public Color gizmoAttackSensorColor = new Color(1f, 0.5f, 0.1f, 0.9f);
     [Min(0f)] public float gizmoZOffset = 0f;
 
     private Rigidbody2D _rb;
@@ -104,6 +119,8 @@ public class EnemyAI2D : MonoBehaviour
     private bool _proximityAggro;
     private float _nextPlayerFindTime;
 
+    private bool _housePathBlocked;
+
     private void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
@@ -111,9 +128,43 @@ public class EnemyAI2D : MonoBehaviour
         if (animator == null) animator = GetComponent<Animator>();
 
         CaptureBaseIfNeeded();
+        ResolveSensorRefs();
 
         if (sensorTrigger == null)
-            Debug.LogWarning($"{name}: sensorTrigger Î´°ó¶¨(AttackSensor µÄ Trigger Collider)");
+            Debug.LogWarning($"{name}: sensorTrigger is not assigned");
+    }
+
+    private void OnEnable()
+    {
+        ResolveSensorRefs();
+
+        CacheHouse();
+        CachePlayer(true);
+
+        _moveGoal = _house;
+        SetState(State.MoveToGoal);
+        _nextRepathTime = 0f;
+        _housePathBlocked = false;
+    }
+
+    private void OnDisable()
+    {
+        if (_rb != null) _rb.linearVelocity = Vector2.zero;
+    }
+
+    private void ResolveSensorRefs()
+    {
+        if (sensorTrigger == null && sensorProxy != null)
+            sensorTrigger = sensorProxy.GetComponent<Collider2D>();
+
+        if (sensorProxy == null && sensorTrigger != null)
+            sensorProxy = sensorTrigger.GetComponent<EnemyAISensor2D>();
+
+        if (sensorProxy == null)
+            sensorProxy = GetComponentInChildren<EnemyAISensor2D>(true);
+
+        if (sensorTrigger == null && sensorProxy != null)
+            sensorTrigger = sensorProxy.GetComponent<Collider2D>();
     }
 
     private void CaptureBaseIfNeeded()
@@ -125,30 +176,15 @@ public class EnemyAI2D : MonoBehaviour
         _baseWallDamage = Mathf.Max(0, damageToWall);
     }
 
-    private void OnEnable()
-    {
-        CacheHouse();
-        CachePlayer(true);
-
-        _moveGoal = _house;
-        SetState(State.MoveToGoal);
-        _nextRepathTime = 0f;
-    }
-
-    private void OnDisable()
-    {
-        if (_rb != null) _rb.linearVelocity = Vector2.zero;
-    }
-
     private void Update()
     {
         if (_state == State.Dead) return;
 
+        ResolveSensorRefs();
         CacheHouseIfLost();
         CachePlayer(false);
 
         PruneCandidates();
-
         UpdateReactiveAggro();
 
         bool chasePlayer = ShouldChasePlayer();
@@ -160,12 +196,19 @@ public class EnemyAI2D : MonoBehaviour
             _path = null;
             _waypointIndex = 0;
             _nextRepathTime = 0f;
+
+            if (chasePlayer)
+                _housePathBlocked = false;
         }
 
+        bool allowWallAttack = !chasePlayer && ShouldAttackWallsToReachHouse();
         bool forcePlayerAttack = chasePlayer;
-        ResolveAttackTarget(forcePlayerAttack);
 
-        bool playerInAttackRange = _attackTargetCol != null && canTargetPlayer && _attackTargetCol.CompareTag(playerTag);
+        ResolveAttackTarget(forcePlayerAttack, allowWallAttack);
+
+        bool playerInAttackRange = _attackTargetCol != null && IsPlayerCollider(_attackTargetCol) && IsTargetInsideAttackSensor(_attackTargetCol);
+        bool wallInAttackRange = _attackTargetCol != null && IsWallCollider(_attackTargetCol) && IsTargetInsideAttackSensor(_attackTargetCol);
+        bool coreInAttackRange = _attackTargetCol != null && IsCoreCollider(_attackTargetCol) && IsTargetInsideAttackSensor(_attackTargetCol);
 
         if (chasePlayer)
         {
@@ -175,21 +218,19 @@ public class EnemyAI2D : MonoBehaviour
             }
             else
             {
-                if (breakWallAttackWhenAggroPlayer && _state == State.Attack)
-                {
-                    if (_attackTargetCol != null && (_attackTargetCol.CompareTag(wallTag) || _attackTargetCol.CompareTag(coreTag)))
-                    {
-                        _attackTargetCol = null;
-                        _attackTargetHp = null;
-                    }
-                }
-
                 if (_state != State.MoveToGoal) SetState(State.MoveToGoal);
             }
         }
         else
         {
-            if (_attackTargetHp != null)
+            bool shouldAttack = false;
+
+            if (coreInAttackRange)
+                shouldAttack = true;
+            else if (wallInAttackRange && allowWallAttack)
+                shouldAttack = true;
+
+            if (shouldAttack)
             {
                 if (_state != State.Attack) SetState(State.Attack);
             }
@@ -295,10 +336,57 @@ public class EnemyAI2D : MonoBehaviour
 
     private void OnPathComplete(Path p)
     {
-        if (p == null || p.error) return;
+        if (p == null)
+        {
+            if (_moveGoal == _house)
+                _housePathBlocked = true;
+            return;
+        }
+
+        if (p.error)
+        {
+            if (_moveGoal == _house)
+                _housePathBlocked = true;
+            return;
+        }
 
         _path = p;
         _waypointIndex = 0;
+
+        if (_moveGoal == _house)
+            RefreshHouseBlockedStateFromPath(p);
+        else
+            _housePathBlocked = false;
+    }
+
+    private void RefreshHouseBlockedStateFromPath(Path p)
+    {
+        if (_house == null)
+        {
+            _housePathBlocked = false;
+            return;
+        }
+
+        if (p == null || p.vectorPath == null || p.vectorPath.Count == 0)
+        {
+            _housePathBlocked = true;
+            return;
+        }
+
+        Vector3 endPoint = p.vectorPath[p.vectorPath.Count - 1];
+        float distToHouse = Vector2.Distance(endPoint, _house.position);
+        _housePathBlocked = distToHouse > Mathf.Max(0f, houseReachThreshold);
+    }
+
+    private bool ShouldAttackWallsToReachHouse()
+    {
+        if (!attackWallsOnlyWhenHousePathBlocked)
+            return true;
+
+        if (_moveGoal != _house)
+            return false;
+
+        return _housePathBlocked;
     }
 
     private void TickAttack()
@@ -309,6 +397,20 @@ public class EnemyAI2D : MonoBehaviour
             return;
 
         if (!_candidates.Contains(_attackTargetCol) || _attackTargetHp.dead)
+        {
+            _attackTargetCol = null;
+            _attackTargetHp = null;
+            return;
+        }
+
+        if (!IsTargetInsideAttackSensor(_attackTargetCol))
+        {
+            _attackTargetCol = null;
+            _attackTargetHp = null;
+            return;
+        }
+
+        if (IsWallCollider(_attackTargetCol) && !ShouldAttackWallsToReachHouse())
         {
             _attackTargetCol = null;
             _attackTargetHp = null;
@@ -341,19 +443,23 @@ public class EnemyAI2D : MonoBehaviour
     private void TryDealDamage()
     {
         if (_attackTargetHp == null || _attackTargetCol == null) return;
+        if (!IsTargetInsideAttackSensor(_attackTargetCol)) return;
 
         int dmg = 0;
 
-        if (canTargetPlayer && _attackTargetCol.CompareTag(playerTag))
+        if (canTargetPlayer && IsPlayerCollider(_attackTargetCol))
             dmg = damageToPlayer;
-        else if (_attackTargetCol.CompareTag(wallTag))
+        else if (IsWallCollider(_attackTargetCol))
             dmg = damageToWall;
-        else if (canTargetCore && _attackTargetCol.CompareTag(coreTag))
+        else if (canTargetCore && IsCoreCollider(_attackTargetCol))
             dmg = damageToCore;
         else
             return;
 
         _attackTargetHp.TakeDamage(dmg);
+
+        if (IsWallCollider(_attackTargetCol) && keepRepathingWhileBlocked)
+            _nextRepathTime = 0f;
     }
 
     public void AnimEvent_DealDamage()
@@ -363,9 +469,9 @@ public class EnemyAI2D : MonoBehaviour
         TryDealDamage();
     }
 
-    private void ResolveAttackTarget(bool forcePlayer)
+    private void ResolveAttackTarget(bool forcePlayer, bool allowWallAttack)
     {
-        Collider2D chosen = ChooseTargetByPriority(forcePlayer);
+        Collider2D chosen = ChooseTargetByPriority(forcePlayer, allowWallAttack);
         if (chosen == null)
         {
             _attackTargetCol = null;
@@ -386,7 +492,7 @@ public class EnemyAI2D : MonoBehaviour
         _attackTargetHp = hp;
     }
 
-    private Collider2D ChooseTargetByPriority(bool forcePlayer)
+    private Collider2D ChooseTargetByPriority(bool forcePlayer, bool allowWallAttack)
     {
         Collider2D bestPlayer = null;
         Collider2D bestWall = null;
@@ -399,11 +505,12 @@ public class EnemyAI2D : MonoBehaviour
         for (int i = 0; i < _candidates.Count; i++)
         {
             Collider2D c = _candidates[i];
-            if (c == null) continue;
+            if (!IsValidTargetCollider(c)) continue;
+            if (!IsTargetInsideAttackSensor(c)) continue;
 
-            float d = Vector2.Distance(_rb.position, c.transform.position);
+            float d = GetColliderDistance(c);
 
-            if (canTargetPlayer && c.CompareTag(playerTag))
+            if (canTargetPlayer && IsPlayerCollider(c))
             {
                 if (d < bestPlayerDist)
                 {
@@ -411,7 +518,7 @@ public class EnemyAI2D : MonoBehaviour
                     bestPlayer = c;
                 }
             }
-            else if (c.CompareTag(wallTag))
+            else if (allowWallAttack && IsWallCollider(c))
             {
                 if (d < bestWallDist)
                 {
@@ -419,7 +526,7 @@ public class EnemyAI2D : MonoBehaviour
                     bestWall = c;
                 }
             }
-            else if (canTargetCore && c.CompareTag(coreTag))
+            else if (canTargetCore && IsCoreCollider(c))
             {
                 if (d < bestCoreDist)
                 {
@@ -441,23 +548,84 @@ public class EnemyAI2D : MonoBehaviour
             return bestCore != null ? bestCore : bestWall;
     }
 
+    private float GetColliderDistance(Collider2D c)
+    {
+        if (c == null) return float.MaxValue;
+        Vector2 from = _rb != null ? _rb.position : (Vector2)transform.position;
+        Vector2 point = c.bounds.ClosestPoint(from);
+        return Vector2.Distance(from, point);
+    }
+
+    private bool IsTargetInsideAttackSensor(Collider2D target)
+    {
+        if (target == null) return false;
+        if (!requireAssignedSensorOverlapForAttack) return true;
+
+        if (sensorProxy != null)
+            return sensorProxy.Contains(target);
+
+        if (sensorTrigger != null)
+            return sensorTrigger.IsTouching(target);
+
+        return false;
+    }
+
+    private bool IsValidTargetCollider(Collider2D c)
+    {
+        if (c == null) return false;
+
+        if (ignoreDisabledTargets)
+        {
+            if (!c.enabled) return false;
+            if (!c.gameObject.activeInHierarchy) return false;
+        }
+
+        if (ignoreTriggerTargets && c.isTrigger)
+            return false;
+
+        return true;
+    }
+
     private void PruneCandidates()
     {
         for (int i = _candidates.Count - 1; i >= 0; i--)
         {
-            if (_candidates[i] == null) _candidates.RemoveAt(i);
+            Collider2D c = _candidates[i];
+
+            if (!IsValidTargetCollider(c))
+            {
+                if (_attackTargetCol == c)
+                {
+                    _attackTargetCol = null;
+                    _attackTargetHp = null;
+                }
+
+                _candidates.RemoveAt(i);
+                continue;
+            }
+
+            var hp = c.GetComponentInParent<Health>();
+            if (hp != null && hp.dead)
+            {
+                if (_attackTargetCol == c)
+                {
+                    _attackTargetCol = null;
+                    _attackTargetHp = null;
+                }
+
+                _candidates.RemoveAt(i);
+            }
         }
     }
 
     public void SensorEnter(Collider2D other)
     {
-        if (other == null) return;
-
+        if (!IsValidTargetCollider(other)) return;
         if (((1 << other.gameObject.layer) & targetLayers.value) == 0) return;
 
-        bool isPlayer = canTargetPlayer && other.CompareTag(playerTag);
-        bool isWall = other.CompareTag(wallTag);
-        bool isCore = canTargetCore && other.CompareTag(coreTag);
+        bool isPlayer = canTargetPlayer && IsPlayerCollider(other);
+        bool isWall = IsWallCollider(other);
+        bool isCore = canTargetCore && IsCoreCollider(other);
 
         if (!isPlayer && !isWall && !isCore) return;
 
@@ -476,6 +644,46 @@ public class EnemyAI2D : MonoBehaviour
             _attackTargetCol = null;
             _attackTargetHp = null;
         }
+    }
+
+    private bool IsPlayerCollider(Collider2D other)
+    {
+        if (other == null) return false;
+        return HasTagOnHierarchy(other.transform, playerTag);
+    }
+
+    private bool IsWallCollider(Collider2D other)
+    {
+        if (other == null) return false;
+
+        if (HasTagOnHierarchy(other.transform, wallTag))
+            return true;
+
+        if (other.GetComponentInParent<WoodenWallDurability>() != null)
+            return true;
+
+        return false;
+    }
+
+    private bool IsCoreCollider(Collider2D other)
+    {
+        if (other == null) return false;
+        return HasTagOnHierarchy(other.transform, coreTag);
+    }
+
+    private bool HasTagOnHierarchy(Transform t, string tagName)
+    {
+        if (t == null || string.IsNullOrWhiteSpace(tagName)) return false;
+
+        Transform cur = t;
+        while (cur != null)
+        {
+            if (cur.CompareTag(tagName))
+                return true;
+            cur = cur.parent;
+        }
+
+        return false;
     }
 
     private void CacheHouse()
@@ -506,7 +714,11 @@ public class EnemyAI2D : MonoBehaviour
 
     private void CachePlayer(bool immediate)
     {
-        if (!canTargetPlayer) { _player = null; return; }
+        if (!canTargetPlayer)
+        {
+            _player = null;
+            return;
+        }
 
         if (_player != null) return;
 
@@ -653,6 +865,13 @@ public class EnemyAI2D : MonoBehaviour
         Gizmos.color = gizmoHitAggroMaxColor;
         Gizmos.DrawWireSphere(pos, rHit);
 
+        if (sensorTrigger != null)
+        {
+            Gizmos.color = gizmoAttackSensorColor;
+            Bounds b = sensorTrigger.bounds;
+            Gizmos.DrawWireCube(b.center, b.size);
+        }
+
         if (drawTargetLines)
         {
             Transform player = _player;
@@ -682,7 +901,7 @@ public class EnemyAI2D : MonoBehaviour
 
             if (house != null)
             {
-                Gizmos.color = gizmoLineToHouseColor;
+                Gizmos.color = _housePathBlocked ? gizmoBlockedHousePathColor : gizmoLineToHouseColor;
                 Vector3 hpos = house.position;
                 hpos.z = pos.z;
                 Gizmos.DrawLine(pos, hpos);

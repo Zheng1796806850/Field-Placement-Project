@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: QI_WallPlacement_Planks
   m_EditorClassIdentifier: Assembly-CSharp::WallPlacementQuickUseSO
   displayName: Wood Wall
-  icon: {fileID: 21300426, guid: 95d22684aba5646d79a26b3287a692b6, type: 3}
+  icon: {fileID: 21300000, guid: fe8a2ad2a51fc3d41a3748d031485c81, type: 3}
   resourceType: 0
   consumeAmount: 3
   cooldownSeconds: 0
@@ -29,7 +29,7 @@ MonoBehaviour:
   wallPrefab: {fileID: 8182331800364297307, guid: 8409afd7b8537e94fb87ef49e31acc69, type: 3}
   previewPrefab: {fileID: 8182331800364297307, guid: 040fd66b8de925f4486d9cc4b62968dc, type: 3}
   placementCost: 4
-  buildDuration: 2
+  buildDuration: 0.1
   holdToBuild: 1
   restrictBuildToDay: 0
   maxBuildDistance: 0.5

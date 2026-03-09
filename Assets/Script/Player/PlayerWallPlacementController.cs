@@ -8,11 +8,13 @@ public class PlayerWallPlacementController : MonoBehaviour
     public Transform placementOrigin;
     public PlayerMovementController movement;
     public PlayerInteractor2D interactor;
+    public PlayerCombat2D combat;
     public TimedActionController timedAction;
     public PlayerResourceInventory inventory;
 
     [Header("Behavior")]
     public bool disableInteractorInputWhilePlacing = true;
+    public bool disableCombatInputWhilePlacing = true;
     public bool allowCancelKey = true;
     public KeyCode cancelPlacementKey = KeyCode.Escape;
     public bool autoSaveInventoryAfterBuild = true;
@@ -54,6 +56,7 @@ public class PlayerWallPlacementController : MonoBehaviour
     private bool _previewValid;
     private bool _previewInRange;
     private bool _interactorPreviousEnabled = true;
+    private bool _combatBlockApplied;
 
     public bool IsPlacementModeActive => _placementActive && _activeConfig != null;
     public bool IsActiveWith(WallPlacementQuickUseSO config) => IsPlacementModeActive && _activeConfig == config;
@@ -143,6 +146,8 @@ public class PlayerWallPlacementController : MonoBehaviour
             interactor.SetInputEnabled(false);
         }
 
+        ApplyCombatBlock(true);
+
         if (!EnsurePreviewInstance())
         {
             CancelPlacement(false, null);
@@ -173,6 +178,8 @@ public class PlayerWallPlacementController : MonoBehaviour
         if (disableInteractorInputWhilePlacing && interactor != null)
             interactor.SetInputEnabled(_interactorPreviousEnabled);
 
+        ApplyCombatBlock(false);
+
         _activeConfig = null;
         _placementActive = false;
         _previewValid = false;
@@ -199,6 +206,9 @@ public class PlayerWallPlacementController : MonoBehaviour
         if (interactor == null)
             interactor = user != null ? user.GetComponentInParent<PlayerInteractor2D>() : GetComponentInParent<PlayerInteractor2D>();
 
+        if (combat == null)
+            combat = user != null ? user.GetComponentInParent<PlayerCombat2D>() : GetComponentInParent<PlayerCombat2D>();
+
         if (timedAction == null)
             timedAction = user != null ? user.GetComponentInParent<TimedActionController>() : GetComponentInParent<TimedActionController>();
 
@@ -207,6 +217,24 @@ public class PlayerWallPlacementController : MonoBehaviour
 
         if (inventory == null)
             inventory = PlayerResourceInventory.Instance;
+    }
+
+    private void ApplyCombatBlock(bool active)
+    {
+        if (!disableCombatInputWhilePlacing || combat == null) return;
+
+        if (active)
+        {
+            if (_combatBlockApplied) return;
+            combat.PushExternalInputBlock();
+            _combatBlockApplied = true;
+        }
+        else
+        {
+            if (!_combatBlockApplied) return;
+            combat.PopExternalInputBlock();
+            _combatBlockApplied = false;
+        }
     }
 
     private bool EnsurePreviewInstance()
@@ -636,7 +664,7 @@ public class PlayerWallPlacementController : MonoBehaviour
             }
         }
 
-        if (!_activeConfig.wallPrefab)
+        if (_activeConfig.wallPrefab == null)
         {
             failMessage = "No wall prefab assigned";
             return false;

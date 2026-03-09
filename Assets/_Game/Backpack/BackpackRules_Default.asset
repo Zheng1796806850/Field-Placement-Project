@@ -18,25 +18,57 @@ MonoBehaviour:
   rules:
   - type: 0
     displayName: Planks
-    icon: {fileID: 21300000, guid: b51d18577d0ec4d29b81998d983bd710, type: 3}
+    icon: {fileID: 21300000, guid: fe8a2ad2a51fc3d41a3748d031485c81, type: 3}
     stackSize: 5
     maxCarry: 99
     showInUI: 1
+    quickUseItem: {fileID: 11400000, guid: 7799e5af29d48de4aa8b14a2f945c10a, type: 2}
   - type: 1
     displayName: Seeds
-    icon: {fileID: 21300000, guid: dbc624f7b3a644dcf989e434e63d9a98, type: 3}
+    icon: {fileID: 21300000, guid: f9c41804349a30540864c89e432f22e6, type: 3}
     stackSize: 5
     maxCarry: 99
     showInUI: 1
+    quickUseItem: {fileID: 11400000, guid: 754e175f2e70b9e45a2c674694cad713, type: 2}
   - type: 2
     displayName: Water
-    icon: {fileID: 21300000, guid: af1d44c8d77c341869dcdb0b63c5cff8, type: 3}
+    icon: {fileID: 21300000, guid: c103cffd03792f445b908c0db8252946, type: 3}
     stackSize: 5
     maxCarry: 99
     showInUI: 1
+    quickUseItem: {fileID: 11400000, guid: c6baa6280e966b14db41e947c60cdaa2, type: 2}
   - type: 3
     displayName: Food
-    icon: {fileID: 21300000, guid: 8f03d65eca65243d0963f648c2e9824a, type: 3}
+    icon: {fileID: 21300000, guid: 707bc9598009e3b4498deeef7408f343, type: 3}
     stackSize: 5
     maxCarry: 99
     showInUI: 1
+    quickUseItem: {fileID: 11400000, guid: 44f6f101124ddbb47ba198a724d3fc62, type: 2}
+  - type: 4
+    displayName: Potato(Seed)
+    icon: {fileID: 21300000, guid: 3391ffe42d2950a43bb9c83aa541367c, type: 3}
+    stackSize: 5
+    maxCarry: 99
+    showInUI: 1
+    quickUseItem: {fileID: 11400000, guid: f1f29ee13640a754e994f893b16bef43, type: 2}
+  - type: 5
+    displayName: Potato
+    icon: {fileID: 21300000, guid: 2b3409dd74a1f0948868e6123d99f3b3, type: 3}
+    stackSize: 5
+    maxCarry: 99
+    showInUI: 1
+    quickUseItem: {fileID: 11400000, guid: 6e9a901318ba77740811751649f1b80e, type: 2}
+  - type: 6
+    displayName: Tomato Seed
+    icon: {fileID: 21300000, guid: ecaf70a779da7ad48b3cea8e8f63882d, type: 3}
+    stackSize: 5
+    maxCarry: 99
+    showInUI: 1
+    quickUseItem: {fileID: 11400000, guid: c1104b1106e5ad34098ccde99a113e2e, type: 2}
+  - type: 7
+    displayName: Tomato
+    icon: {fileID: 21300000, guid: 5996ef248b1478640b6680d2e7ea7d8c, type: 3}
+    stackSize: 5
+    maxCarry: 99
+    showInUI: 1
+    quickUseItem: {fileID: 11400000, guid: a5fb550c7e020cf49bc91a1b2bf4ab7f, type: 2}

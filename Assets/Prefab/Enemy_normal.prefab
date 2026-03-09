@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3148975405397199573}
   - component: {fileID: 712654658534804701}
   - component: {fileID: 2175373283786183274}
-  - component: {fileID: 7616503817468566751}
+  - component: {fileID: 5713530445289422959}
   - component: {fileID: 8404882644763343775}
   - component: {fileID: 1949475503890342462}
   - component: {fileID: 3125651829959158979}
@@ -148,12 +148,12 @@ Rigidbody2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
---- !u!61 &7616503817468566751
-BoxCollider2D:
+--- !u!58 &5713530445289422959
+CircleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -186,18 +186,8 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.00046399236, y: 0.100733876}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0}
-    oldSize: {x: 0.375, y: 0.375}
-    newSize: {x: 0.375, y: 0.375}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 0.12722936, y: 0.14207703}
-  m_EdgeRadius: 0
+  m_Offset: {x: 0, y: 0.1}
+  m_Radius: 0.07
 --- !u!61 &8404882644763343775
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -274,13 +264,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI2D
   houseOverride: {fileID: 0}
   sensorTrigger: {fileID: 2801059464928992703}
+  sensorProxy: {fileID: 571393404570350659}
   targetLayers:
     serializedVersion: 2
     m_Bits: 641
   playerTag: Player
   wallTag: Wall
+  coreTag: Core
   canTargetPlayer: 1
+  canTargetCore: 1
   preferPlayerOverWall: 1
+  preferWallOverCore: 1
+  requireAssignedSensorOverlapForAttack: 1
   playerAggroRange: 1
   playerDisengageRange: 1.2
   hitAggroDuration: 1
@@ -292,9 +287,13 @@ MonoBehaviour:
   lockYMovement: 0
   damageToWall: 2
   damageToPlayer: 2
+  damageToCore: 8
   attackCooldown: 1
   attackWindup: 0.25
   useAnimationEventForHit: 0
+  attackWallsOnlyWhenHousePathBlocked: 1
+  houseReachThreshold: 0.6
+  keepRepathingWhileBlocked: 1
   animator: {fileID: 712654658534804701}
   animSpeedParam: Speed
   animAttackTrigger: Attack
@@ -307,6 +306,8 @@ MonoBehaviour:
   gizmoHitAggroMaxColor: {r: 1, g: 0.25, b: 0.25, a: 0.75}
   gizmoLineToPlayerColor: {r: 1, g: 0.35, b: 0.35, a: 0.9}
   gizmoLineToHouseColor: {r: 0.35, g: 0.8, b: 1, a: 0.9}
+  gizmoBlockedHousePathColor: {r: 1, g: 0.25, b: 0.25, a: 0.9}
+  gizmoAttackSensorColor: {r: 1, g: 0.5, b: 0.1, a: 0.9}
   gizmoZOffset: 0
 --- !u!114 &8602533380366581256
 MonoBehaviour:

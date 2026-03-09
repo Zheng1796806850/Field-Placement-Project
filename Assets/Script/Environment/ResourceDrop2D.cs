@@ -9,6 +9,13 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
     public ResourceType resourceType = ResourceType.Planks;
     [Min(1)] public int amount = 1;
 
+    [Header("Visual")]
+    public BackpackRulesSO rulesOverride;
+    public bool usePlayerInventoryRules = true;
+    public SpriteRenderer iconRenderer;
+    public bool searchIconRendererInChildren = true;
+    public bool preserveExistingSpriteAsFallback = true;
+
     [Header("Pickup")]
     public bool requireInteractKey = false;
     public string playerTag = "Player";
@@ -28,6 +35,7 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
 
     private Rigidbody2D _rb;
     private Collider2D _col;
+    private Sprite _fallbackSprite;
 
     private Transform _attractTarget;
     private bool _attracting;
@@ -44,6 +52,8 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
     {
         _rb = GetComponent<Rigidbody2D>();
         _col = GetComponent<Collider2D>();
+        ResolveIconRenderer();
+        CacheFallbackSprite();
 
         if (_col != null) _col.isTrigger = true;
 
@@ -52,12 +62,16 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
             _rb.bodyType = RigidbodyType2D.Kinematic;
             _rb.gravityScale = 0f;
         }
+
+        RefreshVisual();
     }
 
     private void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
         _col = GetComponent<Collider2D>();
+        ResolveIconRenderer();
+        CacheFallbackSprite();
 
         if (_col != null) _col.isTrigger = true;
 
@@ -70,8 +84,15 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
             _rb.linearVelocity = Vector2.zero;
         }
 
+        RefreshVisual();
+
         if (lifetimeSeconds > 0f)
             Destroy(gameObject, lifetimeSeconds);
+    }
+
+    private void Start()
+    {
+        RefreshVisual();
     }
 
     private void FixedUpdate()
@@ -153,6 +174,7 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
     {
         resourceType = type;
         amount = Mathf.Max(1, amt);
+        RefreshVisual();
     }
 
     private void TryPickup(GameObject interactor)
@@ -190,14 +212,85 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
         }
 
         amount = Mathf.Max(1, rejected);
+        RefreshVisual();
 
         CancelAttract();
         _pickupBlockedUntil = Time.time + retryCooldownSeconds;
         _magnetBlockedUntil = Time.time + retryCooldownSeconds;
     }
 
-    public string GetPrompt() => $"Pick up {resourceType} x{amount}";
+    public string GetPrompt()
+    {
+        var rules = ResolveRules();
+        string displayName = rules != null ? rules.GetDisplayName(resourceType) : resourceType.ToString();
+        return $"Pick up {displayName} x{amount}";
+    }
+
     public bool CanInteract(GameObject interactor) => !_picked && interactor != null && interactor.CompareTag(playerTag);
     public void Interact(GameObject interactor) => TryPickup(interactor);
     public int Priority => interactPriority;
+
+    private void ResolveIconRenderer()
+    {
+        if (iconRenderer == null)
+            iconRenderer = GetComponent<SpriteRenderer>();
+
+        if (iconRenderer == null && searchIconRendererInChildren)
+            iconRenderer = GetComponentInChildren<SpriteRenderer>(true);
+    }
+
+    private void CacheFallbackSprite()
+    {
+        if (!preserveExistingSpriteAsFallback) return;
+        if (iconRenderer == null) return;
+        if (_fallbackSprite != null) return;
+        _fallbackSprite = iconRenderer.sprite;
+    }
+
+    private BackpackRulesSO ResolveRules()
+    {
+        if (rulesOverride != null)
+            return rulesOverride;
+
+        if (usePlayerInventoryRules)
+        {
+            var inv = PlayerResourceInventory.Instance;
+            if (inv == null)
+                inv = FindFirstObjectByType<PlayerResourceInventory>();
+
+            if (inv != null && inv.rules != null)
+                return inv.rules;
+        }
+
+        return null;
+    }
+
+    private void RefreshVisual()
+    {
+        ResolveIconRenderer();
+        CacheFallbackSprite();
+
+        if (iconRenderer == null)
+            return;
+
+        Sprite sprite = null;
+        var rules = ResolveRules();
+        if (rules != null)
+            sprite = rules.GetIcon(resourceType);
+
+        if (sprite != null)
+            iconRenderer.sprite = sprite;
+        else if (_fallbackSprite != null)
+            iconRenderer.sprite = _fallbackSprite;
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        ResolveIconRenderer();
+        CacheFallbackSprite();
+        if (!Application.isPlaying)
+            RefreshVisual();
+    }
+#endif
 }

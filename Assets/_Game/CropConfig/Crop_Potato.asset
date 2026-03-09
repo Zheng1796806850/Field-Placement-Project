@@ -10,12 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 077d7039412992042b23954d691741f1, type: 3}
-  m_Name: Crop_Spring_Demo
+  m_Name: Crop_Potato
   m_EditorClassIdentifier: Assembly-CSharp::CropConfigSO
-  cropId: spring_crop_demo
-  displayName: Spring Crop (Demo)
-  daysToMature: 2
+  cropId: potato
+  displayName: Potato
+  seedResource: 4
+  seedCost: 1
+  daysToMature: 3
   requiresDailyWater: 1
   waterCostPerDay: 1
-  harvestResource: 3
-  harvestAmount: 2
+  growthStageCount: 2
+  harvestResource: 5
+  harvestMinAmount: 2
+  harvestMaxAmount: 3
+  seedEconomyValue: 1
+  cropEconomyValue: 3
+  balanceNote: 
+  plantSfxId: 0
+  waterSfxId: 1
+  harvestSfxId: 2

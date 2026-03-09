@@ -21,6 +21,7 @@ public class BackpackRulesSO : ScriptableObject
         [Min(1)] public int stackSize = 20;
         [Min(-1)] public int maxCarry = -1;
         public bool showInUI = true;
+        public QuickUseItemSO quickUseItem;
     }
 
     [Header("Capacity")]
@@ -75,6 +76,7 @@ public class BackpackRulesSO : ScriptableObject
     public int GetStackSize(ResourceType type) => Mathf.Max(1, GetRule(type)?.stackSize ?? 20);
     public int GetMaxCarry(ResourceType type) => GetRule(type)?.maxCarry ?? -1;
     public Sprite GetIcon(ResourceType type) => GetRule(type)?.icon;
+    public QuickUseItemSO GetQuickUseItem(ResourceType type) => GetRule(type)?.quickUseItem;
 
     public string GetDisplayName(ResourceType type)
     {

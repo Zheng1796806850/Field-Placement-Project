@@ -14,6 +14,8 @@ public class PlayerHungerThirst : MonoBehaviour
     [Serializable]
     public class QuickSlot
     {
+        public bool useResourceBinding;
+        public ResourceType boundResourceType;
         public QuickUseItemSO item;
     }
 
@@ -496,9 +498,40 @@ public class PlayerHungerThirst : MonoBehaviour
 
     public QuickUseItemSO GetQuickSlotItem(int index)
     {
-        if (quickSlots == null) return null;
-        if (index < 0 || index >= quickSlots.Count) return null;
-        return quickSlots[index] != null ? quickSlots[index].item : null;
+        return ResolveQuickSlotItem(index);
+    }
+
+    public bool TryGetQuickSlotBoundResourceType(int index, out ResourceType type)
+    {
+        if (quickSlots == null || index < 0 || index >= quickSlots.Count)
+        {
+            type = default;
+            return false;
+        }
+
+        var slot = quickSlots[index];
+        if (slot == null || !slot.useResourceBinding)
+        {
+            type = default;
+            return false;
+        }
+
+        type = slot.boundResourceType;
+        return true;
+    }
+
+    public void BindQuickSlotResource(int index, ResourceType type)
+    {
+        if (quickSlots == null) return;
+        if (index < 0 || index >= quickSlots.Count) return;
+        if (quickSlots[index] == null) quickSlots[index] = new QuickSlot();
+
+        quickSlots[index].useResourceBinding = true;
+        quickSlots[index].boundResourceType = type;
+        quickSlots[index].item = null;
+
+        EnsureQuickSlotCooldownSize();
+        OnQuickSlotsLayoutChanged?.Invoke();
     }
 
     public void SetQuickSlotItem(int index, QuickUseItemSO item)
@@ -506,9 +539,46 @@ public class PlayerHungerThirst : MonoBehaviour
         if (quickSlots == null) return;
         if (index < 0 || index >= quickSlots.Count) return;
         if (quickSlots[index] == null) quickSlots[index] = new QuickSlot();
+
+        quickSlots[index].useResourceBinding = false;
         quickSlots[index].item = item;
+
         EnsureQuickSlotCooldownSize();
         OnQuickSlotsLayoutChanged?.Invoke();
+    }
+
+    public Sprite GetQuickSlotIcon(int index)
+    {
+        if (inventory == null) inventory = PlayerResourceInventory.Instance;
+
+        if (TryGetQuickSlotBoundResourceType(index, out var boundType))
+        {
+            if (inventory != null && inventory.rules != null)
+            {
+                Sprite icon = inventory.rules.GetIcon(boundType);
+                if (icon != null) return icon;
+            }
+        }
+
+        var item = ResolveQuickSlotItem(index);
+        return item != null ? item.icon : null;
+    }
+
+    public string GetQuickSlotDisplayName(int index)
+    {
+        if (inventory == null) inventory = PlayerResourceInventory.Instance;
+
+        if (TryGetQuickSlotBoundResourceType(index, out var boundType))
+        {
+            if (inventory != null && inventory.rules != null)
+                return inventory.rules.GetDisplayName(boundType);
+
+            return boundType.ToString();
+        }
+
+        var item = ResolveQuickSlotItem(index);
+        if (item == null) return string.Empty;
+        return string.IsNullOrWhiteSpace(item.displayName) ? item.name : item.displayName;
     }
 
     public float GetQuickSlotCooldownRemaining(int index)
@@ -519,31 +589,26 @@ public class PlayerHungerThirst : MonoBehaviour
 
     public float GetQuickSlotCooldownDuration(int index)
     {
-        var item = GetQuickSlotItem(index);
+        var item = ResolveQuickSlotItem(index);
         return item != null ? Mathf.Max(0f, item.cooldownSeconds) : 0f;
     }
 
     public int GetQuickSlotAvailableCount(int index)
     {
-        var item = GetQuickSlotItem(index);
-        if (item == null) return 0;
         if (inventory == null) inventory = PlayerResourceInventory.Instance;
         if (inventory == null) return 0;
+
+        if (TryGetQuickSlotBoundResourceType(index, out var boundType))
+            return Mathf.Max(0, inventory.Get(boundType));
+
+        var item = ResolveQuickSlotItem(index);
+        if (item == null) return 0;
         return Mathf.Max(0, inventory.Get(item.resourceType));
     }
 
     public bool TryUseQuickSlot(int index)
     {
         SetQuickSlotSelectedIndex(index);
-
-        var item = GetQuickSlotItem(index);
-        if (item == null)
-        {
-            if (showEmptySlotMessage)
-                PushInventoryMessage(string.IsNullOrWhiteSpace(emptySlotMessage) ? "Empty slot" : emptySlotMessage);
-
-            return false;
-        }
 
         EnsureQuickSlotCooldownSize();
         if (index < 0 || index >= _quickSlotCooldownRemaining.Count) return false;
@@ -560,6 +625,22 @@ public class PlayerHungerThirst : MonoBehaviour
         if (inventory == null)
         {
             PushInventoryMessage("No inventory");
+            return false;
+        }
+
+        var item = ResolveQuickSlotItem(index);
+        if (item == null)
+        {
+            if (TryGetQuickSlotBoundResourceType(index, out var boundType))
+            {
+                string itemName = inventory.rules != null ? inventory.rules.GetDisplayName(boundType) : boundType.ToString();
+                PushInventoryMessage($"No quick use configured for {itemName}");
+            }
+            else if (showEmptySlotMessage)
+            {
+                PushInventoryMessage(string.IsNullOrWhiteSpace(emptySlotMessage) ? "Empty slot" : emptySlotMessage);
+            }
+
             return false;
         }
 
@@ -592,6 +673,24 @@ public class PlayerHungerThirst : MonoBehaviour
         OnQuickSlotsLayoutChanged?.Invoke();
 
         return true;
+    }
+
+    private QuickUseItemSO ResolveQuickSlotItem(int index)
+    {
+        if (quickSlots == null) return null;
+        if (index < 0 || index >= quickSlots.Count) return null;
+
+        var slot = quickSlots[index];
+        if (slot == null) return null;
+
+        if (slot.useResourceBinding)
+        {
+            if (inventory == null) inventory = PlayerResourceInventory.Instance;
+            if (inventory == null || inventory.rules == null) return null;
+            return inventory.rules.GetQuickUseItem(slot.boundResourceType);
+        }
+
+        return slot.item;
     }
 
     private void SetQuickSlotSelectedIndex(int index)

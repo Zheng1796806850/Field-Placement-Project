@@ -65,14 +65,14 @@ public class QuickSlotsHUD : MonoBehaviour
         for (int i = 0; i < max; i++)
         {
             var ui = slots[i];
-            var item = controller.GetQuickSlotItem(i);
-
             if (ui == null) continue;
+
+            Sprite icon = controller.GetQuickSlotIcon(i);
 
             if (ui.icon != null)
             {
-                ui.icon.sprite = item != null ? item.icon : null;
-                ui.icon.enabled = !hideIconWhenEmpty || (item != null && ui.icon.sprite != null);
+                ui.icon.sprite = icon;
+                ui.icon.enabled = !hideIconWhenEmpty || icon != null;
             }
         }
     }
@@ -89,7 +89,7 @@ public class QuickSlotsHUD : MonoBehaviour
             var ui = slots[i];
             if (ui == null) continue;
 
-            if (ui.highlight != null) ui.highlight.enabled = (i == selected);
+            if (ui.highlight != null) ui.highlight.enabled = i == selected;
 
             float cd = controller.GetQuickSlotCooldownRemaining(i);
             float dur = controller.GetQuickSlotCooldownDuration(i);
@@ -102,16 +102,8 @@ public class QuickSlotsHUD : MonoBehaviour
 
             if (ui.countLabel != null)
             {
-                var item = controller.GetQuickSlotItem(i);
-                if (item == null)
-                {
-                    ui.countLabel.text = "";
-                }
-                else
-                {
-                    int count = controller.GetQuickSlotAvailableCount(i);
-                    ui.countLabel.text = (count > 0 || showCountWhenZero) ? $"{countPrefix}{count}" : "";
-                }
+                int count = controller.GetQuickSlotAvailableCount(i);
+                ui.countLabel.text = (count > 0 || showCountWhenZero) ? $"{countPrefix}{count}" : "";
             }
         }
     }

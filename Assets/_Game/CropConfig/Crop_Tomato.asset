@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 077d7039412992042b23954d691741f1, type: 3}
+  m_Name: Crop_Tomato
+  m_EditorClassIdentifier: Assembly-CSharp::CropConfigSO
+  cropId: tomato
+  displayName: Tomato
+  seedResource: 6
+  seedCost: 1
+  daysToMature: 4
+  requiresDailyWater: 1
+  waterCostPerDay: 1
+  growthStageCount: 3
+  harvestResource: 7
+  harvestMinAmount: 3
+  harvestMaxAmount: 4
+  seedEconomyValue: 2
+  cropEconomyValue: 4
+  balanceNote: 
+  plantSfxId: 0
+  waterSfxId: 1
+  harvestSfxId: 2

@@ -10,13 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e707c238856049a4b9d2b532b704383b, type: 3}
-  m_Name: QU_Water
+  m_Name: Water
   m_EditorClassIdentifier: Assembly-CSharp::QuickUseItemSO
   displayName: Water
-  icon: {fileID: 21300000, guid: af1d44c8d77c341869dcdb0b63c5cff8, type: 3}
+  icon: {fileID: 21300000, guid: c103cffd03792f445b908c0db8252946, type: 3}
   resourceType: 2
   consumeAmount: 1
   cooldownSeconds: 0.5
   addHunger: 0
   addThirst: 25
   addHP: 0
+  hpTarget: 0
+  showSuccessMessage: 1
+  showFailMessage: 1
+  successMessageOverride: 
+  insufficientMessageOverride: 
+  invalidTargetMessage: Cannot use now

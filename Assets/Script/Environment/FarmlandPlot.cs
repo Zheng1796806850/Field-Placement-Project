@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 public class FarmlandPlot : MonoBehaviour, IInteractable
@@ -10,22 +13,49 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         ReadyToHarvest = 3
     }
 
+    [Serializable]
+    public class CropVisualSet
+    {
+        public CropConfigSO crop;
+        public List<GameObject> dryStageVisuals = new List<GameObject>();
+        public List<GameObject> wateredStageVisuals = new List<GameObject>();
+        public GameObject matureVisual;
+
+        public GameObject GetDryStageVisual(int stageIndex)
+        {
+            if (dryStageVisuals == null || dryStageVisuals.Count == 0) return null;
+            stageIndex = Mathf.Clamp(stageIndex, 0, dryStageVisuals.Count - 1);
+            return dryStageVisuals[stageIndex];
+        }
+
+        public GameObject GetWateredStageVisual(int stageIndex)
+        {
+            if (wateredStageVisuals == null || wateredStageVisuals.Count == 0) return null;
+            stageIndex = Mathf.Clamp(stageIndex, 0, wateredStageVisuals.Count - 1);
+            return wateredStageVisuals[stageIndex];
+        }
+    }
+
     [SerializeField] private PlotState state = PlotState.Empty;
 
+    [Header("Crop")]
     public CropConfigSO cropToPlant;
 
     [SerializeField] private CropConfigSO plantedCrop;
     [SerializeField] private int growthDaysCompleted = 0;
-
     [SerializeField] private bool wateredSinceLastDayStart = false;
 
+    [Header("Legacy Plant Cost Fallback")]
     public int seedCost = 1;
 
+    [Header("Harvest")]
     public ResourceDrop2D harvestDropPrefab;
     public bool harvestGoesToInventoryDirectly = true;
 
+    [Header("Rules")]
     public bool restrictActionsToDay = true;
 
+    [Header("Timed Actions")]
     public float plantDuration = 2f;
     public float waterDuration = 1f;
     public bool holdToComplete = true;
@@ -33,16 +63,24 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
     public bool lockPlayerMovementWhileActing = false;
     public bool autoSaveInventoryOnAction = true;
 
+    [Header("Interaction")]
     public int priority = 5;
     public int Priority => priority;
 
+    [Header("Default Visuals")]
     public GameObject emptyVisual;
     public GameObject plantedVisual;
     public GameObject wateredVisual;
     public GameObject matureVisual;
 
+    [Header("Crop Visual Sets")]
+    public bool useCropSpecificVisualSets = true;
+    public List<CropVisualSet> cropVisualSets = new List<CropVisualSet>();
+
+    [Header("Debug")]
     public bool debugLogs = false;
 
+    [Header("Action Loop SFX")]
     public bool enableActionLoopSfx = true;
     public AudioClip[] plantActionLoopClips;
     public AudioClip[] waterActionLoopClips;
@@ -50,7 +88,6 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
     private GameStateManager _gsm;
     private bool _subscribed;
-
     private AudioSource _actionLoopSource;
 
     private void Awake()
@@ -112,7 +149,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         if (overrideClips != null && overrideClips.Length > 0)
         {
-            clip = overrideClips.Length == 1 ? overrideClips[0] : overrideClips[Random.Range(0, overrideClips.Length)];
+            clip = overrideClips.Length == 1 ? overrideClips[0] : overrideClips[UnityEngine.Random.Range(0, overrideClips.Length)];
         }
         else
         {
@@ -136,8 +173,14 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         float pMin = pitchRange.x <= 0f ? 0.01f : pitchRange.x;
         float pMax = pitchRange.y <= 0f ? 0.01f : pitchRange.y;
-        if (pMax < pMin) { float t = pMin; pMin = pMax; pMax = t; }
-        float pitch = (pMin == pMax) ? pMin : Random.Range(pMin, pMax);
+        if (pMax < pMin)
+        {
+            float t = pMin;
+            pMin = pMax;
+            pMax = t;
+        }
+
+        float pitch = pMin == pMax ? pMin : UnityEngine.Random.Range(pMin, pMax);
 
         _actionLoopSource.clip = clip;
         _actionLoopSource.loop = true;
@@ -186,11 +229,14 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         {
             case PlotState.Empty:
                 {
-                    if (cropToPlant == null) return "Plant";
-                    string days = cropToPlant.daysToMature <= 0 ? "Instant" : $"{cropToPlant.daysToMature} days";
-                    return seedCost <= 0
-                        ? $"Plant {cropToPlant.displayName} ({days})"
-                        : $"Plant {cropToPlant.displayName} (-{seedCost} Seeds, {days})";
+                    CropConfigSO crop = ResolveRequestedCrop(null);
+                    if (crop == null) return "Select Seed";
+
+                    string days = crop.daysToMature <= 0 ? "Instant" : $"{crop.daysToMature} days";
+                    ResourceType plantType = GetPlantSeedResource(crop);
+                    int plantCost = GetPlantSeedCost(crop);
+                    string costText = plantCost <= 0 ? "" : $" (-{plantCost} {FormatResourceTypeName(plantType)})";
+                    return $"Plant {crop.displayName}{costText}, {days}";
                 }
 
             case PlotState.PlantedDry:
@@ -210,7 +256,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
             case PlotState.ReadyToHarvest:
                 {
                     if (plantedCrop == null) return "Harvest";
-                    return $"Harvest (+{plantedCrop.harvestResource} x{plantedCrop.harvestAmount})";
+                    return $"Harvest (+{FormatResourceTypeName(plantedCrop.harvestResource)} x{plantedCrop.GetHarvestAmountLabel()})";
                 }
 
             default:
@@ -232,8 +278,12 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         switch (state)
         {
             case PlotState.Empty:
-                if (cropToPlant == null) return false;
-                return inv != null && inv.CanSpend(ResourceType.Seeds, seedCost);
+                {
+                    CropConfigSO crop = ResolveRequestedCrop(interactor);
+                    if (crop == null) return false;
+                    if (inv == null) return false;
+                    return inv.CanSpend(GetPlantSeedResource(crop), GetPlantSeedCost(crop));
+                }
 
             case PlotState.PlantedDry:
                 if (plantedCrop == null) return false;
@@ -275,17 +325,21 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
     private void StartTimedPlant(GameObject interactor)
     {
-        if (cropToPlant == null) return;
+        CropConfigSO requestedCrop = ResolveRequestedCrop(interactor);
+        if (requestedCrop == null) return;
 
         var inv = ResolveInventory(interactor);
         if (inv == null) return;
 
-        if (!inv.CanSpend(ResourceType.Seeds, seedCost)) return;
+        ResourceType plantType = GetPlantSeedResource(requestedCrop);
+        int plantCost = GetPlantSeedCost(requestedCrop);
+
+        if (!inv.CanSpend(plantType, plantCost)) return;
 
         var runner = interactor != null ? interactor.GetComponentInParent<TimedActionController>() : null;
         if (runner == null)
         {
-            TryPlantImmediate(inv);
+            TryPlantImmediate(inv, requestedCrop, interactor);
             return;
         }
 
@@ -307,14 +361,14 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         req.onBegin = () =>
         {
-            spent = inv.Spend(ResourceType.Seeds, seedCost);
+            spent = inv.Spend(plantType, plantCost);
             if (!spent)
             {
                 runner.CancelActive();
                 return;
             }
 
-            BeginActionLoop(SfxId.Farming_Plant, plantActionLoopClips);
+            BeginActionLoop(requestedCrop.plantSfxId, plantActionLoopClips);
         };
 
         req.onProgress = (p) =>
@@ -328,7 +382,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
             if (spent)
             {
-                inv.Add(ResourceType.Seeds, seedCost);
+                inv.Add(plantType, plantCost);
                 if (autoSaveInventoryOnAction) inv.SaveInMemory();
             }
         };
@@ -339,11 +393,14 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
             if (!spent) return;
 
-            plantedCrop = cropToPlant;
+            plantedCrop = requestedCrop;
             growthDaysCompleted = 0;
             wateredSinceLastDayStart = false;
 
             SetState(PlotState.PlantedDry);
+
+            var plantingController = ResolvePlantingController(interactor);
+            plantingController?.NotifyPlantCompleted(inv);
 
             if (autoSaveInventoryOnAction) inv.SaveInMemory();
 
@@ -398,7 +455,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
                 return;
             }
 
-            BeginActionLoop(SfxId.Farming_Water, waterActionLoopClips);
+            BeginActionLoop(plantedCrop.waterSfxId, waterActionLoopClips);
         };
 
         req.onProgress = (p) =>
@@ -435,21 +492,27 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         runner.TryBegin(req);
     }
 
-    private void TryPlantImmediate(PlayerResourceInventory inv)
+    private void TryPlantImmediate(PlayerResourceInventory inv, CropConfigSO requestedCrop, GameObject interactor)
     {
-        if (cropToPlant == null) return;
+        if (requestedCrop == null) return;
         if (inv == null) return;
 
-        if (!inv.Spend(ResourceType.Seeds, seedCost))
+        ResourceType plantType = GetPlantSeedResource(requestedCrop);
+        int plantCost = GetPlantSeedCost(requestedCrop);
+
+        if (!inv.Spend(plantType, plantCost))
             return;
 
-        plantedCrop = cropToPlant;
+        plantedCrop = requestedCrop;
         growthDaysCompleted = 0;
         wateredSinceLastDayStart = false;
 
         SetState(PlotState.PlantedDry);
 
-        SfxPlayer.TryPlay(SfxId.Farming_Plant, transform.position);
+        SfxPlayer.TryPlay(requestedCrop.plantSfxId, transform.position);
+
+        var plantingController = ResolvePlantingController(interactor);
+        plantingController?.NotifyPlantCompleted(inv);
 
         if (autoSaveInventoryOnAction) inv.SaveInMemory();
 
@@ -470,7 +533,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         wateredSinceLastDayStart = true;
         SetState(PlotState.PlantedWatered);
 
-        SfxPlayer.TryPlay(SfxId.Farming_Water, transform.position);
+        SfxPlayer.TryPlay(plantedCrop.waterSfxId, transform.position);
 
         if (autoSaveInventoryOnAction) inv.SaveInMemory();
 
@@ -486,17 +549,19 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
             return;
         }
 
-        SfxPlayer.TryPlay(SfxId.Farming_Harvest, transform.position);
+        int harvestAmount = plantedCrop.GetResolvedHarvestAmount();
+
+        SfxPlayer.TryPlay(plantedCrop.harvestSfxId, transform.position);
 
         if (harvestGoesToInventoryDirectly || harvestDropPrefab == null)
         {
             var inv = ResolveInventory(interactor);
-            if (inv != null) inv.Add(plantedCrop.harvestResource, plantedCrop.harvestAmount);
+            if (inv != null) inv.Add(plantedCrop.harvestResource, harvestAmount);
         }
         else
         {
             var drop = Instantiate(harvestDropPrefab, transform.position, Quaternion.identity);
-            drop.Configure(plantedCrop.harvestResource, plantedCrop.harvestAmount);
+            drop.Configure(plantedCrop.harvestResource, harvestAmount);
         }
 
         if (debugLogs)
@@ -552,6 +617,34 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         ApplyVisuals();
     }
 
+    private CropConfigSO ResolveRequestedCrop(GameObject interactor)
+    {
+        var plantingController = ResolvePlantingController(interactor);
+        if (plantingController != null && plantingController.TryGetSelectedCrop(out var selectedCrop) && selectedCrop != null)
+            return selectedCrop;
+
+        return cropToPlant;
+    }
+
+    private PlayerSeedPlantingController ResolvePlantingController(GameObject interactor)
+    {
+        var controller = interactor != null ? interactor.GetComponentInParent<PlayerSeedPlantingController>() : null;
+        if (controller != null) return controller;
+        return FindFirstObjectByType<PlayerSeedPlantingController>(FindObjectsInactive.Include);
+    }
+
+    private ResourceType GetPlantSeedResource(CropConfigSO crop)
+    {
+        if (crop == null) return ResourceType.Seeds;
+        return crop.seedResource;
+    }
+
+    private int GetPlantSeedCost(CropConfigSO crop)
+    {
+        if (crop == null) return Mathf.Max(0, seedCost);
+        return crop.GetResolvedSeedCost(seedCost);
+    }
+
     private PlayerResourceInventory ResolveInventory(GameObject interactor)
     {
         var inv = interactor != null ? interactor.GetComponentInParent<PlayerResourceInventory>() : null;
@@ -562,9 +655,133 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
     private void ApplyVisuals()
     {
         if (emptyVisual != null) emptyVisual.SetActive(state == PlotState.Empty);
+
+        if (plantedVisual != null) plantedVisual.SetActive(false);
+        if (wateredVisual != null) wateredVisual.SetActive(false);
+        if (matureVisual != null) matureVisual.SetActive(false);
+
+        DisableAllCropSpecificVisuals();
+
+        if (state == PlotState.Empty)
+            return;
+
+        CropConfigSO visualCrop = plantedCrop != null ? plantedCrop : cropToPlant;
+        bool usedSpecific = TryApplyCropSpecificVisuals(visualCrop);
+
+        if (usedSpecific)
+            return;
+
         if (plantedVisual != null) plantedVisual.SetActive(state == PlotState.PlantedDry);
         if (wateredVisual != null) wateredVisual.SetActive(state == PlotState.PlantedWatered);
         if (matureVisual != null) matureVisual.SetActive(state == PlotState.ReadyToHarvest);
+    }
+
+    private bool TryApplyCropSpecificVisuals(CropConfigSO crop)
+    {
+        if (!useCropSpecificVisualSets) return false;
+        if (crop == null) return false;
+
+        CropVisualSet set = FindVisualSet(crop);
+        if (set == null) return false;
+
+        if (state == PlotState.ReadyToHarvest)
+        {
+            if (set.matureVisual != null)
+            {
+                set.matureVisual.SetActive(true);
+                return true;
+            }
+
+            return false;
+        }
+
+        int stageIndex = crop.GetGrowthStageIndex(growthDaysCompleted);
+
+        if (state == PlotState.PlantedWatered)
+        {
+            GameObject wateredGo = set.GetWateredStageVisual(stageIndex);
+            if (wateredGo != null)
+            {
+                wateredGo.SetActive(true);
+                return true;
+            }
+
+            GameObject dryFallback = set.GetDryStageVisual(stageIndex);
+            if (dryFallback != null)
+            {
+                dryFallback.SetActive(true);
+                return true;
+            }
+
+            return false;
+        }
+
+        if (state == PlotState.PlantedDry)
+        {
+            GameObject dryGo = set.GetDryStageVisual(stageIndex);
+            if (dryGo != null)
+            {
+                dryGo.SetActive(true);
+                return true;
+            }
+
+            GameObject wateredFallback = set.GetWateredStageVisual(stageIndex);
+            if (wateredFallback != null)
+            {
+                wateredFallback.SetActive(true);
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    private CropVisualSet FindVisualSet(CropConfigSO crop)
+    {
+        if (crop == null || cropVisualSets == null) return null;
+
+        for (int i = 0; i < cropVisualSets.Count; i++)
+        {
+            var set = cropVisualSets[i];
+            if (set == null) continue;
+            if (set.crop == crop) return set;
+        }
+
+        return null;
+    }
+
+    private void DisableAllCropSpecificVisuals()
+    {
+        if (cropVisualSets == null) return;
+
+        for (int i = 0; i < cropVisualSets.Count; i++)
+        {
+            var set = cropVisualSets[i];
+            if (set == null) continue;
+
+            if (set.dryStageVisuals != null)
+            {
+                for (int j = 0; j < set.dryStageVisuals.Count; j++)
+                {
+                    if (set.dryStageVisuals[j] != null)
+                        set.dryStageVisuals[j].SetActive(false);
+                }
+            }
+
+            if (set.wateredStageVisuals != null)
+            {
+                for (int j = 0; j < set.wateredStageVisuals.Count; j++)
+                {
+                    if (set.wateredStageVisuals[j] != null)
+                        set.wateredStageVisuals[j].SetActive(false);
+                }
+            }
+
+            if (set.matureVisual != null)
+                set.matureVisual.SetActive(false);
+        }
     }
 
     private void AutoWireVisualsIfNull()
@@ -573,5 +790,27 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         if (plantedVisual == null) plantedVisual = transform.Find("PlantedVisual")?.gameObject;
         if (wateredVisual == null) wateredVisual = transform.Find("WateredVisual")?.gameObject;
         if (matureVisual == null) matureVisual = transform.Find("MatureVisual")?.gameObject;
+    }
+
+    private static string FormatResourceTypeName(ResourceType type)
+    {
+        string raw = type.ToString();
+        if (string.IsNullOrEmpty(raw)) return raw;
+
+        StringBuilder sb = new StringBuilder(raw.Length + 8);
+        sb.Append(raw[0]);
+
+        for (int i = 1; i < raw.Length; i++)
+        {
+            char c = raw[i];
+            char prev = raw[i - 1];
+
+            if (char.IsUpper(c) && !char.IsUpper(prev))
+                sb.Append(' ');
+
+            sb.Append(c);
+        }
+
+        return sb.ToString();
     }
 }

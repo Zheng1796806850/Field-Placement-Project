@@ -3,5 +3,9 @@ public enum ResourceType
     Planks,
     Seeds,
     Water,
-    Food
+    Food,
+    PotatoSeed,
+    Potato,
+    TomatoSeed,
+    Tomato
 }

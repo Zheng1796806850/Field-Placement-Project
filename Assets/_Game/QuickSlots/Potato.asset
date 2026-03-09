@@ -10,13 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e707c238856049a4b9d2b532b704383b, type: 3}
-  m_Name: QU_Food
+  m_Name: Potato
   m_EditorClassIdentifier: Assembly-CSharp::QuickUseItemSO
-  displayName: Food
-  icon: {fileID: 21300000, guid: 8f03d65eca65243d0963f648c2e9824a, type: 3}
-  resourceType: 3
+  displayName: Potato
+  icon: {fileID: 21300000, guid: 2b3409dd74a1f0948868e6123d99f3b3, type: 3}
+  resourceType: 5
   consumeAmount: 1
   cooldownSeconds: 0.5
-  addHunger: 25
+  addHunger: 30
   addThirst: 0
-  addHP: 10
+  addHP: 15
+  hpTarget: 0
+  showSuccessMessage: 1
+  showFailMessage: 1
+  successMessageOverride: 
+  insufficientMessageOverride: 
+  invalidTargetMessage: Cannot use now

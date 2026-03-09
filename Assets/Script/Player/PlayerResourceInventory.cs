@@ -13,6 +13,13 @@ public class PlayerResourceInventory : MonoBehaviour
 {
     public static PlayerResourceInventory Instance { get; private set; }
 
+    [Serializable]
+    public class DefaultResourceEntry
+    {
+        public ResourceType type;
+        public int amount;
+    }
+
     [Header("Backpack Rules")]
     public BackpackRulesSO rules;
     public BackpackOverflowMode overflowModeOverride = BackpackOverflowMode.DenyPickup;
@@ -22,11 +29,8 @@ public class PlayerResourceInventory : MonoBehaviour
     public ResourceDrop2D overflowDropPrefab;
     public float overflowDropScatterRadius = 0.25f;
 
-    [Header("Defaults (used if no save exists yet)")]
-    public int defaultPlanks = 0;
-    public int defaultSeeds = 0;
-    public int defaultWater = 0;
-    public int defaultFood = 0;
+    [Header("Default Resources (used if no save exists yet)")]
+    public List<DefaultResourceEntry> defaultResources = new List<DefaultResourceEntry>();
 
     [Header("Persistence")]
     public string saveKey = "PLAYER_RESOURCE_INVENTORY_V1";
@@ -36,6 +40,12 @@ public class PlayerResourceInventory : MonoBehaviour
     [Header("Editor Debug")]
     public bool clearSaveOnAwakeInEditor = false;
 
+    [Header("Legacy Defaults")]
+    [SerializeField, HideInInspector] private int defaultPlanks = 0;
+    [SerializeField, HideInInspector] private int defaultSeeds = 0;
+    [SerializeField, HideInInspector] private int defaultWater = 0;
+    [SerializeField, HideInInspector] private int defaultFood = 0;
+
     public event Action<ResourceType, int> OnResourceChanged;
     public event Action OnAnyResourceChanged;
     public event Action<string> OnInventoryMessage;
@@ -43,8 +53,17 @@ public class PlayerResourceInventory : MonoBehaviour
     private readonly Dictionary<ResourceType, int> _amounts = new Dictionary<ResourceType, int>();
     private readonly Dictionary<ResourceType, int> _overflowBuffer = new Dictionary<ResourceType, int>();
     private readonly List<BackpackStackView> _stackCache = new List<BackpackStackView>();
+    private readonly List<ResourceType> _displayOrder = new List<ResourceType>();
 
     private bool _flushingBuffer;
+
+    [Serializable]
+    private class SaveDataV3
+    {
+        public List<Entry> entries = new List<Entry>();
+        public List<Entry> overflow = new List<Entry>();
+        public List<OrderEntry> displayOrder = new List<OrderEntry>();
+    }
 
     [Serializable]
     private class SaveDataV2
@@ -64,6 +83,12 @@ public class PlayerResourceInventory : MonoBehaviour
     {
         public ResourceType type;
         public int amount;
+    }
+
+    [Serializable]
+    private class OrderEntry
+    {
+        public ResourceType type;
     }
 
     public int MaxSlots => Mathf.Max(1, rules != null ? rules.maxSlots : 16);
@@ -100,22 +125,121 @@ public class PlayerResourceInventory : MonoBehaviour
         }
     }
 
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        SanitizeDefaultResources();
+    }
+#endif
+
     private void InitDefaultsIfNeeded()
     {
-        if (_amounts.Count > 0) return;
-
-        _amounts[ResourceType.Planks] = Mathf.Max(0, defaultPlanks);
-        _amounts[ResourceType.Seeds] = Mathf.Max(0, defaultSeeds);
-        _amounts[ResourceType.Water] = Mathf.Max(0, defaultWater);
-        _amounts[ResourceType.Food] = Mathf.Max(0, defaultFood);
+        EnsureAllResourceKeys();
+        MigrateLegacyDefaultsToListIfNeeded();
+        SanitizeDefaultResources();
 
         foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
         {
+            _amounts[t] = 0;
+            _overflowBuffer[t] = Mathf.Max(0, GetOverflowBuffer(t));
+        }
+
+        if (defaultResources != null)
+        {
+            for (int i = 0; i < defaultResources.Count; i++)
+            {
+                var entry = defaultResources[i];
+                if (entry == null) continue;
+                if (entry.amount <= 0) continue;
+
+                int current = Get(entry.type);
+                int next = current + Mathf.Max(0, entry.amount);
+
+                int maxCarry = GetMaxCarry(entry.type);
+                if (maxCarry >= 0)
+                    next = Mathf.Min(next, maxCarry);
+
+                _amounts[entry.type] = next;
+            }
+        }
+
+        EnsureDisplayOrder();
+        EnsureWithinCapacityToBuffer(false);
+    }
+
+    private void MigrateLegacyDefaultsToListIfNeeded()
+    {
+        if (defaultResources != null && defaultResources.Count > 0)
+            return;
+
+        if (defaultResources == null)
+            defaultResources = new List<DefaultResourceEntry>();
+
+        AddLegacyDefaultIfPositive(ResourceType.Planks, defaultPlanks);
+        AddLegacyDefaultIfPositive(ResourceType.Seeds, defaultSeeds);
+        AddLegacyDefaultIfPositive(ResourceType.Water, defaultWater);
+        AddLegacyDefaultIfPositive(ResourceType.Food, defaultFood);
+    }
+
+    private void AddLegacyDefaultIfPositive(ResourceType type, int amount)
+    {
+        if (amount <= 0) return;
+        defaultResources.Add(new DefaultResourceEntry { type = type, amount = amount });
+    }
+
+    private void SanitizeDefaultResources()
+    {
+        if (defaultResources == null)
+        {
+            defaultResources = new List<DefaultResourceEntry>();
+            return;
+        }
+
+        for (int i = defaultResources.Count - 1; i >= 0; i--)
+        {
+            var entry = defaultResources[i];
+            if (entry == null)
+            {
+                defaultResources.RemoveAt(i);
+                continue;
+            }
+
+            if (entry.amount < 0)
+                entry.amount = 0;
+        }
+    }
+
+    private void EnsureAllResourceKeys()
+    {
+        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+        {
+            if (!_amounts.ContainsKey(t))
+                _amounts[t] = 0;
+
             if (!_overflowBuffer.ContainsKey(t))
                 _overflowBuffer[t] = 0;
         }
+    }
 
-        EnsureWithinCapacityToBuffer(false);
+    private void EnsureDisplayOrder()
+    {
+        var seen = new HashSet<ResourceType>();
+        for (int i = _displayOrder.Count - 1; i >= 0; i--)
+        {
+            var t = _displayOrder[i];
+            if (seen.Contains(t))
+            {
+                _displayOrder.RemoveAt(i);
+                continue;
+            }
+            seen.Add(t);
+        }
+
+        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+        {
+            if (!seen.Contains(t))
+                _displayOrder.Add(t);
+        }
     }
 
     public int Get(ResourceType type)
@@ -154,10 +278,12 @@ public class PlayerResourceInventory : MonoBehaviour
 
     public IReadOnlyList<BackpackStackView> GetStackViewsSnapshot()
     {
+        EnsureDisplayOrder();
         _stackCache.Clear();
 
-        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+        for (int i = 0; i < _displayOrder.Count; i++)
         {
+            ResourceType t = _displayOrder[i];
             int count = Get(t);
             if (count <= 0) continue;
 
@@ -173,6 +299,95 @@ public class PlayerResourceInventory : MonoBehaviour
         return _stackCache;
     }
 
+    public bool TryGetStackViewAtDisplayIndex(int displayIndex, out BackpackStackView view)
+    {
+        var snapshot = GetStackViewsSnapshot();
+        if (displayIndex >= 0 && displayIndex < snapshot.Count)
+        {
+            view = snapshot[displayIndex];
+            return true;
+        }
+
+        view = default;
+        return false;
+    }
+
+    public bool TryGetResourceTypeAtDisplayIndex(int displayIndex, out ResourceType type)
+    {
+        if (TryGetStackViewAtDisplayIndex(displayIndex, out var view))
+        {
+            type = view.type;
+            return true;
+        }
+
+        type = default;
+        return false;
+    }
+
+    public bool ReorderDisplaySlot(int fromDisplayIndex, int toDisplayIndex)
+    {
+        if (!TryGetResourceTypeAtDisplayIndex(fromDisplayIndex, out var fromType))
+            return false;
+
+        if (TryGetResourceTypeAtDisplayIndex(toDisplayIndex, out var toType))
+        {
+            if (fromType == toType)
+                return false;
+
+            return SwapDisplayOrder(fromType, toType);
+        }
+
+        return MoveTypeToEndOfOccupied(fromType);
+    }
+
+    public bool BindQuickSlotCandidateFromDisplayIndex(int displayIndex, out ResourceType type)
+    {
+        return TryGetResourceTypeAtDisplayIndex(displayIndex, out type);
+    }
+
+    private bool SwapDisplayOrder(ResourceType a, ResourceType b)
+    {
+        EnsureDisplayOrder();
+
+        int aIndex = _displayOrder.IndexOf(a);
+        int bIndex = _displayOrder.IndexOf(b);
+        if (aIndex < 0 || bIndex < 0 || aIndex == bIndex)
+            return false;
+
+        (_displayOrder[aIndex], _displayOrder[bIndex]) = (_displayOrder[bIndex], _displayOrder[aIndex]);
+        RaiseLayoutChanged();
+        return true;
+    }
+
+    private bool MoveTypeToEndOfOccupied(ResourceType type)
+    {
+        EnsureDisplayOrder();
+
+        int sourceIndex = _displayOrder.IndexOf(type);
+        if (sourceIndex < 0)
+            return false;
+
+        int insertIndex = 0;
+        for (int i = 0; i < _displayOrder.Count; i++)
+        {
+            var current = _displayOrder[i];
+            if (current == type) continue;
+            if (Get(current) > 0)
+                insertIndex = i + 1;
+        }
+
+        if (insertIndex > sourceIndex)
+            insertIndex--;
+
+        if (insertIndex == sourceIndex)
+            return false;
+
+        _displayOrder.RemoveAt(sourceIndex);
+        _displayOrder.Insert(Mathf.Clamp(insertIndex, 0, _displayOrder.Count), type);
+        RaiseLayoutChanged();
+        return true;
+    }
+
     public void Set(ResourceType type, int amount)
     {
         amount = Mathf.Max(0, amount);
@@ -181,6 +396,8 @@ public class PlayerResourceInventory : MonoBehaviour
         if (maxCarry >= 0) amount = Mathf.Min(amount, maxCarry);
 
         _amounts[type] = amount;
+        EnsureAllResourceKeys();
+        EnsureDisplayOrder();
         EnsureWithinCapacityToBuffer(false);
         TryFlushOverflowBuffer(false);
         Broadcast(type);
@@ -242,6 +459,9 @@ public class PlayerResourceInventory : MonoBehaviour
         rejected = 0;
 
         if (amount <= 0) return true;
+
+        EnsureAllResourceKeys();
+        EnsureDisplayOrder();
 
         int maxAccepted = ComputeMaxAddable(type, amount);
         var mode = GetOverflowMode();
@@ -437,8 +657,16 @@ public class PlayerResourceInventory : MonoBehaviour
 
     private void BroadcastAll()
     {
+        EnsureAllResourceKeys();
+        EnsureDisplayOrder();
+
         foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
             OnResourceChanged?.Invoke(t, Get(t));
+        OnAnyResourceChanged?.Invoke();
+    }
+
+    private void RaiseLayoutChanged()
+    {
         OnAnyResourceChanged?.Invoke();
     }
 
@@ -455,13 +683,17 @@ public class PlayerResourceInventory : MonoBehaviour
 
     public void SaveInMemory()
     {
-        SaveDataV2 data = new SaveDataV2();
+        SaveDataV3 data = new SaveDataV3();
 
         foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
         {
             data.entries.Add(new Entry { type = t, amount = Get(t) });
             data.overflow.Add(new Entry { type = t, amount = GetOverflowBuffer(t) });
         }
+
+        EnsureDisplayOrder();
+        for (int i = 0; i < _displayOrder.Count; i++)
+            data.displayOrder.Add(new OrderEntry { type = _displayOrder[i] });
 
         string json = JsonUtility.ToJson(data);
         PlayerPrefs.SetString(saveKey, json);
@@ -487,19 +719,42 @@ public class PlayerResourceInventory : MonoBehaviour
 
         try
         {
-            if (json.Contains("\"overflow\""))
+            _amounts.Clear();
+            _overflowBuffer.Clear();
+            _displayOrder.Clear();
+
+            if (json.Contains("\"displayOrder\""))
             {
-                var data = JsonUtility.FromJson<SaveDataV2>(json);
+                var data = JsonUtility.FromJson<SaveDataV3>(json);
                 if (data != null && data.entries != null)
                 {
-                    _amounts.Clear();
                     foreach (var e in data.entries)
                         _amounts[e.type] = Mathf.Max(0, e.amount);
                 }
 
                 if (data != null && data.overflow != null)
                 {
-                    _overflowBuffer.Clear();
+                    foreach (var e in data.overflow)
+                        _overflowBuffer[e.type] = Mathf.Max(0, e.amount);
+                }
+
+                if (data != null && data.displayOrder != null)
+                {
+                    foreach (var e in data.displayOrder)
+                        _displayOrder.Add(e.type);
+                }
+            }
+            else if (json.Contains("\"overflow\""))
+            {
+                var data = JsonUtility.FromJson<SaveDataV2>(json);
+                if (data != null && data.entries != null)
+                {
+                    foreach (var e in data.entries)
+                        _amounts[e.type] = Mathf.Max(0, e.amount);
+                }
+
+                if (data != null && data.overflow != null)
+                {
                     foreach (var e in data.overflow)
                         _overflowBuffer[e.type] = Mathf.Max(0, e.amount);
                 }
@@ -509,23 +764,21 @@ public class PlayerResourceInventory : MonoBehaviour
                 var data = JsonUtility.FromJson<SaveDataV1>(json);
                 if (data != null && data.entries != null)
                 {
-                    _amounts.Clear();
                     foreach (var e in data.entries)
                         _amounts[e.type] = Mathf.Max(0, e.amount);
-                }
-
-                foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
-                {
-                    if (!_overflowBuffer.ContainsKey(t))
-                        _overflowBuffer[t] = 0;
                 }
             }
         }
         catch
         {
+            _amounts.Clear();
+            _overflowBuffer.Clear();
+            _displayOrder.Clear();
             InitDefaultsIfNeeded();
         }
 
+        EnsureAllResourceKeys();
+        EnsureDisplayOrder();
         EnsureWithinCapacityToBuffer(false);
         TryFlushOverflowBuffer(false);
         BroadcastAll();
@@ -552,6 +805,7 @@ public class PlayerResourceInventory : MonoBehaviour
 
         _amounts.Clear();
         _overflowBuffer.Clear();
+        _displayOrder.Clear();
         InitDefaultsIfNeeded();
         BroadcastAll();
     }

@@ -17,9 +17,16 @@ public class PlayerCombat2D : MonoBehaviour
     public KeyCode attackKey = KeyCode.Mouse0;
     public float attackLockTime = 0.35f;
 
+    [Header("Input State")]
+    public bool localInputEnabled = true;
+
     private bool isAttacking;
     private float attackTimer;
     private BoxCollider2D currentCollider;
+    private int externalInputBlockCount;
+
+    public bool IsAttacking => isAttacking;
+    public bool InputEnabled => localInputEnabled && externalInputBlockCount <= 0;
 
     private void Awake()
     {
@@ -32,7 +39,7 @@ public class PlayerCombat2D : MonoBehaviour
 
     private void Update()
     {
-        if (!isAttacking && Input.GetKeyDown(attackKey))
+        if (!isAttacking && InputEnabled && Input.GetKeyDown(attackKey))
         {
             StartAttack();
         }
@@ -45,20 +52,50 @@ public class PlayerCombat2D : MonoBehaviour
         }
     }
 
+    public void SetInputEnabled(bool enabled)
+    {
+        localInputEnabled = enabled;
+        if (!InputEnabled && isAttacking)
+            EndAttack();
+    }
+
+    public void PushExternalInputBlock()
+    {
+        externalInputBlockCount++;
+        if (externalInputBlockCount < 0)
+            externalInputBlockCount = 0;
+
+        if (!InputEnabled && isAttacking)
+            EndAttack();
+    }
+
+    public void PopExternalInputBlock()
+    {
+        externalInputBlockCount--;
+        if (externalInputBlockCount < 0)
+            externalInputBlockCount = 0;
+    }
+
     private void StartAttack()
     {
+        if (!InputEnabled) return;
+
         isAttacking = true;
         attackTimer = attackLockTime;
 
-        movement.SetCanMove(false);
+        if (movement != null)
+            movement.SetCanMove(false);
 
-        Vector2 dir = movement.GetFacingDir();
+        Vector2 dir = movement != null ? movement.GetFacingDir() : Vector2.down;
 
-        animator.SetFloat("InputX", dir.x);
-        animator.SetFloat("InputY", dir.y);
-        animator.SetTrigger("Attack");
+        if (animator != null)
+        {
+            animator.SetFloat("InputX", dir.x);
+            animator.SetFloat("InputY", dir.y);
+            animator.SetTrigger("Attack");
+        }
 
-        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+        if (spriteRenderer != null && Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
             spriteRenderer.flipX = dir.x < 0;
 
         SelectAttackCollider(dir);
@@ -69,7 +106,10 @@ public class PlayerCombat2D : MonoBehaviour
     private void EndAttack()
     {
         isAttacking = false;
-        movement.SetCanMove(true);
+
+        if (movement != null)
+            movement.SetCanMove(true);
+
         DisableAllColliders();
     }
 
@@ -89,10 +129,10 @@ public class PlayerCombat2D : MonoBehaviour
 
     private void DisableAllColliders()
     {
-        attackUp.enabled = false;
-        attackDown.enabled = false;
-        attackLeft.enabled = false;
-        attackRight.enabled = false;
+        if (attackUp != null) attackUp.enabled = false;
+        if (attackDown != null) attackDown.enabled = false;
+        if (attackLeft != null) attackLeft.enabled = false;
+        if (attackRight != null) attackRight.enabled = false;
         currentCollider = null;
     }
 

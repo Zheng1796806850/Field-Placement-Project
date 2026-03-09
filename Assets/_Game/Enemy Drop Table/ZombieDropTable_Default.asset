@@ -16,9 +16,19 @@ MonoBehaviour:
   - type: 0
     minAmount: 1
     maxAmount: 5
-    chance: 0.6
+    chance: 0.3
     maxSpawnsPerKill: 5
   - type: 1
+    minAmount: 1
+    maxAmount: 3
+    chance: 0.3
+    maxSpawnsPerKill: 3
+  - type: 4
+    minAmount: 1
+    maxAmount: 3
+    chance: 0.3
+    maxSpawnsPerKill: 3
+  - type: 6
     minAmount: 1
     maxAmount: 3
     chance: 0.3

@@ -35,6 +35,7 @@ public class BackpackPanelHUD : MonoBehaviour
 
     [Header("Behavior")]
     public bool openOnStart = false;
+    public bool saveInventoryAfterReorder = true;
 
     private readonly List<BackpackSlotUI> _slots = new List<BackpackSlotUI>();
     private float _nextRefreshTime;
@@ -128,7 +129,10 @@ public class BackpackPanelHUD : MonoBehaviour
         EnsureSlotObjects(maxSlots);
 
         for (int i = 0; i < maxSlots; i++)
+        {
+            _slots[i].Configure(this, i);
             _slots[i].SetEmpty();
+        }
 
         int fillCount = Mathf.Min(used, maxSlots);
         for (int i = 0; i < fillCount; i++)
@@ -143,11 +147,43 @@ public class BackpackPanelHUD : MonoBehaviour
             _slots[i].gameObject.SetActive(i < visibleSlots);
     }
 
+    public bool TryGetResourceTypeAtDisplaySlot(int displayIndex, out ResourceType type)
+    {
+        ResolveRefs();
+        if (inventory == null)
+        {
+            type = default;
+            return false;
+        }
+
+        return inventory.BindQuickSlotCandidateFromDisplayIndex(displayIndex, out type);
+    }
+
+    public void HandleSlotDrop(int fromSlotIndex, int toSlotIndex)
+    {
+        ResolveRefs();
+        if (inventory == null) return;
+        if (fromSlotIndex < 0 || toSlotIndex < 0) return;
+        if (fromSlotIndex == toSlotIndex) return;
+
+        bool changed = inventory.ReorderDisplaySlot(fromSlotIndex, toSlotIndex);
+        if (!changed) return;
+
+        if (saveInventoryAfterReorder)
+            inventory.SaveInMemory();
+
+        Refresh();
+    }
+
     private void EnsureSlotObjects(int targetCount)
     {
         if (gridRoot == null || slotPrefab == null) return;
 
         while (_slots.Count < targetCount)
-            _slots.Add(Instantiate(slotPrefab, gridRoot));
+        {
+            var slot = Instantiate(slotPrefab, gridRoot);
+            slot.Configure(this, _slots.Count);
+            _slots.Add(slot);
+        }
     }
 }
