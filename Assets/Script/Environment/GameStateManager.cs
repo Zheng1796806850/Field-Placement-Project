@@ -16,11 +16,14 @@ public class GameStateManager : MonoBehaviour
     [Min(5f)] public float nightDuration = 120f;
 
     [Header("Clock Options")]
-    [Tooltip("If true, uses unscaled time for the day/night clock (pause won't advance time).")]
     public bool useUnscaledTime = false;
 
     [Header("Start Phase")]
     public DayNightPhase startPhase = DayNightPhase.Day;
+
+    [Header("Transition Restore")]
+    public bool restorePhaseFromSceneTransition = true;
+    public bool invokePhaseEventsOnRestore = true;
 
     [Header("Debug Hotkeys")]
     public bool enableDebugHotkeys = true;
@@ -44,6 +47,12 @@ public class GameStateManager : MonoBehaviour
 
     private void Start()
     {
+        if (restorePhaseFromSceneTransition && SceneTransitionContext.TryGetClockSnapshot(out var phase, out var timeRemaining, out var elapsed))
+        {
+            ApplyPhaseState(phase, timeRemaining, elapsed, invokePhaseEventsOnRestore);
+            return;
+        }
+
         SetPhaseInternal(startPhase, force: true);
     }
 
@@ -82,6 +91,40 @@ public class GameStateManager : MonoBehaviour
 
     public void ForceDay() => SetPhaseInternal(DayNightPhase.Day, force: true);
     public void ForceNight() => SetPhaseInternal(DayNightPhase.Night, force: true);
+
+    public void ApplyPhaseState(DayNightPhase phase, float timeRemaining, float elapsed, bool invokeEvents)
+    {
+        CurrentPhase = phase;
+
+        float total = phase == DayNightPhase.Day ? dayDuration : nightDuration;
+        if (total <= 0f)
+            total = 1f;
+
+        PhaseTimeRemaining = Mathf.Clamp(timeRemaining, 0f, total);
+        PhaseElapsed = Mathf.Clamp(elapsed, 0f, total);
+
+        if (PhaseTimeRemaining <= 0f && PhaseElapsed <= 0f)
+        {
+            PhaseTimeRemaining = total;
+            PhaseElapsed = 0f;
+        }
+        else if (PhaseTimeRemaining <= 0f)
+        {
+            PhaseTimeRemaining = Mathf.Clamp(total - PhaseElapsed, 0f, total);
+        }
+        else if (PhaseElapsed <= 0f)
+        {
+            PhaseElapsed = Mathf.Clamp(total - PhaseTimeRemaining, 0f, total);
+        }
+
+        OnPhaseChanged?.Invoke(phase);
+
+        if (!invokeEvents)
+            return;
+
+        if (phase == DayNightPhase.Day) OnDayStarted?.Invoke();
+        else OnNightStarted?.Invoke();
+    }
 
     private void SetPhaseInternal(DayNightPhase next, bool force)
     {

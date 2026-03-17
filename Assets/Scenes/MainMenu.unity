@@ -1413,7 +1413,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 839e811ae1a57344b9ea67943399a250, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuUI
-  gameplaySceneName: Gameplay
+  gameplaySceneName: BaseScene
   gameplaySceneBuildIndex: -1
   loadSceneMode: 0
   useLoadingScene: 1
