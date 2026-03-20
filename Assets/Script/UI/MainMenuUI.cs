@@ -62,6 +62,10 @@ public class MainMenuUI : MonoBehaviour
     public UnityEvent onBeforeStartLoad;
     public UnityEvent onAfterButtonsLocked;
 
+    [Header("Tutorial")]
+    public bool useTutorialOnStart = true;
+    public TutorialPanelController tutorialPanelController;
+
     [Header("Settings")]
     public UnityEvent onOpenSettings;
     public UnityEvent onCloseSettings;
@@ -240,6 +244,14 @@ public class MainMenuUI : MonoBehaviour
         onAfterButtonsLocked?.Invoke();
 
         ApplyOpenState();
+
+        if (useTutorialOnStart && tutorialPanelController != null)
+        {
+            tutorialPanelController.BeginTutorial();
+            while (tutorialPanelController != null && !tutorialPanelController.IsCompleted)
+                yield return null;
+        }
+
         RunStartInitialization();
         onBeforeStartLoad?.Invoke();
 

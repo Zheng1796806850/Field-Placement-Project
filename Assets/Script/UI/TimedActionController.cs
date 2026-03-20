@@ -26,6 +26,12 @@ public class TimedActionController : MonoBehaviour
             return;
         }
 
+        // When the game is paused, never treat ESC (or other cancelKey) as an action cancel.
+        // UI should remain responsive, but gameplay timed actions should not react to cancel input.
+        var gsm = GameStateManager.Instance;
+        if (gsm != null && gsm.IsPaused)
+            return;
+
         if (_req.cancelKey != KeyCode.None && Time.frameCount > _cancelInputUnlockedFrame && Input.GetKeyDown(_req.cancelKey))
         {
             Cancel();
@@ -40,7 +46,6 @@ public class TimedActionController : MonoBehaviour
 
         if (_req.cancelIfPhaseNotDay)
         {
-            var gsm = GameStateManager.Instance;
             if (gsm != null && gsm.CurrentPhase != DayNightPhase.Day)
             {
                 Cancel();

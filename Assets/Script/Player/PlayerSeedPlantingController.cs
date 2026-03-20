@@ -37,6 +37,11 @@ public class PlayerSeedPlantingController : MonoBehaviour
     {
         if (!IsPlantingModeActive) return;
 
+        // While paused, don't react to Escape cancel logic.
+        var gsm = GameStateManager.Instance;
+        if (gsm != null && gsm.IsPaused)
+            return;
+
         ResolveRefs(_context.user != null ? _context.user : gameObject);
 
         if (allowCancelKey && cancelPlantingKey != KeyCode.None && Input.GetKeyDown(cancelPlantingKey))

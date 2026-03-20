@@ -75,6 +75,11 @@ public class PlayerWallPlacementController : MonoBehaviour
     {
         if (!IsPlacementModeActive) return;
 
+        // While paused, don't react to Escape cancel/build inputs.
+        var gsm = GameStateManager.Instance;
+        if (gsm != null && gsm.IsPaused)
+            return;
+
         ResolveRefs(_context.user != null ? _context.user : gameObject);
 
         if (allowCancelKey && cancelPlacementKey != KeyCode.None && Input.GetKeyDown(cancelPlacementKey))
