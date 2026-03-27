@@ -1620,6 +1620,11 @@ MonoBehaviour:
   minimumLoadingScreenTime: 0.25
   carryPlayerVitals: 1
   carryDayNightPhase: 0
+  restrictByPhase: 0
+  allowInDay: 1
+  allowInNight: 1
+  showDenyMessage: 1
+  denyMessageByPhase: Cannot travel now.
   promptText: Press E to Enter
   priority: 100
 --- !u!61 &103452727
@@ -62028,6 +62033,11 @@ MonoBehaviour:
   minimumLoadingScreenTime: 0.25
   carryPlayerVitals: 1
   carryDayNightPhase: 0
+  restrictByPhase: 0
+  allowInDay: 1
+  allowInNight: 1
+  showDenyMessage: 1
+  denyMessageByPhase: Cannot travel now.
   promptText: Press E to Enter
   priority: 100
 --- !u!61 &727522579
@@ -139114,6 +139124,11 @@ MonoBehaviour:
   minimumLoadingScreenTime: 0.35
   carryPlayerVitals: 1
   carryDayNightPhase: 0
+  restrictByPhase: 1
+  allowInDay: 1
+  allowInNight: 0
+  showDenyMessage: 1
+  denyMessageByPhase: Cannot travel now.
   promptText: Press E to Go To Town
   priority: 100
 --- !u!212 &2000740190

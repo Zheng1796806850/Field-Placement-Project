@@ -38,6 +38,15 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
     public bool carryPlayerVitals = true;
     public bool carryDayNightPhase = false;
 
+    [Header("Phase Access Restriction")]
+    public bool restrictByPhase = false;
+    public bool allowInDay = true;
+    public bool allowInNight = true;
+
+    [Header("Denied Feedback")]
+    public bool showDenyMessage = true;
+    [TextArea] public string denyMessageByPhase = "Cannot travel now.";
+
     [Header("Interaction")]
     [TextArea] public string promptText = "Press E to Enter";
     public int priority = 100;
@@ -50,7 +59,13 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
             cameraController = Camera.main.GetComponent<CameraFollowBounds2D>();
     }
 
-    public string GetPrompt() => promptText;
+    public string GetPrompt()
+    {
+        if (!restrictByPhase)
+            return promptText;
+
+        return IsPhaseAllowed() ? promptText : denyMessageByPhase;
+    }
 
     private Transform ResolvePlayerTransform(GameObject interactor)
     {
@@ -93,6 +108,12 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
         var playerT = ResolvePlayerTransform(interactor);
         if (playerT == null) return;
 
+        if (!IsPhaseAllowed())
+        {
+            PushDenyFeedback(interactor);
+            return;
+        }
+
         if (teleportMode == TeleportMode.LocalTeleport)
         {
             playerT.position = teleportTarget.position;
@@ -107,6 +128,43 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
         }
 
         BeginSceneTransition();
+    }
+
+    private bool IsPhaseAllowed()
+    {
+        if (!restrictByPhase)
+            return true;
+
+        var gsm = GameStateManager.Instance;
+        if (gsm == null)
+            return true;
+
+        if (gsm.CurrentPhase == DayNightPhase.Day)
+            return allowInDay;
+
+        if (gsm.CurrentPhase == DayNightPhase.Night)
+            return allowInNight;
+
+        return true;
+    }
+
+    private void PushDenyFeedback(GameObject interactor)
+    {
+        if (!showDenyMessage)
+            return;
+
+        string msg = string.IsNullOrWhiteSpace(denyMessageByPhase) ? "Cannot travel now." : denyMessageByPhase;
+
+        var inv = interactor != null ? interactor.GetComponentInParent<PlayerResourceInventory>() : null;
+        if (inv == null) inv = PlayerResourceInventory.Instance;
+
+        if (inv != null)
+        {
+            inv.PushMessage(msg);
+            return;
+        }
+
+        Debug.Log(msg);
     }
 
     private void BeginSceneTransition()
