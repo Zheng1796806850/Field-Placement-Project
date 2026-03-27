@@ -31,6 +31,7 @@ public class PauseMenuController : MonoBehaviour
     [SerializeField] private float minimumLoadingScreenTime = 0.25f;
 
     private bool _isOpen;
+    private bool _pausedByThisMenu;
 
     private bool _prevCursorVisible;
     private CursorLockMode _prevCursorLock;
@@ -69,10 +70,37 @@ public class PauseMenuController : MonoBehaviour
             tutorialPanelController.OnTutorialCompleted += HandleTutorialCompleted;
     }
 
+    private void OnDisable()
+    {
+        // Safety: if this pause menu gets disabled during a phase/UI swap while it paused the game,
+        // we must restore time and input. Otherwise the game can remain frozen with no visible menu.
+        ForceUnpauseIfNeeded();
+    }
+
     private void OnDestroy()
     {
+        ForceUnpauseIfNeeded();
         if (tutorialPanelController != null)
             tutorialPanelController.OnTutorialCompleted -= HandleTutorialCompleted;
+    }
+
+    private void ForceUnpauseIfNeeded()
+    {
+        if (!_pausedByThisMenu)
+            return;
+
+        _pausedByThisMenu = false;
+        _isOpen = false;
+
+        var gsm = GameStateManager.Instance;
+        if (gsm != null)
+            gsm.SetPaused(false);
+        else
+            Time.timeScale = 1f;
+
+        // Best-effort restore of input/cursor in case we paused.
+        RestorePlayerInput();
+        ApplyCursorForPause(false);
     }
 
     private void ApplyCanvasGroupVisible(bool visible)
@@ -150,6 +178,7 @@ public class PauseMenuController : MonoBehaviour
 
         var gsm = GameStateManager.Instance;
         _isOpen = true;
+        _pausedByThisMenu = true;
 
         // Pause first to freeze gameplay time.
         if (gsm != null)
@@ -168,6 +197,7 @@ public class PauseMenuController : MonoBehaviour
         if (!_isOpen) return;
 
         _isOpen = false;
+        _pausedByThisMenu = false;
 
         var gsm = GameStateManager.Instance;
         // Restore time.

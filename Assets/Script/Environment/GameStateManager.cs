@@ -29,6 +29,7 @@ public class GameStateManager : MonoBehaviour
     public bool enableDebugHotkeys = true;
     public KeyCode togglePhaseKey = KeyCode.F1;
     public KeyCode pauseKey = KeyCode.F2;
+    public bool logPauseStateChanges = false;
 
     public DayNightPhase CurrentPhase { get; private set; }
     public float PhaseTimeRemaining { get; private set; }
@@ -147,6 +148,11 @@ public class GameStateManager : MonoBehaviour
 
     public void SetPaused(bool paused)
     {
+        if (logPauseStateChanges && IsPaused != paused)
+        {
+            Debug.Log($"[GameStateManager] SetPaused({paused}) called.\n{System.Environment.StackTrace}");
+        }
+
         IsPaused = paused;
 
         Time.timeScale = paused ? 0f : 1f;
