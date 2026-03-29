@@ -14,6 +14,7 @@ public static class SceneTransitionContext
     public static int HealthCurrent { get; private set; } = -1;
     public static float Hunger { get; private set; } = -1f;
     public static float Thirst { get; private set; } = -1f;
+    public static bool ForceInvokePhaseStartEventOnRestore { get; private set; }
 
     public static void Prepare(string entryPointId, bool carryClock, bool carryPlayerVitals)
     {
@@ -22,6 +23,7 @@ public static class SceneTransitionContext
 
         ClearClockSnapshot();
         ClearPlayerVitalsSnapshot();
+        ForceInvokePhaseStartEventOnRestore = false;
 
         if (carryClock)
             CaptureClockSnapshot();
@@ -54,10 +56,26 @@ public static class SceneTransitionContext
 
     public static void Clear()
     {
-        HasPendingEntryRoute = false;
-        EntryPointId = "";
+        ClearEntryRoute();
         ClearClockSnapshot();
         ClearPlayerVitalsSnapshot();
+        ForceInvokePhaseStartEventOnRestore = false;
+    }
+
+    public static void ClearEntryRoute()
+    {
+        HasPendingEntryRoute = false;
+        EntryPointId = "";
+    }
+
+    public static void ClearPlayerVitals()
+    {
+        ClearPlayerVitalsSnapshot();
+    }
+
+    public static void RequestPhaseStartEventOnRestore()
+    {
+        ForceInvokePhaseStartEventOnRestore = true;
     }
 
     private static void CaptureClockSnapshot()
@@ -74,8 +92,20 @@ public static class SceneTransitionContext
 
     private static void CapturePlayerVitalsSnapshot()
     {
-        var health = Object.FindFirstObjectByType<Health>();
-        var vitals = Object.FindFirstObjectByType<PlayerHungerThirst>();
+        Transform player = ResolvePlayerTransform();
+        Health health = null;
+        PlayerHungerThirst vitals = null;
+
+        if (player != null)
+        {
+            health = player.GetComponent<Health>();
+            if (health == null)
+                health = player.GetComponentInChildren<Health>(true);
+
+            vitals = player.GetComponent<PlayerHungerThirst>();
+            if (vitals == null)
+                vitals = player.GetComponentInChildren<PlayerHungerThirst>(true);
+        }
 
         HasPlayerVitalsSnapshot = health != null || vitals != null;
 
@@ -103,5 +133,22 @@ public static class SceneTransitionContext
         HealthCurrent = -1;
         Hunger = -1f;
         Thirst = -1f;
+    }
+
+    private static Transform ResolvePlayerTransform()
+    {
+        GameObject byTag = GameObject.FindGameObjectWithTag("Player");
+        if (byTag != null)
+            return byTag.transform;
+
+        var movement = Object.FindFirstObjectByType<PlayerMovementController>(FindObjectsInactive.Exclude);
+        if (movement != null)
+            return movement.transform;
+
+        var vitals = Object.FindFirstObjectByType<PlayerHungerThirst>(FindObjectsInactive.Exclude);
+        if (vitals != null)
+            return vitals.transform.root;
+
+        return null;
     }
 }

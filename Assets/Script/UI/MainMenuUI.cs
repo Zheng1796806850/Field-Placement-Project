@@ -59,6 +59,8 @@ public class MainMenuUI : MonoBehaviour
     public bool resetAudioPauseOnOpen = true;
     public bool resetPersistentInventoryToDefaults = false;
     public bool clearInventorySaveOnStart = false;
+    [Tooltip("Increment Base world run id so PlayerPrefs for wells/collectors use a fresh key (recommended for new game from menu). Disable to keep same Base run across menu restarts.")]
+    public bool advanceBaseWorldRunOnStart = true;
     public UnityEvent onBeforeStartLoad;
     public UnityEvent onAfterButtonsLocked;
 
@@ -271,6 +273,9 @@ public class MainMenuUI : MonoBehaviour
 
     private void RunStartInitialization()
     {
+        if (advanceBaseWorldRunOnStart)
+            BaseWorldSession.AdvanceRunGeneration();
+
         var inventory = PlayerResourceInventory.Instance;
         if (inventory == null)
             return;

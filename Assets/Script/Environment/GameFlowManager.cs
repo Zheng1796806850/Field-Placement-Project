@@ -49,6 +49,7 @@ public class GameFlowManager : MonoBehaviour
     {
         TrySubscribe();
         WireSpawnerToTracker();
+        SyncNightWaveStateOnSceneStart();
 
         if (resourceInventory == null)
             resourceInventory = PlayerResourceInventory.Instance;
@@ -98,6 +99,25 @@ public class GameFlowManager : MonoBehaviour
             if (waveSpawner.waveConfig == null)
                 waveSpawner.waveConfig = waveProgress.waveConfig;
         }
+    }
+
+    private void SyncNightWaveStateOnSceneStart()
+    {
+        if (HasEnded) return;
+
+        if (gameStateManager == null)
+            gameStateManager = GameStateManager.Instance != null ? GameStateManager.Instance : FindFirstObjectByType<GameStateManager>();
+
+        if (waveProgress == null)
+            waveProgress = FindFirstObjectByType<WaveProgressTracker>();
+
+        if (gameStateManager == null || waveProgress == null)
+            return;
+
+        // When scene restored directly into Night, some listeners may miss OnNightStarted
+        // due to script start order. Compensate by starting wave once if needed.
+        if (gameStateManager.CurrentPhase == DayNightPhase.Night && !waveProgress.waveInProgress)
+            waveProgress.StartNextWave();
     }
 
     private void HandleNightStarted()

@@ -702,6 +702,9 @@ public class PlayerWallPlacementController : MonoBehaviour
         Vector3 spawnPos = world + _activeConfig.builtWorldOffset;
         var go = Instantiate(_activeConfig.wallPrefab, spawnPos, Quaternion.identity);
 
+        var placedMarker = go.GetComponent<PlayerPlacedWall>() ?? go.AddComponent<PlayerPlacedWall>();
+        placedMarker.SetPlacement(_activeConfig.wallPlacementId, cell);
+
         var wall = go.GetComponentInChildren<WoodenWallDurability>(true);
         if (wall != null)
             wall.SetPlacementCostEquivalent(_activeConfig.placementCost);

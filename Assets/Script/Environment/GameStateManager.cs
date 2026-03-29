@@ -23,7 +23,8 @@ public class GameStateManager : MonoBehaviour
 
     [Header("Transition Restore")]
     public bool restorePhaseFromSceneTransition = true;
-    public bool invokePhaseEventsOnRestore = true;
+    [Tooltip("If false, OnDayStarted/OnNightStarted are not fired when restoring phase from scene transition (avoids double-advancing crops/waves).")]
+    public bool invokePhaseEventsOnRestore = false;
 
     [Header("Debug Hotkeys")]
     public bool enableDebugHotkeys = true;
@@ -50,7 +51,8 @@ public class GameStateManager : MonoBehaviour
     {
         if (restorePhaseFromSceneTransition && SceneTransitionContext.TryGetClockSnapshot(out var phase, out var timeRemaining, out var elapsed))
         {
-            ApplyPhaseState(phase, timeRemaining, elapsed, invokePhaseEventsOnRestore);
+            bool invokePhaseStartEvents = invokePhaseEventsOnRestore || SceneTransitionContext.ForceInvokePhaseStartEventOnRestore;
+            ApplyPhaseState(phase, timeRemaining, elapsed, invokePhaseStartEvents);
             return;
         }
 

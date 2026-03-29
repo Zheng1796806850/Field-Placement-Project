@@ -36,7 +36,8 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
 
     [Header("State Carryover")]
     public bool carryPlayerVitals = true;
-    public bool carryDayNightPhase = false;
+    [Tooltip("Keep shared day/night timer when switching Base <-> Town (SceneTransitionContext clock snapshot).")]
+    public bool carryDayNightPhase = true;
 
     [Header("Phase Access Restriction")]
     public bool restrictByPhase = false;
@@ -169,6 +170,8 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
 
     private void BeginSceneTransition()
     {
+        BaseConstructionSnapshotCollector.CaptureFromSceneIfBase();
+
         SceneTransitionContext.Prepare(targetEntryPointId, carryDayNightPhase, carryPlayerVitals);
 
         if (useLoadingScene)

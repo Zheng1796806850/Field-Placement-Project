@@ -1,4 +1,5 @@
 using System;
+using Pathfinding;
 using UnityEngine;
 
 public enum WallBuildState
@@ -159,6 +160,98 @@ public class WoodenWallDurability : MonoBehaviour, IInteractable
     public void SetPlacementCostEquivalent(int cost)
     {
         planksCostEquivalent = Mathf.Max(0, cost);
+    }
+
+    public float GetRubbleTimeRemainingForSnapshot()
+    {
+        if (state != WallBuildState.Rubble) return -1f;
+        return _rubbleTimer;
+    }
+
+    public void ApplyRestoredPlacementState(WallBuildState restoredState, int currentHp, int maxHp, float rubbleTimeRemaining)
+    {
+        if (health == null) health = GetComponent<Health>();
+        if (wallDeathHandler == null) wallDeathHandler = GetComponent<WallDeathHandler>();
+
+        int resolvedMax = maxHp > 0 ? maxHp : Mathf.Max(1, wallMaxHP);
+        if (health != null && overrideHealthMaxOnAwake)
+            health.SetMaxHP(resolvedMax, false);
+
+        state = restoredState;
+        _rubbleTimer = -1f;
+
+        if (restoredState == WallBuildState.Built)
+        {
+            if (health != null)
+            {
+                int hp = Mathf.Clamp(currentHp, 1, Mathf.Max(1, health.maxHP));
+                health.Revive(hp);
+            }
+
+            ApplyStateVisuals();
+
+            if (wallDeathHandler != null)
+                wallDeathHandler.RestoreBlockingState();
+            else
+                RefreshGraphsFallback();
+
+            OnStateChanged?.Invoke(state);
+            return;
+        }
+
+        if (restoredState == WallBuildState.Rubble)
+        {
+            if (health != null)
+                health.SetRubbleDeadStateWithoutDiedEvent();
+
+            if (rubbleLifetimeSeconds > 0f)
+                _rubbleTimer = rubbleTimeRemaining >= 0f ? rubbleTimeRemaining : rubbleLifetimeSeconds;
+            else
+                _rubbleTimer = -1f;
+
+            ApplyStateVisuals();
+
+            if (wallDeathHandler != null)
+                wallDeathHandler.EnterDestroyedState();
+
+            OnStateChanged?.Invoke(state);
+            return;
+        }
+
+        if (restoredState == WallBuildState.Removed)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void RefreshGraphsFallback()
+    {
+        if (AstarPath.active == null) return;
+
+        var cols = GetComponentsInChildren<Collider2D>(true);
+        Bounds b = new Bounds(transform.position, Vector3.zero);
+        bool hasBounds = false;
+
+        for (int i = 0; i < cols.Length; i++)
+        {
+            var c = cols[i];
+            if (c == null) continue;
+            if (!c.enabled) continue;
+            if (c.isTrigger) continue;
+
+            if (!hasBounds)
+            {
+                b = c.bounds;
+                hasBounds = true;
+            }
+            else b.Encapsulate(c.bounds);
+        }
+
+        if (!hasBounds) return;
+
+        b.Expand(0.5f);
+        AstarPath.active.UpdateGraphs(b);
+        AstarPath.active.FlushGraphUpdates();
     }
 
     public void ApplyWallDamage(int amount)

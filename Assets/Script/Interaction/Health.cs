@@ -113,4 +113,11 @@ public class Health : MonoBehaviour
         currentHP = maxHP;
         OnHealthChanged?.Invoke(currentHP, maxHP);
     }
+
+    public void SetRubbleDeadStateWithoutDiedEvent()
+    {
+        dead = true;
+        currentHP = 0;
+        OnHealthChanged?.Invoke(currentHP, maxHP);
+    }
 }

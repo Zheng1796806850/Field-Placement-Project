@@ -77,6 +77,10 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
     public bool useCropSpecificVisualSets = true;
     public List<CropVisualSet> cropVisualSets = new List<CropVisualSet>();
 
+    [Header("Persistence")]
+    [Tooltip("Unique id per plot in Base scene (required for Base <-> Town construction snapshot).")]
+    public string plotId = "";
+
     [Header("Debug")]
     public bool debugLogs = false;
 
@@ -610,6 +614,51 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
     }
 
     public PlotState GetState() => state;
+
+    public FarmlandPlotEntry BuildSnapshotEntry()
+    {
+        return new FarmlandPlotEntry
+        {
+            plotId = plotId,
+            cropId = plantedCrop != null ? plantedCrop.cropId : "",
+            growthDaysCompleted = growthDaysCompleted,
+            wateredSinceLastDayStart = wateredSinceLastDayStart,
+            plotState = (int)state
+        };
+    }
+
+    public void TryApplySnapshotFromTravel(FarmlandPlotEntry e, CropConfigSO[] cropCatalog)
+    {
+        if (e == null) return;
+
+        if (!System.Enum.IsDefined(typeof(PlotState), e.plotState))
+        {
+            ResetPlot();
+            return;
+        }
+
+        var st = (PlotState)e.plotState;
+
+        if (st == PlotState.Empty || string.IsNullOrEmpty(e.cropId))
+        {
+            ResetPlot();
+            return;
+        }
+
+        CropConfigSO crop = CropConfigCatalogUtil.ResolveByCropId(e.cropId, cropCatalog);
+        if (crop == null)
+        {
+            if (debugLogs)
+                Debug.LogWarning($"[FarmlandPlot] Unknown cropId '{e.cropId}' on {name}. Resetting plot.");
+            ResetPlot();
+            return;
+        }
+
+        plantedCrop = crop;
+        growthDaysCompleted = Mathf.Max(0, e.growthDaysCompleted);
+        wateredSinceLastDayStart = e.wateredSinceLastDayStart;
+        SetState(st);
+    }
 
     public void SetState(PlotState newState)
     {

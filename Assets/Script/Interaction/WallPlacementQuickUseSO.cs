@@ -7,6 +7,10 @@ public class WallPlacementQuickUseSO : QuickUseItemSO, IUsableItem
     public GameObject wallPrefab;
     public GameObject previewPrefab;
 
+    [Header("Persistence")]
+    [Tooltip("Stable id for Base <-> Town wall snapshot restore (must match an entry in BaseConstructionSnapshotApplier wall catalog).")]
+    public string wallPlacementId = "wooden_wall_default";
+
     [Header("Build Cost")]
     [Min(0)] public int placementCost = 4;
 

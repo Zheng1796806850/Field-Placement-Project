@@ -97,6 +97,7 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
 
     [Header("Save Settings")]
     public bool autoSaveInventoryOnChange = true;
+    [Tooltip("Local key; actual PlayerPrefs key is scoped per run via BaseWorldSession (see BaseWorldSession / MainMenu advance run).")]
     public string collectorSaveKey = "";
 
     public event Action<bool> OnBuiltChanged;
@@ -143,8 +144,8 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
         bool loadedLegacySave = false;
         bool loadedAnySave = false;
 
-        if (!string.IsNullOrWhiteSpace(collectorSaveKey) && PlayerPrefs.HasKey(collectorSaveKey))
-            loadedAnySave = LoadCollectorState(out loadedLegacySave);
+        if (!string.IsNullOrWhiteSpace(collectorSaveKey))
+            loadedAnySave = TryLoadCollectorStateFromPrefs(out loadedLegacySave);
 
         InitializeRuntimeState(loadedAnySave, loadedLegacySave);
         ClampRuntimeAndBroadcast();
@@ -334,6 +335,11 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
     {
         currentDurability = Mathf.Clamp(amount, 0, MaxDurability);
         BroadcastDurability();
+        SaveCollectorStateIfEnabled();
+    }
+
+    public void ForcePersistRuntimeState()
+    {
         SaveCollectorStateIfEnabled();
     }
 
@@ -894,6 +900,8 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
     {
         if (string.IsNullOrWhiteSpace(collectorSaveKey)) return;
 
+        string prefsKey = BaseWorldSession.ScopePlayerPrefsKey(collectorSaveKey);
+
         string data = string.Join("|",
             isBuilt ? "1" : "0",
             storedWater.ToString(CultureInfo.InvariantCulture),
@@ -902,17 +910,44 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
             _secTimer.ToString(CultureInfo.InvariantCulture),
             _durabilityTimer.ToString(CultureInfo.InvariantCulture));
 
-        PlayerPrefs.SetString(collectorSaveKey, data);
+        PlayerPrefs.SetString(prefsKey, data);
         PlayerPrefs.Save();
     }
 
-    private bool LoadCollectorState(out bool loadedLegacySave)
+    private bool TryLoadCollectorStateFromPrefs(out bool loadedLegacySave)
+    {
+        loadedLegacySave = false;
+
+        if (string.IsNullOrWhiteSpace(collectorSaveKey))
+            return false;
+
+        string scopedKey = BaseWorldSession.ScopePlayerPrefsKey(collectorSaveKey);
+
+        if (PlayerPrefs.HasKey(scopedKey))
+            return ParseCollectorPayload(PlayerPrefs.GetString(scopedKey, ""), out loadedLegacySave);
+
+        if (PlayerPrefs.HasKey(collectorSaveKey))
+        {
+            bool ok = ParseCollectorPayload(PlayerPrefs.GetString(collectorSaveKey, ""), out loadedLegacySave);
+            if (ok)
+            {
+                PlayerPrefs.DeleteKey(collectorSaveKey);
+                SaveCollectorStateIfEnabled();
+                PlayerPrefs.Save();
+            }
+
+            return ok;
+        }
+
+        return false;
+    }
+
+    private bool ParseCollectorPayload(string data, out bool loadedLegacySave)
     {
         loadedLegacySave = false;
 
         try
         {
-            string data = PlayerPrefs.GetString(collectorSaveKey, "");
             if (string.IsNullOrWhiteSpace(data))
                 return false;
 

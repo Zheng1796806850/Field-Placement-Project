@@ -23,6 +23,7 @@ public class WaveSpawnController2D : MonoBehaviour
     public bool logSpawn = true;
 
     private bool _subscribed;
+    private float _nextRetryTime;
 
     private void Awake()
     {
@@ -40,6 +41,22 @@ public class WaveSpawnController2D : MonoBehaviour
 
     private void Start()
     {
+        if (waveProgress == null)
+            waveProgress = FindFirstObjectByType<WaveProgressTracker>();
+
+        if (waveConfig == null && waveProgress != null)
+            waveConfig = waveProgress.waveConfig;
+
+        TrySubscribe();
+    }
+
+    private void Update()
+    {
+        if (_subscribed) return;
+        if (Time.unscaledTime < _nextRetryTime) return;
+
+        _nextRetryTime = Time.unscaledTime + 0.5f;
+
         if (waveProgress == null)
             waveProgress = FindFirstObjectByType<WaveProgressTracker>();
 

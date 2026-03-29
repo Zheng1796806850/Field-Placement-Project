@@ -40,7 +40,10 @@ public class SceneSpawnRouter : MonoBehaviour
         }
 
         if (clearTransitionContextAfterApply)
-            SceneTransitionContext.Clear();
+        {
+            SceneTransitionContext.ClearEntryRoute();
+            SceneTransitionContext.ClearPlayerVitals();
+        }
     }
 
     public bool TryApply()
@@ -67,7 +70,10 @@ public class SceneSpawnRouter : MonoBehaviour
         applied = true;
 
         if (clearTransitionContextAfterApply)
-            SceneTransitionContext.Clear();
+        {
+            SceneTransitionContext.ClearEntryRoute();
+            SceneTransitionContext.ClearPlayerVitals();
+        }
 
         return true;
     }
@@ -88,9 +94,9 @@ public class SceneSpawnRouter : MonoBehaviour
         if (movement != null)
             return movement.transform;
 
-        var health = Object.FindFirstObjectByType<Health>();
-        if (health != null)
-            return health.transform;
+        var vitals = Object.FindFirstObjectByType<PlayerHungerThirst>();
+        if (vitals != null)
+            return vitals.transform.root;
 
         return null;
     }
@@ -142,8 +148,6 @@ public class SceneSpawnRouter : MonoBehaviour
         Health health = player.GetComponent<Health>();
         if (health == null)
             health = player.GetComponentInChildren<Health>();
-        if (health == null)
-            health = Object.FindFirstObjectByType<Health>();
 
         if (health != null && healthCurrent >= 0)
             health.SetCurrentHP(healthCurrent, true);
@@ -151,8 +155,6 @@ public class SceneSpawnRouter : MonoBehaviour
         PlayerHungerThirst vitals = player.GetComponent<PlayerHungerThirst>();
         if (vitals == null)
             vitals = player.GetComponentInChildren<PlayerHungerThirst>();
-        if (vitals == null)
-            vitals = Object.FindFirstObjectByType<PlayerHungerThirst>();
 
         if (vitals != null)
         {

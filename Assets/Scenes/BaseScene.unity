@@ -4254,6 +4254,58 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e44703cebc2d97646936b1d4025741a6, type: 3}
+--- !u!1 &280618522
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 280618524}
+  - component: {fileID: 280618523}
+  m_Layer: 0
+  m_Name: _BaseConstructionState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &280618523
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 280618522}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a9eefdd641ad6049b445a5a8b33f316, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BaseConstructionSnapshotApplier
+  baseSceneName: BaseScene
+  cropCatalog:
+  - {fileID: 11400000, guid: 9425a4c62cd17d14789580ee8683918c, type: 2}
+  - {fileID: 11400000, guid: 61ffb65f0185a40498421468102523f3, type: 2}
+  - {fileID: 11400000, guid: 35603f28268456740be5fdc9f9646473, type: 2}
+  wallCatalog:
+  - {fileID: 11400000, guid: 7799e5af29d48de4aa8b14a2f945c10a, type: 2}
+  applyDelayFrames: 1
+--- !u!4 &280618524
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 280618522}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.60423, y: 0.25667, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &283667662
 GameObject:
   m_ObjectHideFlags: 0
@@ -5839,12 +5891,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 972274430916fe143a8d93cabb1a8f1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameStateManager
-  dayDuration: 25
+  dayDuration: 50
   nightDuration: 25
   useUnscaledTime: 0
   startPhase: 0
   restorePhaseFromSceneTransition: 1
-  invokePhaseEventsOnRestore: 1
+  invokePhaseEventsOnRestore: 0
   enableDebugHotkeys: 1
   togglePhaseKey: 282
   pauseKey: 283
@@ -15561,6 +15613,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 21457639}
     m_Modifications:
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: plotId
+      value: plot_02
+      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01 (3)
@@ -61358,6 +61414,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 21457639}
     m_Modifications:
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: plotId
+      value: plot_04
+      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01 (4)
@@ -62627,6 +62687,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 21457639}
     m_Modifications:
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: plotId
+      value: plot_06
+      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01 (5)
@@ -63795,6 +63859,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 21457639}
     m_Modifications:
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: plotId
+      value: plot_05
+      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01 (2)
@@ -139027,6 +139095,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 21457639}
     m_Modifications:
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: plotId
+      value: plot_03
+      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01 (1)
@@ -139123,7 +139195,7 @@ MonoBehaviour:
   readyPrompt: Click Anywhere To Enter Town
   minimumLoadingScreenTime: 0.35
   carryPlayerVitals: 1
-  carryDayNightPhase: 0
+  carryDayNightPhase: 1
   restrictByPhase: 1
   allowInDay: 1
   allowInNight: 0
@@ -141163,6 +141235,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 21457639}
     m_Modifications:
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: plotId
+      value: plot_01
+      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01
@@ -141224,6 +141300,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterCollectorSpot
       objectReference: {fileID: 0}
+    - target: {fileID: 6180384242341235040, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: collectorSaveKey
+      value: wc_base_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 6180384242341235040, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: autoSaveInventoryOnChange
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6670492750611669669, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_Size.y
+      value: 1.5219045
+      objectReference: {fileID: 0}
+    - target: {fileID: 6670492750611669669, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_Offset.y
+      value: -0.26095223
+      objectReference: {fileID: 0}
     - target: {fileID: 7545031342684364423, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_LocalPosition.x
       value: -16.001
@@ -141264,6 +141356,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8172046086833336466, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.77
+      objectReference: {fileID: 0}
+    - target: {fileID: 8172046086833336466, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 2.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 8172046086833336466, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 1.35
+      objectReference: {fileID: 0}
+    - target: {fileID: 8810137269250272090, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -141286,6 +141394,7 @@ SceneRoots:
   - {fileID: 429581809}
   - {fileID: 909449144}
   - {fileID: 1468649198}
+  - {fileID: 280618524}
   - {fileID: 728446062}
   - {fileID: 1330362786}
   - {fileID: 1553689923}
