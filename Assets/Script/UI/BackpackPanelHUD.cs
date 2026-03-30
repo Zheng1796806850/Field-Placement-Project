@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -37,8 +38,13 @@ public class BackpackPanelHUD : MonoBehaviour
     public bool openOnStart = false;
     public bool saveInventoryAfterReorder = true;
 
+    public event Action<bool> OnPanelVisibilityChanged;
+    public event Action<int, int> OnDisplayOrderReordered;
+
     private readonly List<BackpackSlotUI> _slots = new List<BackpackSlotUI>();
     private float _nextRefreshTime;
+    private bool _lastVisibleState;
+    public bool IsOpen => panelRoot != null && panelRoot.activeSelf;
 
     private void Awake()
     {
@@ -46,6 +52,8 @@ public class BackpackPanelHUD : MonoBehaviour
 
         if (panelRoot != null)
             panelRoot.SetActive(openOnStart);
+
+        _lastVisibleState = IsOpen;
 
         Refresh();
     }
@@ -70,6 +78,8 @@ public class BackpackPanelHUD : MonoBehaviour
     {
         if (enableToggleKey && Input.GetKeyDown(toggleKey))
             Toggle();
+
+        EmitPanelVisibilityIfChanged();
 
         if (!refreshWhileVisible) return;
         if (panelRoot == null || !panelRoot.activeInHierarchy) return;
@@ -103,7 +113,17 @@ public class BackpackPanelHUD : MonoBehaviour
     {
         if (panelRoot == null) return;
         panelRoot.SetActive(!panelRoot.activeSelf);
+        EmitPanelVisibilityIfChanged(force: true);
         if (panelRoot.activeSelf) Refresh();
+    }
+
+    public void SetPanelVisible(bool visible)
+    {
+        if (panelRoot == null) return;
+        if (panelRoot.activeSelf == visible) return;
+        panelRoot.SetActive(visible);
+        EmitPanelVisibilityIfChanged(force: true);
+        if (visible) Refresh();
     }
 
     public void Refresh()
@@ -172,7 +192,17 @@ public class BackpackPanelHUD : MonoBehaviour
         if (saveInventoryAfterReorder)
             inventory.SaveInMemory();
 
+        OnDisplayOrderReordered?.Invoke(fromSlotIndex, toSlotIndex);
+
         Refresh();
+    }
+
+    private void EmitPanelVisibilityIfChanged(bool force = false)
+    {
+        bool now = IsOpen;
+        if (!force && now == _lastVisibleState) return;
+        _lastVisibleState = now;
+        OnPanelVisibilityChanged?.Invoke(now);
     }
 
     private void EnsureSlotObjects(int targetCount)

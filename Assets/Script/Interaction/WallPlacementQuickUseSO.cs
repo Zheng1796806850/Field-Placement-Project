@@ -64,17 +64,9 @@ public class WallPlacementQuickUseSO : QuickUseItemSO, IUsableItem
                 return false;
             }
 
-            if (placementCost > 0 && !context.inventory.CanSpend(resourceType, placementCost))
-            {
-                if (showFailMessage)
-                {
-                    string msg = !string.IsNullOrWhiteSpace(insufficientMessageOverride)
-                        ? insufficientMessageOverride
-                        : $"Not enough {resourceType}";
-                    context.pushMessage?.Invoke(msg);
-                }
-                return false;
-            }
+            // Do not require full placementCost to open placement mode — only to start a build.
+            // Otherwise after placing one wall the player cannot re-enter with leftover materials
+            // (e.g. tutorial gives 5 planks, cost 4 → 1 left and TogglePlacement would always fail).
         }
 
         return controller.TogglePlacement(this, context);

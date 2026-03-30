@@ -57,9 +57,19 @@ public class PlayerWallPlacementController : MonoBehaviour
     private bool _previewInRange;
     private bool _interactorPreviousEnabled = true;
     private bool _combatBlockApplied;
+    private bool _suppressAutoResolveGrid;
 
     public bool IsPlacementModeActive => _placementActive && _activeConfig != null;
     public bool IsActiveWith(WallPlacementQuickUseSO config) => IsPlacementModeActive && _activeConfig == config;
+
+    /// <summary>
+    /// Tutorial (or other systems) can pin a Grid and block FindFirstObjectByType from replacing it each frame.
+    /// </summary>
+    public void SetGridForTutorial(Grid gridValue, bool suppressAutoResolve)
+    {
+        _suppressAutoResolveGrid = suppressAutoResolve;
+        grid = gridValue;
+    }
 
     private void Awake()
     {
@@ -98,6 +108,10 @@ public class PlayerWallPlacementController : MonoBehaviour
     public bool TogglePlacement(WallPlacementQuickUseSO config, UseContext context)
     {
         if (config == null) return false;
+
+        if (timedAction != null && timedAction.IsBusy)
+            timedAction.CancelActive();
+        _buildInProgress = false;
 
         if (IsActiveWith(config))
         {
@@ -195,11 +209,21 @@ public class PlayerWallPlacementController : MonoBehaviour
 
         if (pushMessage && !string.IsNullOrWhiteSpace(message))
             PushMessage(message);
+
+        SyncTutorialGateAfterPlacementExit();
+    }
+
+    private static void SyncTutorialGateAfterPlacementExit()
+    {
+        var mgr = Object.FindFirstObjectByType<TutorialManager>(FindObjectsInactive.Include);
+        var gate = Object.FindFirstObjectByType<TutorialAbilityGate>(FindObjectsInactive.Include);
+        if (mgr == null || gate == null) return;
+        gate.RefreshFromStep(mgr.GetCurrentStep());
     }
 
     private void ResolveRefs(GameObject user)
     {
-        if (grid == null)
+        if (grid == null && !_suppressAutoResolveGrid)
             grid = FindFirstObjectByType<Grid>(FindObjectsInactive.Include);
 
         if (placementOrigin == null)

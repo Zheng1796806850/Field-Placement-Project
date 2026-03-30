@@ -42,14 +42,22 @@ public class CameraFollowBounds2D : MonoBehaviour
     {
         currentBounds = bounds;
 
-        if (snapInstant && target != null)
-        {
-            Vector3 desired = target.position + followOffset;
-            if (currentBounds != null)
-                desired = ClampToBounds_Perspective(desired, currentBounds.BoundsWorld);
+        if (snapInstant)
+            SnapToFollowTarget();
+    }
 
-            transform.position = desired;
-        }
+    /// <summary>
+    /// Instantly moves the camera to the follow position for the current target, offset, and bounds.
+    /// </summary>
+    public void SnapToFollowTarget()
+    {
+        if (target == null) return;
+
+        Vector3 desired = target.position + followOffset;
+        if (currentBounds != null)
+            desired = ClampToBounds_Perspective(desired, currentBounds.BoundsWorld);
+
+        transform.position = desired;
     }
 
     private Vector3 ClampToBounds_Perspective(Vector3 camPos, Bounds boundsWorld)

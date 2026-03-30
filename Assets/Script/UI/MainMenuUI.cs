@@ -65,7 +65,21 @@ public class MainMenuUI : MonoBehaviour
     public UnityEvent onAfterButtonsLocked;
 
     [Header("Tutorial")]
-    public bool useTutorialOnStart = true;
+    [Tooltip("If assigned, Start opens this panel first (Yes = tutorial scene, No = gameplay).")]
+    public GameObject tutorialChoicePanel;
+    public Button tutorialChoiceYesButton;
+    public Button tutorialChoiceNoButton;
+    [Tooltip("Child object shown on hover (same role as Button Visuals → Selected Root on Start/Settings).")]
+    public GameObject tutorialChoiceYesSelectedRoot;
+    [Tooltip("Child object shown on hover for the No button.")]
+    public GameObject tutorialChoiceNoSelectedRoot;
+    [Tooltip("Scene to load when the player chooses tutorial (e.g. TutorialScene).")]
+    public string tutorialSceneName = "TutorialScene";
+    public int tutorialSceneBuildIndex = -1;
+    [Tooltip("Local collectorSaveKey values from WaterCollectorBuildSpot prefabs (e.g. wc_base_01). Cleared on every new game start.")]
+    public List<string> waterCollectorLocalSaveKeysToClear = new List<string> { "wc_base_01" };
+    [Tooltip("Legacy: in-menu slideshow before load when no choice panel is used.")]
+    public bool useTutorialOnStart = false;
     public TutorialPanelController tutorialPanelController;
 
     [Header("Settings")]
@@ -82,6 +96,8 @@ public class MainMenuUI : MonoBehaviour
 
     [Header("Runtime")]
     public bool isBusy;
+
+    private bool _tutorialChoiceOpen;
 
     private readonly Dictionary<RectTransform, Vector3> baseScales = new Dictionary<RectTransform, Vector3>();
     private readonly List<RaycastResult> raycastResults = new List<RaycastResult>(16);
@@ -126,6 +142,12 @@ public class MainMenuUI : MonoBehaviour
     {
         if (!isBusy && quitOnEscape && quitKey != KeyCode.None && Input.GetKeyDown(quitKey))
         {
+            if (tutorialChoicePanel != null && tutorialChoicePanel.activeSelf)
+            {
+                CloseTutorialChoicePanel();
+                return;
+            }
+
             if (settingsPanel != null && settingsPanel.activeSelf)
             {
                 CloseSettings();
@@ -147,7 +169,7 @@ public class MainMenuUI : MonoBehaviour
 
     public void StartGame()
     {
-        if (isBusy)
+        if (isBusy || _tutorialChoiceOpen)
             return;
 
         if (!CanLoadGameplayScene())
@@ -162,7 +184,70 @@ public class MainMenuUI : MonoBehaviour
             return;
         }
 
-        StartCoroutine(StartGameRoutine());
+        if (tutorialChoicePanel != null)
+        {
+            OpenTutorialChoicePanel();
+            return;
+        }
+
+        StartCoroutine(StartGameRoutine(enterTutorialLevel: false));
+    }
+
+    public void OpenTutorialChoicePanel()
+    {
+        if (tutorialChoicePanel == null || _tutorialChoiceOpen)
+            return;
+
+        _tutorialChoiceOpen = true;
+
+        if (settingsPanel != null)
+            settingsPanel.SetActive(false);
+
+        if (creditsPanel != null)
+            creditsPanel.SetActive(false);
+
+        if (mainMenuPanel != null && hideMainMenuWhenSubPanelOpen)
+            mainMenuPanel.SetActive(false);
+
+        tutorialChoicePanel.SetActive(true);
+
+        if (selectDefaultOnEnable && EventSystem.current != null && tutorialChoiceYesButton != null)
+            EventSystem.current.SetSelectedGameObject(tutorialChoiceYesButton.gameObject);
+    }
+
+    public void CloseTutorialChoicePanel()
+    {
+        if (tutorialChoicePanel != null)
+            tutorialChoicePanel.SetActive(false);
+
+        if (mainMenuPanel != null && hideMainMenuWhenSubPanelOpen)
+            mainMenuPanel.SetActive(true);
+
+        _tutorialChoiceOpen = false;
+    }
+
+    public void OnTutorialChoiceYes()
+    {
+        if (!_tutorialChoiceOpen || isBusy)
+            return;
+
+        if (!CanLoadTutorialScene())
+        {
+            Debug.LogError("[MainMenuUI] Tutorial scene is not configured or not found in Build Settings.");
+            return;
+        }
+
+        CloseTutorialChoicePanel();
+        StartCoroutine(StartGameRoutine(enterTutorialLevel: true));
+    }
+
+    public void OnTutorialChoiceNo()
+    {
+        if (!_tutorialChoiceOpen || isBusy)
+            return;
+
+        CloseTutorialChoicePanel();
+        StartCoroutine(StartGameRoutine(enterTutorialLevel: false));
     }
 
     public void OpenSettings()
@@ -239,7 +324,7 @@ public class MainMenuUI : MonoBehaviour
 #endif
     }
 
-    private IEnumerator StartGameRoutine()
+    private IEnumerator StartGameRoutine(bool enterTutorialLevel)
     {
         isBusy = true;
         SetButtonsInteractable(false);
@@ -247,7 +332,11 @@ public class MainMenuUI : MonoBehaviour
 
         ApplyOpenState();
 
-        if (useTutorialOnStart && tutorialPanelController != null)
+        BaseWorldSession.DeleteWaterCollectorKeysForAllRuns(waterCollectorLocalSaveKeysToClear);
+
+        // If we use the Yes/No tutorial panel, never run the legacy in-menu slideshow on "No" — it can stay incomplete forever and block loading.
+        bool skipMenuTutorialSlideshow = tutorialChoicePanel != null;
+        if (!skipMenuTutorialSlideshow && !enterTutorialLevel && useTutorialOnStart && tutorialPanelController != null)
         {
             tutorialPanelController.BeginTutorial();
             while (tutorialPanelController != null && !tutorialPanelController.IsCompleted)
@@ -259,7 +348,9 @@ public class MainMenuUI : MonoBehaviour
 
         yield return null;
 
-        AsyncOperation op = useLoadingScene ? CreateLoadingFlowOperation() : CreateGameplayLoadOperation();
+        AsyncOperation op = useLoadingScene
+            ? CreateLoadingFlowOperation(enterTutorialLevel)
+            : CreateGameplayLoadOperation(enterTutorialLevel);
         if (op == null)
         {
             isBusy = false;
@@ -290,11 +381,14 @@ public class MainMenuUI : MonoBehaviour
             inventory.ClearSave();
     }
 
-    private AsyncOperation CreateLoadingFlowOperation()
+    private AsyncOperation CreateLoadingFlowOperation(bool enterTutorialLevel)
     {
+        string targetName = enterTutorialLevel ? tutorialSceneName : gameplaySceneName;
+        int targetIndex = enterTutorialLevel ? tutorialSceneBuildIndex : gameplaySceneBuildIndex;
+
         SceneLoadRequest.SetRequest(
-            gameplaySceneName,
-            gameplaySceneBuildIndex,
+            targetName,
+            targetIndex,
             loadSceneMode,
             loadingTitle,
             readyPrompt,
@@ -336,31 +430,34 @@ public class MainMenuUI : MonoBehaviour
         return null;
     }
 
-    private AsyncOperation CreateGameplayLoadOperation()
+    private AsyncOperation CreateGameplayLoadOperation(bool enterTutorialLevel)
     {
-        if (gameplaySceneBuildIndex >= 0)
+        string name = enterTutorialLevel ? tutorialSceneName : gameplaySceneName;
+        int index = enterTutorialLevel ? tutorialSceneBuildIndex : gameplaySceneBuildIndex;
+
+        if (index >= 0)
         {
-            if (gameplaySceneBuildIndex >= SceneManager.sceneCountInBuildSettings)
+            if (index >= SceneManager.sceneCountInBuildSettings)
             {
-                Debug.LogError($"[MainMenuUI] Gameplay scene build index {gameplaySceneBuildIndex} is out of range.");
+                Debug.LogError($"[MainMenuUI] Target scene build index {index} is out of range.");
                 return null;
             }
 
-            return SceneManager.LoadSceneAsync(gameplaySceneBuildIndex, loadSceneMode);
+            return SceneManager.LoadSceneAsync(index, loadSceneMode);
         }
 
-        if (!string.IsNullOrWhiteSpace(gameplaySceneName))
+        if (!string.IsNullOrWhiteSpace(name))
         {
-            if (!Application.CanStreamedLevelBeLoaded(gameplaySceneName))
+            if (!Application.CanStreamedLevelBeLoaded(name))
             {
-                Debug.LogError($"[MainMenuUI] Gameplay scene '{gameplaySceneName}' is not available in Build Settings.");
+                Debug.LogError($"[MainMenuUI] Target scene '{name}' is not available in Build Settings.");
                 return null;
             }
 
-            return SceneManager.LoadSceneAsync(gameplaySceneName, loadSceneMode);
+            return SceneManager.LoadSceneAsync(name, loadSceneMode);
         }
 
-        Debug.LogError("[MainMenuUI] No gameplay scene name or build index configured.");
+        Debug.LogError("[MainMenuUI] No target scene name or build index configured.");
         return null;
     }
 
@@ -371,6 +468,17 @@ public class MainMenuUI : MonoBehaviour
 
         if (!string.IsNullOrWhiteSpace(gameplaySceneName))
             return Application.CanStreamedLevelBeLoaded(gameplaySceneName);
+
+        return false;
+    }
+
+    private bool CanLoadTutorialScene()
+    {
+        if (tutorialSceneBuildIndex >= 0)
+            return tutorialSceneBuildIndex < SceneManager.sceneCountInBuildSettings;
+
+        if (!string.IsNullOrWhiteSpace(tutorialSceneName))
+            return Application.CanStreamedLevelBeLoaded(tutorialSceneName);
 
         return false;
     }
@@ -423,6 +531,18 @@ public class MainMenuUI : MonoBehaviour
             creditsCloseButton.onClick.RemoveListener(CloseCredits);
             creditsCloseButton.onClick.AddListener(CloseCredits);
         }
+
+        if (tutorialChoiceYesButton != null)
+        {
+            tutorialChoiceYesButton.onClick.RemoveListener(OnTutorialChoiceYes);
+            tutorialChoiceYesButton.onClick.AddListener(OnTutorialChoiceYes);
+        }
+
+        if (tutorialChoiceNoButton != null)
+        {
+            tutorialChoiceNoButton.onClick.RemoveListener(OnTutorialChoiceNo);
+            tutorialChoiceNoButton.onClick.AddListener(OnTutorialChoiceNo);
+        }
     }
 
     private void CacheButtonVisuals()
@@ -431,6 +551,11 @@ public class MainMenuUI : MonoBehaviour
         EnsureButtonVisualEntry(settingsButton);
         EnsureButtonVisualEntry(creditsButton);
         EnsureButtonVisualEntry(quitButton);
+
+        EnsureButtonVisualEntry(tutorialChoiceYesButton);
+        EnsureButtonVisualEntry(tutorialChoiceNoButton);
+        AssignSelectedRootForButtonVisual(tutorialChoiceYesButton, tutorialChoiceYesSelectedRoot);
+        AssignSelectedRootForButtonVisual(tutorialChoiceNoButton, tutorialChoiceNoSelectedRoot);
 
         if (defaultSelectedButton == null)
             defaultSelectedButton = startButton != null ? startButton : settingsButton;
@@ -470,6 +595,19 @@ public class MainMenuUI : MonoBehaviour
         });
     }
 
+    private void AssignSelectedRootForButtonVisual(Button button, GameObject selectedRoot)
+    {
+        if (button == null || selectedRoot == null) return;
+
+        for (int i = 0; i < buttonVisuals.Count; i++)
+        {
+            ButtonVisual entry = buttonVisuals[i];
+            if (entry == null || entry.button != button) continue;
+            entry.selectedRoot = selectedRoot;
+            return;
+        }
+    }
+
     private void ApplyOpenState()
     {
         if (resetTimeScaleOnOpen)
@@ -492,6 +630,9 @@ public class MainMenuUI : MonoBehaviour
 
         if (creditsPanel != null)
             creditsPanel.SetActive(false);
+
+        if (tutorialChoicePanel != null)
+            tutorialChoicePanel.SetActive(false);
     }
 
     private void EnsureEventSystem()
