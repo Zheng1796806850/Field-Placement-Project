@@ -48,6 +48,7 @@ public class EnemyAI2D : MonoBehaviour
     public bool breakWallAttackWhenAggroPlayer = true;
 
     [Header("Movement")]
+    [Tooltip("Base move speed on prefab. After wave spawn, final speed = this * wave speedMultiplier unless WaveSpawnController2D disables scaling.")]
     [Min(0f)] public float moveSpeed = 2.0f;
     [Min(0.05f)] public float repathInterval = 0.5f;
     [Min(0.01f)] public float nextWaypointDistance = 0.2f;
@@ -60,8 +61,10 @@ public class EnemyAI2D : MonoBehaviour
 
     [Header("Attack - Timing (seconds)")]
     [Min(0.05f)] public float attackCooldown = 1.0f;
+    [Tooltip("Only used when useAnimationEventForHit is false. When true, damage timing uses AnimEvent_DealDamage only.")]
     [Min(0f)] public float attackWindup = 0.25f;
-    public bool useAnimationEventForHit = false;
+    [Tooltip("When true: use AnimEvent_DealDamage / AnimEvent_AttackFinished; windup scheduling is disabled.")]
+    public bool useAnimationEventForHit = true;
 
     [Header("Blocked Path Wall Breaking")]
     public bool attackWallsOnlyWhenHousePathBlocked = true;
@@ -70,8 +73,19 @@ public class EnemyAI2D : MonoBehaviour
 
     [Header("Animation (Optional)")]
     public Animator animator;
+    public SpriteRenderer spriteRenderer;
+    [Tooltip("Float 0..1: normalized move speed. Drives Move state's animation playback speed (0 = frozen walk pose when no Idle clip).")]
     public string animSpeedParam = "Speed";
     public string animAttackTrigger = "Attack";
+    [Tooltip("Death trigger name on Controller (for reference). Death is forced via Animator.Play(animDeathStateName), not this trigger.")]
+    public string animDeathTrigger = "Death";
+    [Tooltip("State name in Animator Controller to force on death (Animator.Play).")]
+    public string animDeathStateName = "Death";
+    [Tooltip("Seconds after death to Destroy (Health.destroyOnDeath should be off on this prefab).")]
+    [Min(0.05f)] public float destroyAfterDeathDelay = 1.25f;
+    [Tooltip("SfxId played from AnimEvent_PlayEnemyAttackSfx on attack clip.")]
+    public SfxId enemyAttackSfxId = SfxId.Combat_EnemyAttackSwing;
+    [Min(0.001f)] public float flipVelocityThreshold = 0.05f;
 
     [Header("Debug")]
     public bool logStateChanges = false;
@@ -121,17 +135,35 @@ public class EnemyAI2D : MonoBehaviour
 
     private bool _housePathBlocked;
 
+    private Health _health;
+    private bool _deathHandled;
+    private bool _attackCycleActive;
+
+    /// <summary>True = art mirrored (face right). Updated from movement; during Attack from target position (velocity is zero).</summary>
+    private bool _facingRight;
+
     private void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
         _seeker = GetComponent<Seeker>();
         if (animator == null) animator = GetComponent<Animator>();
+        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+
+        _health = GetComponent<Health>();
+        if (_health != null)
+            _health.OnDied += HandleHealthDied;
 
         CaptureBaseIfNeeded();
         ResolveSensorRefs();
 
         if (sensorTrigger == null)
             Debug.LogWarning($"{name}: sensorTrigger is not assigned");
+    }
+
+    private void OnDestroy()
+    {
+        if (_health != null)
+            _health.OnDied -= HandleHealthDied;
     }
 
     private void OnEnable()
@@ -145,10 +177,15 @@ public class EnemyAI2D : MonoBehaviour
         SetState(State.MoveToGoal);
         _nextRepathTime = 0f;
         _housePathBlocked = false;
+
+        _attackCycleActive = false;
+        if (_health != null && !_health.dead)
+            _deathHandled = false;
     }
 
     private void OnDisable()
     {
+        CancelInvoke(nameof(DelayedDestroyEnemy));
         if (_rb != null) _rb.linearVelocity = Vector2.zero;
     }
 
@@ -210,33 +247,39 @@ public class EnemyAI2D : MonoBehaviour
         bool wallInAttackRange = _attackTargetCol != null && IsWallCollider(_attackTargetCol) && IsTargetInsideAttackSensor(_attackTargetCol);
         bool coreInAttackRange = _attackTargetCol != null && IsCoreCollider(_attackTargetCol) && IsTargetInsideAttackSensor(_attackTargetCol);
 
-        if (chasePlayer)
+        bool canChangeLocomotionAttackState =
+            !useAnimationEventForHit || !_attackCycleActive || _state != State.Attack;
+
+        if (canChangeLocomotionAttackState)
         {
-            if (playerInAttackRange)
+            if (chasePlayer)
             {
-                if (_state != State.Attack) SetState(State.Attack);
+                if (playerInAttackRange)
+                {
+                    if (_state != State.Attack) SetState(State.Attack);
+                }
+                else
+                {
+                    if (_state != State.MoveToGoal) SetState(State.MoveToGoal);
+                }
             }
             else
             {
-                if (_state != State.MoveToGoal) SetState(State.MoveToGoal);
-            }
-        }
-        else
-        {
-            bool shouldAttack = false;
+                bool shouldAttack = false;
 
-            if (coreInAttackRange)
-                shouldAttack = true;
-            else if (wallInAttackRange && allowWallAttack)
-                shouldAttack = true;
+                if (coreInAttackRange)
+                    shouldAttack = true;
+                else if (wallInAttackRange && allowWallAttack)
+                    shouldAttack = true;
 
-            if (shouldAttack)
-            {
-                if (_state != State.Attack) SetState(State.Attack);
-            }
-            else
-            {
-                if (_state != State.MoveToGoal) SetState(State.MoveToGoal);
+                if (shouldAttack)
+                {
+                    if (_state != State.Attack) SetState(State.Attack);
+                }
+                else
+                {
+                    if (_state != State.MoveToGoal) SetState(State.MoveToGoal);
+                }
             }
         }
 
@@ -254,7 +297,13 @@ public class EnemyAI2D : MonoBehaviour
 
         if (animator != null && !string.IsNullOrWhiteSpace(animSpeedParam))
         {
-            float speed01 = (_state == State.MoveToGoal && _attackTargetHp == null) ? 1f : 0f;
+            float speed01 = 0f;
+            if (_state == State.MoveToGoal)
+            {
+                float denom = Mathf.Max(0.01f, moveSpeed);
+                speed01 = Mathf.Clamp01(_rb.linearVelocity.magnitude / denom);
+            }
+
             animator.SetFloat(animSpeedParam, speed01);
         }
 
@@ -279,6 +328,28 @@ public class EnemyAI2D : MonoBehaviour
                 TickAttack();
                 break;
         }
+
+        UpdateSpriteFacing();
+    }
+
+    /// <summary>Art faces left by default; mirror when moving right or when attacking a target to the right.</summary>
+    private void UpdateSpriteFacing()
+    {
+        if (spriteRenderer == null) return;
+
+        if (_state == State.Attack && _attackTargetCol != null)
+        {
+            float dx = _attackTargetCol.bounds.center.x - _rb.position.x;
+            _facingRight = dx > flipVelocityThreshold;
+        }
+        else
+        {
+            float vx = _rb.linearVelocity.x;
+            if (Mathf.Abs(vx) > flipVelocityThreshold)
+                _facingRight = vx > flipVelocityThreshold;
+        }
+
+        spriteRenderer.flipX = _facingRight;
     }
 
     private void TickMove()
@@ -418,6 +489,7 @@ public class EnemyAI2D : MonoBehaviour
         }
 
         if (Time.time < _nextAttackAllowedTime) return;
+        if (useAnimationEventForHit && _attackCycleActive) return;
 
         StartAttackCycle();
     }
@@ -432,6 +504,7 @@ public class EnemyAI2D : MonoBehaviour
         if (useAnimationEventForHit)
         {
             _hitPending = false;
+            _attackCycleActive = true;
         }
         else
         {
@@ -466,6 +539,7 @@ public class EnemyAI2D : MonoBehaviour
     {
         if (_state == State.Dead) return;
         if (!useAnimationEventForHit) return;
+        if (_state != State.Attack || !_attackCycleActive) return;
         TryDealDamage();
     }
 
@@ -780,6 +854,8 @@ public class EnemyAI2D : MonoBehaviour
             _path = null;
             _waypointIndex = 0;
             _hitPending = false;
+            if (useAnimationEventForHit)
+                _attackCycleActive = false;
         }
         else if (_state == State.MoveToGoal)
         {
@@ -787,11 +863,61 @@ public class EnemyAI2D : MonoBehaviour
         }
     }
 
+    private void HandleHealthDied()
+    {
+        BeginDeathSequence();
+    }
+
+    private void BeginDeathSequence()
+    {
+        if (_deathHandled) return;
+        _deathHandled = true;
+
+        _hitPending = false;
+        _attackCycleActive = false;
+        _state = State.Dead;
+        if (_rb != null) _rb.linearVelocity = Vector2.zero;
+
+        if (logStateChanges)
+            Debug.Log($"[EnemyAI2D] {name} -> {_state}");
+
+        CancelInvoke(nameof(DelayedDestroyEnemy));
+
+        if (animator != null)
+        {
+            animator.enabled = true;
+            if (!string.IsNullOrWhiteSpace(animAttackTrigger))
+                animator.ResetTrigger(animAttackTrigger);
+
+            if (!string.IsNullOrWhiteSpace(animDeathStateName))
+                animator.Play(Animator.StringToHash(animDeathStateName), 0, 0f);
+        }
+
+        Invoke(nameof(DelayedDestroyEnemy), Mathf.Max(0.05f, destroyAfterDeathDelay));
+    }
+
+    private void DelayedDestroyEnemy()
+    {
+        if (this != null && gameObject != null)
+            Destroy(gameObject);
+    }
+
     public void Die()
     {
+        BeginDeathSequence();
+    }
+
+    public void AnimEvent_PlayEnemyAttackSfx()
+    {
         if (_state == State.Dead) return;
-        _state = State.Dead;
-        _rb.linearVelocity = Vector2.zero;
+        if (_state != State.Attack || !_attackCycleActive) return;
+        SfxPlayer.TryPlay(enemyAttackSfxId, transform.position);
+    }
+
+    public void AnimEvent_AttackFinished()
+    {
+        if (!useAnimationEventForHit) return;
+        _attackCycleActive = false;
     }
 
     public void NotifyAttacked(GameObject attacker)

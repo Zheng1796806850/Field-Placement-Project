@@ -76,6 +76,13 @@ MonoBehaviour:
     minInterval: 0.05
     pitchRange: {x: 0.95, y: 1.05}
     spatialBlend: 0
+  - id: 23
+    clips:
+    - {fileID: 8300000, guid: 379c7a5ee9bc6a64fa9f6806ca334bd1, type: 3}
+    volume: 0.75
+    minInterval: 0.05
+    pitchRange: {x: 0.95, y: 1.05}
+    spatialBlend: 0
   - id: 22
     clips:
     - {fileID: 8300000, guid: 406d47f11ddc3da49a076259f25f264a, type: 3}

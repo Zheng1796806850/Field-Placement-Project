@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 712654658534804701}
   - component: {fileID: 2175373283786183274}
   - component: {fileID: 5713530445289422959}
+  - component: {fileID: 1055239086637611650}
   - component: {fileID: 8404882644763343775}
   - component: {fileID: 1949475503890342462}
   - component: {fileID: 3125651829959158979}
@@ -36,7 +37,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4297858224867008055}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.019, y: 2.098, z: 0}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 1
@@ -93,9 +94,9 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: a52d43b4ff4dc4dfb99b796681f175fb, type: 3}
+  m_Sprite: {fileID: 21300000, guid: ff12ec08a13048947acc01c596565534, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 1
+  m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 0.375, y: 0.375}
@@ -113,7 +114,7 @@ Animator:
   m_GameObject: {fileID: 4297858224867008055}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: e0e1e2e3e4e5e6e7e8e9eaebecedeeef, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -159,7 +160,7 @@ CircleCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4297858224867008055}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
@@ -188,6 +189,52 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0.1}
   m_Radius: 0.07
+--- !u!61 &1055239086637611650
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4297858224867008055}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: -0.008514255, y: 0.0659808}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.3366097, y: 0.08895315}
+    oldSize: {x: 0.4776, y: 0.3532}
+    newSize: {x: 0.375, y: 0.375}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.11017291, y: 0.14907382}
+  m_EdgeRadius: 0
 --- !u!61 &8404882644763343775
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -225,8 +272,8 @@ BoxCollider2D:
   m_Offset: {x: -0.088915795, y: 0.10092416}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0}
-    oldSize: {x: 0.375, y: 0.375}
+    pivot: {x: 0.3366097, y: 0.08895315}
+    oldSize: {x: 0.4776, y: 0.3532}
     newSize: {x: 0.375, y: 0.375}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -248,7 +295,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHP: 10
   currentHP: 0
-  destroyOnDeath: 1
+  destroyOnDeath: 0
   dead: 0
 --- !u!114 &3125651829959158979
 MonoBehaviour:
@@ -275,13 +322,15 @@ MonoBehaviour:
   canTargetCore: 1
   preferPlayerOverWall: 1
   preferWallOverCore: 1
+  ignoreTriggerTargets: 1
+  ignoreDisabledTargets: 1
   requireAssignedSensorOverlapForAttack: 1
   playerAggroRange: 1
   playerDisengageRange: 1.2
   hitAggroDuration: 1
   hitAggroMaxDistance: 1.2
   breakWallAttackWhenAggroPlayer: 1
-  moveSpeed: 0.8
+  moveSpeed: 0.1
   repathInterval: 0.5
   nextWaypointDistance: 0.2
   lockYMovement: 0
@@ -290,18 +339,23 @@ MonoBehaviour:
   damageToCore: 8
   attackCooldown: 1
   attackWindup: 0.25
-  useAnimationEventForHit: 0
+  useAnimationEventForHit: 1
   attackWallsOnlyWhenHousePathBlocked: 1
   houseReachThreshold: 0.6
   keepRepathingWhileBlocked: 1
   animator: {fileID: 712654658534804701}
+  spriteRenderer: {fileID: 3148975405397199573}
   animSpeedParam: Speed
   animAttackTrigger: Attack
+  animDeathTrigger: Death
+  destroyAfterDeathDelay: 1.25
+  enemyAttackSfxId: 23
+  flipVelocityThreshold: 0.05
   logStateChanges: 0
   drawDebugPath: 0
   drawReactiveGizmos: 1
   drawTargetLines: 1
-  gizmoAggroColor: {r: 0.25, g: 1, b: 0.25, a: 0.75}
+  gizmoAggroColor: {r: 0, g: 1, b: 0, a: 0.75}
   gizmoDisengageColor: {r: 1, g: 0.9, b: 0.2, a: 0.75}
   gizmoHitAggroMaxColor: {r: 1, g: 0.25, b: 0.25, a: 0.75}
   gizmoLineToPlayerColor: {r: 1, g: 0.35, b: 0.35, a: 0.9}
@@ -365,6 +419,7 @@ MonoBehaviour:
   statsSO: {fileID: 11400000, guid: 9f9f8108f01ea4d4d963f3b9fa414ef5, type: 2}
   applyOnAwake: 1
   fillHPToMaxOnApply: 1
+  applyMoveSpeedFromStats: 1
 --- !u!114 &2896671886319183912
 MonoBehaviour:
   m_ObjectHideFlags: 0

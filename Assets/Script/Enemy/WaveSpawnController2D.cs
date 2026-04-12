@@ -19,6 +19,9 @@ public class WaveSpawnController2D : MonoBehaviour
     [Header("Enemy Tracking")]
     public bool autoAddWaveEnemyAgent = true;
 
+    [Tooltip("When true: spawned enemy moveSpeed = prefab moveSpeed * wave speedMultiplier. When false: prefab moveSpeed is left unchanged by waves.")]
+    public bool applyWaveSpeedToEnemyMoveSpeed = true;
+
     [Header("Debug")]
     public bool logSpawn = true;
 
@@ -167,7 +170,8 @@ public class WaveSpawnController2D : MonoBehaviour
         var ai = enemy.GetComponentInChildren<EnemyAI2D>();
         if (ai != null)
         {
-            ai.ApplySpeedMultiplier(speedMul);
+            if (applyWaveSpeedToEnemyMoveSpeed)
+                ai.ApplySpeedMultiplier(speedMul);
             ai.ApplyWallDamageMultiplier(wallDmgMul);
         }
     }

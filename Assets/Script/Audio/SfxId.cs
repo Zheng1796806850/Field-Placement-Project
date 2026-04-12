@@ -12,6 +12,7 @@ public enum SfxId
     Combat_AttackSwing = 20,
     Combat_HitConfirm = 21,
     Combat_EnemyDeath = 22,
+    Combat_EnemyAttackSwing = 23,
 
     Movement_FootstepLoop = 30,
 
