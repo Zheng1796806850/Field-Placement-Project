@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class PlayerCombat2D : MonoBehaviour
 {
@@ -33,11 +34,23 @@ public class PlayerCombat2D : MonoBehaviour
         DisableAllColliders();
     }
 
+    private static bool ShouldSuppressAttackForUiOrDrag()
+    {
+        if (BackpackSlotUI.DragPayload.active)
+            return true;
+
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            return true;
+
+        return false;
+    }
+
     private void Update()
     {
         if (!isAttacking && InputEnabled && Input.GetKeyDown(attackKey))
         {
-            StartAttack();
+            if (!ShouldSuppressAttackForUiOrDrag())
+                StartAttack();
         }
 
         if (isAttacking)

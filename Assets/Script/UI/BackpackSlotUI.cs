@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -20,6 +21,7 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     private Canvas _dragCanvas;
     private GameObject _dragVisual;
     private Image _dragVisualImage;
+    private Coroutine _deferredPayloadReset;
 
     public int SlotIndex => _slotIndex;
     public bool HasItem => _hasItem;
@@ -38,7 +40,10 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         if (icon != null)
         {
             icon.sprite = emptyIcon;
-            icon.enabled = emptyIcon != null;
+            icon.enabled = true;
+            icon.raycastTarget = true;
+            // Keep Image enabled for drop raycasts; without a sprite, default Image draws a solid quad — hide via alpha.
+            icon.color = emptyIcon != null ? Color.white : new Color(1f, 1f, 1f, 0f);
         }
 
         if (countLabel != null) countLabel.text = "";
@@ -54,6 +59,8 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         {
             icon.sprite = sprite != null ? sprite : emptyIcon;
             icon.enabled = icon.sprite != null;
+            icon.raycastTarget = true;
+            icon.color = Color.white;
         }
 
         if (countLabel != null) countLabel.text = $"{amountInStack}/{Mathf.Max(1, stackSize)}";
@@ -64,6 +71,12 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     {
         if (!_hasItem) return;
         if (eventData.button != PointerEventData.InputButton.Left) return;
+
+        if (_deferredPayloadReset != null)
+        {
+            StopCoroutine(_deferredPayloadReset);
+            _deferredPayloadReset = null;
+        }
 
         DragPayload.active = true;
         DragPayload.source = this;
@@ -100,7 +113,9 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     public void OnEndDrag(PointerEventData eventData)
     {
         ClearDragVisual();
-        DragPayload.Reset();
+        if (_deferredPayloadReset != null)
+            StopCoroutine(_deferredPayloadReset);
+        _deferredPayloadReset = StartCoroutine(ResetPayloadAfterPointerEvents());
     }
 
     public void OnDrop(PointerEventData eventData)
@@ -111,6 +126,20 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         if (_owner == null) return;
 
         _owner.HandleSlotDrop(DragPayload.sourceSlotIndex, _slotIndex);
+        DragPayload.Reset();
+        if (_deferredPayloadReset != null)
+        {
+            StopCoroutine(_deferredPayloadReset);
+            _deferredPayloadReset = null;
+        }
+    }
+
+    private IEnumerator ResetPayloadAfterPointerEvents()
+    {
+        yield return null;
+        if (DragPayload.source == this && DragPayload.active)
+            DragPayload.Reset();
+        _deferredPayloadReset = null;
     }
 
     private void UpdateDragVisualPosition(PointerEventData eventData)

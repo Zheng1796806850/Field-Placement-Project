@@ -337,7 +337,68 @@ public class PlayerResourceInventory : MonoBehaviour
             return SwapDisplayOrder(fromType, toType);
         }
 
-        return MoveTypeToEndOfOccupied(fromType);
+        return InsertDisplayOrderAtEmptyTarget(fromType, toDisplayIndex);
+    }
+
+    private bool InsertDisplayOrderAtEmptyTarget(ResourceType fromType, int toDisplayIndex)
+    {
+        EnsureDisplayOrder();
+
+        int beforeTotalRows = GetStackViewsSnapshot().Count;
+        int fromStacks = StacksFor(Get(fromType), GetStackSize(fromType));
+        if (fromStacks <= 0)
+            return false;
+
+        int otherRows = beforeTotalRows - fromStacks;
+        int targetRow = Mathf.Min(toDisplayIndex, Mathf.Max(0, otherRows));
+
+        int sourceIndex = _displayOrder.IndexOf(fromType);
+        if (sourceIndex < 0)
+            return false;
+
+        var orderBefore = new List<ResourceType>(_displayOrder);
+
+        _displayOrder.RemoveAt(sourceIndex);
+
+        int row = 0;
+        int insertIndex = _displayOrder.Count;
+        for (int i = 0; i < _displayOrder.Count; i++)
+        {
+            ResourceType t = _displayOrder[i];
+            if (Get(t) <= 0)
+                continue;
+
+            int stacks = StacksFor(Get(t), GetStackSize(t));
+            if (targetRow <= row)
+            {
+                insertIndex = i;
+                break;
+            }
+
+            row += stacks;
+        }
+
+        _displayOrder.Insert(insertIndex, fromType);
+
+        if (DisplayOrderSequencesEqual(orderBefore, _displayOrder))
+            return false;
+
+        RaiseLayoutChanged();
+        return true;
+    }
+
+    private static bool DisplayOrderSequencesEqual(List<ResourceType> a, List<ResourceType> b)
+    {
+        if (a.Count != b.Count)
+            return false;
+
+        for (int i = 0; i < a.Count; i++)
+        {
+            if (a[i] != b[i])
+                return false;
+        }
+
+        return true;
     }
 
     public bool BindQuickSlotCandidateFromDisplayIndex(int displayIndex, out ResourceType type)
