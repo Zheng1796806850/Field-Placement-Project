@@ -19,6 +19,10 @@ public class HouseCoreRepairInteractable : MonoBehaviour, IInteractable
     [Min(0f)] public float maxRepairDistance = 2.5f;
     public bool lockPlayerMovementWhileRepairing = false;
 
+    [Header("Quest")]
+    [Tooltip("Passed to GameplayEventHub for Repair objectives (HP restored per successful step).")]
+    public string questRepairTargetId = "house_core";
+
     [Header("Progress HUD (Optional)")]
     public WallRepairProgressHUD repairProgressHUD;
 
@@ -187,6 +191,7 @@ public class HouseCoreRepairInteractable : MonoBehaviour, IInteractable
             }
 
             coreHealth.Heal(hpRestoredPerStep);
+            EmitQuestRepair(hpRestoredPerStep);
 
             if (autoSaveInventoryOnRepair) inv.SaveInMemory();
         };
@@ -211,8 +216,17 @@ public class HouseCoreRepairInteractable : MonoBehaviour, IInteractable
         if (!inv.Spend(ResourceType.Planks, cost)) return;
 
         coreHealth.Heal(hpRestoredPerStep);
+        EmitQuestRepair(hpRestoredPerStep);
 
         if (autoSaveInventoryOnRepair) inv.SaveInMemory();
+    }
+
+    private void EmitQuestRepair(int hpRestored)
+    {
+        if (hpRestored <= 0) return;
+        if (string.IsNullOrEmpty(questRepairTargetId)) return;
+
+        GameplayEventHub.RaiseStructureRepaired(questRepairTargetId, hpRestored);
     }
 
     private void ShowRepairProgress(float p)

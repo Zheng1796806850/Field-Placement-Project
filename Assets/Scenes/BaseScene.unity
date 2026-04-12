@@ -16594,6 +16594,14 @@ PrefabInstance:
       propertyPath: plotId
       value: plot_02
       objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questRequiredCropId
+      value: wheat
+      objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questPlantWaterCompleteEventId
+      value: backyard_wheat_plot
+      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01 (3)
@@ -62395,6 +62403,14 @@ PrefabInstance:
       propertyPath: plotId
       value: plot_04
       objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questRequiredCropId
+      value: wheat
+      objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questPlantWaterCompleteEventId
+      value: backyard_wheat_plot
+      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01 (4)
@@ -63818,6 +63834,14 @@ PrefabInstance:
       propertyPath: plotId
       value: plot_06
       objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questRequiredCropId
+      value: wheat
+      objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questPlantWaterCompleteEventId
+      value: backyard_wheat_plot
+      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01 (5)
@@ -65039,6 +65063,7 @@ MonoBehaviour:
   holdRepairDuration: 2
   maxRepairDistance: 2.5
   lockPlayerMovementWhileRepairing: 1
+  questRepairTargetId: house_core
   repairProgressHUD: {fileID: 0}
   timedActionOverride: {fileID: 1817910280}
   promptText: Hold Repair House (-1 Planks)
@@ -65175,6 +65200,14 @@ PrefabInstance:
     - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: plotId
       value: plot_05
+      objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questRequiredCropId
+      value: wheat
+      objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questPlantWaterCompleteEventId
+      value: backyard_wheat_plot
       objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
@@ -67577,6 +67610,88 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 988576915}
   m_CullTransparentMesh: 1
+--- !u!1 &998877001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 998877002}
+  - component: {fileID: 998877003}
+  - component: {fileID: 998877004}
+  m_Layer: 0
+  m_Name: _QuestBootstrap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &998877002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 998877001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &998877003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 998877001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5f3d3f3c44d4e44987c2e6fe61a05fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlaytestMilestoneController
+  questDefinition: {fileID: 11400000, guid: c996e3c3ec4c48f4ca1c979addc5feda, type: 2}
+  milestone: {fileID: 0}
+  questManager: {fileID: 998877004}
+  gameState: {fileID: 403308085}
+  inventory: {fileID: 197486640}
+  waveProgress: {fileID: 1564998947}
+  objectiveHUD: {fileID: 1256920426}
+  bannerHUD: {fileID: 1868968597}
+  autoFindWaterCollectors: 1
+  waterCollectors: []
+  disableWaveAutoVictoryWhileActive: 1
+  hideObjectiveOnGameEnd: 1
+  isActive: 1
+  isCompleted: 0
+--- !u!114 &998877004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 998877001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d279f11904b7a643beeb19c729037eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestManager
+  objectiveHUD: {fileID: 1256920426}
+  bannerHUD: {fileID: 1868968597}
+  waveProgress: {fileID: 1564998947}
+  inventory: {fileID: 197486640}
+  disableWaveAutoVictoryWhileActive: 1
+  hideObjectiveOnGameEnd: 1
+  showBannerOnObjectiveComplete: 1
+  showBannerOnQuestComplete: 1
+  debugQuestSummary: 
+  debugProgressLine: 
+  debugLogEachHudRefresh: 0
 --- !u!1 &1001622168
 GameObject:
   m_ObjectHideFlags: 0
@@ -87265,8 +87380,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 11.4, y: -97.2}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: -0.000072479, y: -148.6}
+  m_SizeDelta: {x: 300, y: 202.8}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1256920426
 MonoBehaviour:
@@ -89120,7 +89235,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1355324223
 RectTransform:
   m_ObjectHideFlags: 0
@@ -134026,8 +134141,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: -2.8}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 0, y: -2.800026}
+  m_SizeDelta: {x: 300, y: 149.0385}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &1540786951
 MonoBehaviour:
@@ -134076,12 +134191,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
+  m_fontSize: 30
   m_fontSizeBase: 24
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 12
+  m_fontSizeMax: 30
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
@@ -141568,6 +141683,14 @@ PrefabInstance:
       propertyPath: plotId
       value: plot_03
       objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questRequiredCropId
+      value: wheat
+      objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questPlantWaterCompleteEventId
+      value: backyard_wheat_plot
+      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01 (1)
@@ -143981,10 +144104,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 834955178847284579, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
-      propertyPath: speed
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 3689467099361804595, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
       propertyPath: hud
       value: 
@@ -143993,14 +144112,6 @@ PrefabInstance:
       propertyPath: grid
       value: 
       objectReference: {fileID: 1541765669}
-    - target: {fileID: 4879680865712586085, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
-      propertyPath: dropResourcePrefab
-      value: 
-      objectReference: {fileID: 240201751570076137, guid: 18adf4fc49352e14ebe5ba88fcd6650c, type: 3}
-    - target: {fileID: 4879680865712586085, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
-      propertyPath: overflowDropPrefab
-      value: 
-      objectReference: {fileID: 240201751570076137, guid: 18adf4fc49352e14ebe5ba88fcd6650c, type: 3}
     - target: {fileID: 4976344338439898418, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -144041,14 +144152,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6712024594513438194, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
-      propertyPath: attackLockTime
-      value: 1.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 6752391737401340579, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
-      propertyPath: speedForFastSteps
-      value: 4
-      objectReference: {fileID: 0}
     - target: {fileID: 9068058516804646890, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
       propertyPath: m_Name
       value: Player
@@ -144069,6 +144172,14 @@ PrefabInstance:
     - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: plotId
       value: plot_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questRequiredCropId
+      value: wheat
+      objectReference: {fileID: 0}
+    - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: questPlantWaterCompleteEventId
+      value: backyard_wheat_plot
       objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
@@ -144134,6 +144245,10 @@ PrefabInstance:
     - target: {fileID: 4552219531590130918, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_Name
       value: WaterCollectorSpot
+      objectReference: {fileID: 0}
+    - target: {fileID: 6180384242341235040, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: questStructureId
+      value: water_collector
       objectReference: {fileID: 0}
     - target: {fileID: 7545031342684364423, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_LocalPosition.x
@@ -144202,6 +144317,7 @@ SceneRoots:
   - {fileID: 909449144}
   - {fileID: 1468649198}
   - {fileID: 280618524}
+  - {fileID: 998877002}
   - {fileID: 728446062}
   - {fileID: 1330362786}
   - {fileID: 1553689923}

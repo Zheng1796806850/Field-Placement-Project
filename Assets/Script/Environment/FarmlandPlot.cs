@@ -81,6 +81,13 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
     [Tooltip("Unique id per plot in Base scene (required for Base <-> Town construction snapshot).")]
     public string plotId = "";
 
+    [Header("Quest")]
+    [Tooltip("When player finishes watering after plant, raises GameplayEventHub (PlantAndWater objectives). Must match objective Target Id.")]
+    public string questPlantWaterCompleteEventId = "";
+
+    [Tooltip("If set, event only fires when planted CropConfigSO.cropId equals this (e.g. wheat_crop).")]
+    public string questRequiredCropId = "";
+
     [Header("Debug")]
     public bool debugLogs = false;
 
@@ -488,6 +495,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
             wateredSinceLastDayStart = true;
             SetState(PlotState.PlantedWatered);
+            TryEmitQuestPlantAndWaterComplete();
 
             if (autoSaveInventoryOnAction) inv.SaveInMemory();
 
@@ -538,6 +546,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         wateredSinceLastDayStart = true;
         SetState(PlotState.PlantedWatered);
+        TryEmitQuestPlantAndWaterComplete();
 
         SfxPlayer.TryPlay(plantedCrop.waterSfxId, transform.position);
 
@@ -545,6 +554,17 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         if (debugLogs)
             Debug.Log($"[FarmlandPlot] Water -> {name} (will be counted at next DayStart)");
+    }
+
+    private void TryEmitQuestPlantAndWaterComplete()
+    {
+        if (string.IsNullOrEmpty(questPlantWaterCompleteEventId)) return;
+        if (plantedCrop == null) return;
+        if (!string.IsNullOrEmpty(questRequiredCropId) &&
+            !string.Equals(questRequiredCropId, plantedCrop.cropId, StringComparison.Ordinal))
+            return;
+
+        GameplayEventHub.RaiseCropPlantedAndWatered(questPlantWaterCompleteEventId, plantedCrop.cropId);
     }
 
     private void TryHarvest(GameObject interactor)

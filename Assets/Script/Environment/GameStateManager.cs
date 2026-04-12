@@ -133,14 +133,21 @@ public class GameStateManager : MonoBehaviour
     {
         if (!force && next == CurrentPhase) return;
 
+        DayNightPhase previous = CurrentPhase;
         CurrentPhase = next;
         PhaseElapsed = 0f;
         PhaseTimeRemaining = (next == DayNightPhase.Day) ? dayDuration : nightDuration;
 
         OnPhaseChanged?.Invoke(next);
 
-        if (next == DayNightPhase.Day) OnDayStarted?.Invoke();
-        else OnNightStarted?.Invoke();
+        if (next == DayNightPhase.Day)
+        {
+            OnDayStarted?.Invoke();
+            if (previous == DayNightPhase.Night)
+                GameplayEventHub.RaiseNightSurvived();
+        }
+        else
+            OnNightStarted?.Invoke();
     }
 
     public void TogglePause()

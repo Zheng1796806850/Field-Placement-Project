@@ -7,6 +7,10 @@ public class WaveEnemyAgent : MonoBehaviour
 
     public Health health;
 
+    [Header("Quest")]
+    [Tooltip("If set, used as GameplayEventHub enemy id for Kill objectives; otherwise gameObject.tag.")]
+    public string questKillTagOverride;
+
     private bool _registered;
     private bool _died;
 
@@ -48,6 +52,10 @@ public class WaveEnemyAgent : MonoBehaviour
     {
         if (_died) return;
         _died = true;
+
+        string killTag = !string.IsNullOrEmpty(questKillTagOverride) ? questKillTagOverride : gameObject.tag;
+        GameplayEventHub.RaiseEnemyKilled(killTag, gameObject.GetInstanceID());
+
         Unregister();
     }
 

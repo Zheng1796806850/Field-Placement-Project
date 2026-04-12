@@ -319,7 +319,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.5471698, g: 0.25614512, b: 0.21938412, a: 1}
@@ -16815,7 +16815,9 @@ MonoBehaviour:
     - {fileID: 3858639233306164413}
     - {fileID: 8146970959449234590}
     matureVisual: {fileID: 1323171848819028003}
-  plotId: 
+  plotId: plot_01
+  questPlantWaterCompleteEventId: backyard_wheat_plot
+  questRequiredCropId: wheat
   debugLogs: 1
   enableActionLoopSfx: 1
   plantActionLoopClips: []

@@ -62,6 +62,8 @@ public class PlayerResourceInventory : MonoBehaviour
     private bool _flushingBuffer;
     private int _quickUseScopedBackpackSlotIndex = -1;
 
+    private Dictionary<ResourceType, int> _questCollectBaseline;
+
     [Serializable]
     private class SaveDataV4
     {
@@ -144,6 +146,8 @@ public class PlayerResourceInventory : MonoBehaviour
         {
             BroadcastAll();
         }
+
+        ResetQuestCollectBaseline();
     }
 
 #if UNITY_EDITOR
@@ -815,10 +819,39 @@ public class PlayerResourceInventory : MonoBehaviour
         return Mathf.Min(request, room);
     }
 
+    public void ResetQuestCollectBaseline()
+    {
+        if (_questCollectBaseline == null)
+            _questCollectBaseline = new Dictionary<ResourceType, int>();
+
+        _questCollectBaseline.Clear();
+        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+            _questCollectBaseline[t] = SumTypeInSlots(t);
+    }
+
+    private void EmitQuestResourceCollected(ResourceType type)
+    {
+        if (_questCollectBaseline == null)
+        {
+            ResetQuestCollectBaseline();
+            return;
+        }
+
+        int now = SumTypeInSlots(type);
+        if (!_questCollectBaseline.TryGetValue(type, out int prev))
+            prev = now;
+
+        if (now > prev)
+            GameplayEventHub.RaiseResourceCollected(type, now - prev);
+
+        _questCollectBaseline[type] = now;
+    }
+
     private void Broadcast(ResourceType type)
     {
         OnResourceChanged?.Invoke(type, SumTypeInSlots(type));
         OnAnyResourceChanged?.Invoke();
+        EmitQuestResourceCollected(type);
     }
 
     private void BroadcastAll()
@@ -827,6 +860,8 @@ public class PlayerResourceInventory : MonoBehaviour
         foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
             OnResourceChanged?.Invoke(t, SumTypeInSlots(t));
         OnAnyResourceChanged?.Invoke();
+        foreach (ResourceType t in Enum.GetValues(typeof(ResourceType)))
+            EmitQuestResourceCollected(t);
     }
 
     private void RaiseLayoutChanged()

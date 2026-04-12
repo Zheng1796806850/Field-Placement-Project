@@ -100,6 +100,10 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
     [Tooltip("Local key; actual PlayerPrefs key is scoped per run via BaseWorldSession (see BaseWorldSession / MainMenu advance run).")]
     public string collectorSaveKey = "";
 
+    [Header("Quest")]
+    [Tooltip("Emitted with GameplayEventHub.OnStructureBuilt / OnStructureRepaired for Build/Repair objectives.")]
+    public string questStructureId = WaterCollectorQuestIds.StructureId;
+
     public event Action<bool> OnBuiltChanged;
     public event Action<int, int> OnStoredWaterChanged;
     public event Action<int> OnWaterCollected;
@@ -421,6 +425,8 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
 
             SaveCollectorStateIfEnabled();
 
+            GameplayEventHub.RaiseStructureBuilt(questStructureId, gameObject.GetInstanceID());
+
             if (debugLogs)
                 Debug.Log($"[WaterCollector] Built on {name}. Spent Planks={planksCost}");
 
@@ -543,6 +549,8 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
             inv.SaveInMemory();
 
         SaveCollectorStateIfEnabled();
+
+        GameplayEventHub.RaiseStructureBuilt(questStructureId, gameObject.GetInstanceID());
 
         if (debugLogs)
             Debug.Log($"[WaterCollector] Built on {name}. Spent Planks={planksCost}");
@@ -764,6 +772,10 @@ public class WaterCollectorBuildSpot : MonoBehaviour, IInteractable
 
         BroadcastDurability();
         SaveCollectorStateIfEnabled();
+
+        int gained = currentDurability - before;
+        if (gained > 0)
+            GameplayEventHub.RaiseStructureRepaired(questStructureId, gained);
     }
 
     private bool CanOfferRepairPrompt()

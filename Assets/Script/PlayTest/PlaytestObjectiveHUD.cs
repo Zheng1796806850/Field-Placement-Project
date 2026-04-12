@@ -14,7 +14,15 @@ public class PlaytestObjectiveHUD : MonoBehaviour
     private void Awake()
     {
         if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
+        ConfigureProgressLabelForMultiline();
         ApplyVisible();
+    }
+
+    private void ConfigureProgressLabelForMultiline()
+    {
+        if (progressLabel == null) return;
+        progressLabel.enableWordWrapping = true;
+        progressLabel.alignment = TextAlignmentOptions.TopLeft;
     }
 
     public void SetTitle(string text)

@@ -9,6 +9,7 @@ TagManager:
   - House
   - Obstacles
   - Core
+  - Enemy
   layers:
   - Default
   - TransparentFX
