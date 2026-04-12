@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1773535411006006192
 Transform:
   m_ObjectHideFlags: 0
@@ -237,7 +237,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7462111052866728948
 Transform:
   m_ObjectHideFlags: 0
@@ -344,7 +344,7 @@ Transform:
   m_GameObject: {fileID: 5915830500198901292}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0.0365, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -384,7 +384,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.13101435, y: 0.19686323}
+  m_Offset: {x: -0.13, y: 0.14037624}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -394,7 +394,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.13624626, y: 0.14305365}
+  m_Size: {x: 0.18494883, y: 0.38728523}
   m_EdgeRadius: 0
 --- !u!114 &7111542107527002489
 MonoBehaviour:
@@ -563,7 +563,7 @@ Transform:
   m_GameObject: {fileID: 8026631448976680699}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0.0117, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -603,7 +603,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.13197865, y: 0.19686323}
+  m_Offset: {x: 0.08, y: 0.1404397}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -613,7 +613,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.13882059, y: 0.14305365}
+  m_Size: {x: 0.18494883, y: 0.3864253}
   m_EdgeRadius: 0
 --- !u!114 &7192681446997472013
 MonoBehaviour:
@@ -803,7 +803,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 0f39a9205e4394ee1b6ba8269428d176, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 03030da4733215e4fb4a58fa8f8130b7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -874,17 +874,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.000507921, y: 0.10906758}
+  m_Offset: {x: -0.0012851879, y: 0.06657752}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0}
-    oldSize: {x: 0.5, y: 0.5}
+    pivot: {x: 0.4425091, y: 0.06801773}
+    oldSize: {x: 0.438, y: 0.36466667}
     newSize: {x: 0.5, y: 0.5}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.19001538, y: 0.15736164}
+  m_Size: {x: 0.14700715, y: 0.14907087}
   m_EdgeRadius: 0
 --- !u!61 &6811565305578118162
 BoxCollider2D:
@@ -920,17 +920,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.0006382242, y: 0.10950219}
+  m_Offset: {x: -0.0012851879, y: 0.06657752}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0}
-    oldSize: {x: 0.5, y: 0.5}
+    pivot: {x: 0.4425091, y: 0.06801773}
+    oldSize: {x: 0.438, y: 0.36466667}
     newSize: {x: 0.5, y: 0.5}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.18997164, y: 0.15761338}
+  m_Size: {x: 0.14700715, y: 0.14907087}
   m_EdgeRadius: 0
 --- !u!95 &6971963633893343007
 Animator:
@@ -981,13 +981,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat2D
   movement: {fileID: 834955178847284579}
   animator: {fileID: 6971963633893343007}
-  spriteRenderer: {fileID: 6981055337233874118}
-  attackUp: {fileID: 8963501736002052469}
-  attackDown: {fileID: 2138296270220227323}
   attackLeft: {fileID: 1695496754794659338}
   attackRight: {fileID: 1060414340542720554}
   attackKey: 323
-  attackLockTime: 0.35
+  attackLockTime: 0.5
   localInputEnabled: 1
 --- !u!114 &3917528503583871862
 MonoBehaviour:

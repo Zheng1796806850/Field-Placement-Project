@@ -287,8 +287,6 @@ public class PlayerHungerThirst : MonoBehaviour
         {
             var list = new List<AttackHitbox>(8);
 
-            TryAddHitbox(combat.attackUp, list);
-            TryAddHitbox(combat.attackDown, list);
             TryAddHitbox(combat.attackLeft, list);
             TryAddHitbox(combat.attackRight, list);
 

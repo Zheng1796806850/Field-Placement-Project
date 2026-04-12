@@ -5,11 +5,8 @@ public class PlayerCombat2D : MonoBehaviour
     [Header("Refs")]
     public PlayerMovementController movement;
     public Animator animator;
-    public SpriteRenderer spriteRenderer;
 
-    [Header("Attack Colliders")]
-    public BoxCollider2D attackUp;
-    public BoxCollider2D attackDown;
+    [Header("Attack Colliders (left / right only; size in editor to cover slight vertical reach)")]
     public BoxCollider2D attackLeft;
     public BoxCollider2D attackRight;
 
@@ -32,7 +29,6 @@ public class PlayerCombat2D : MonoBehaviour
     {
         if (movement == null) movement = GetComponent<PlayerMovementController>();
         if (animator == null) animator = GetComponent<Animator>();
-        if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
         DisableAllColliders();
     }
@@ -90,17 +86,14 @@ public class PlayerCombat2D : MonoBehaviour
 
         if (animator != null)
         {
-            animator.SetFloat("InputX", dir.x);
-            animator.SetFloat("InputY", dir.y);
+            float sx = movement != null ? movement.FacingSignX : Mathf.Sign(dir.x);
+            if (Mathf.Abs(sx) < 1e-4f) sx = 1f;
+            animator.SetFloat("InputX", sx);
+            animator.SetFloat("InputY", 0f);
             animator.SetTrigger("Attack");
         }
 
-        if (spriteRenderer != null && Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
-            spriteRenderer.flipX = dir.x < 0;
-
         SelectAttackCollider(dir);
-
-        SfxPlayer.TryPlay(SfxId.Combat_AttackSwing, transform.position);
     }
 
     private void EndAttack()
@@ -117,23 +110,22 @@ public class PlayerCombat2D : MonoBehaviour
     {
         DisableAllColliders();
 
-        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
-        {
-            currentCollider = dir.x > 0 ? attackRight : attackLeft;
-        }
-        else
-        {
-            currentCollider = dir.y > 0 ? attackUp : attackDown;
-        }
+        float sx = movement != null ? movement.FacingSignX : Mathf.Sign(dir.x);
+        if (Mathf.Abs(sx) < 1e-4f) sx = 1f;
+        currentCollider = sx > 0f ? attackRight : attackLeft;
     }
 
     private void DisableAllColliders()
     {
-        if (attackUp != null) attackUp.enabled = false;
-        if (attackDown != null) attackDown.enabled = false;
         if (attackLeft != null) attackLeft.enabled = false;
         if (attackRight != null) attackRight.enabled = false;
         currentCollider = null;
+    }
+
+    /// <summary>Call from attack animation (Animation Event) to play swing SFX in sync with the clip.</summary>
+    public void AnimEvent_PlayAttackSwing()
+    {
+        SfxPlayer.TryPlay(SfxId.Combat_AttackSwing, transform.position);
     }
 
     public void AnimEvent_EnableHitbox()

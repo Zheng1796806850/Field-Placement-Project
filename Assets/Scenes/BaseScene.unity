@@ -143948,6 +143948,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 834955178847284579, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
+      propertyPath: speed
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3689467099361804595, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
       propertyPath: hud
       value: 
@@ -143995,6 +143999,14 @@ PrefabInstance:
     - target: {fileID: 4976344338439898418, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6712024594513438194, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
+      propertyPath: attackLockTime
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6752391737401340579, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
+      propertyPath: speedForFastSteps
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 9068058516804646890, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
       propertyPath: m_Name
