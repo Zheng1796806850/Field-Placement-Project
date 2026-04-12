@@ -16,6 +16,8 @@ public class PlayerHungerThirst : MonoBehaviour
     {
         public bool useResourceBinding;
         public ResourceType boundResourceType;
+        /// <summary>-1 = not bound to a backpack cell; use aggregate Get(type) / Spend.</summary>
+        public int boundBackpackSlotIndex = -1;
         public QuickUseItemSO item;
     }
 
@@ -518,7 +520,7 @@ public class PlayerHungerThirst : MonoBehaviour
         return true;
     }
 
-    public void BindQuickSlotResource(int index, ResourceType type)
+    public void BindQuickSlotResource(int index, ResourceType type, int backpackSlotIndex = -1)
     {
         if (quickSlots == null) return;
         if (index < 0 || index >= quickSlots.Count) return;
@@ -526,6 +528,7 @@ public class PlayerHungerThirst : MonoBehaviour
 
         quickSlots[index].useResourceBinding = true;
         quickSlots[index].boundResourceType = type;
+        quickSlots[index].boundBackpackSlotIndex = backpackSlotIndex;
         quickSlots[index].item = null;
 
         EnsureQuickSlotCooldownSize();
@@ -540,6 +543,7 @@ public class PlayerHungerThirst : MonoBehaviour
 
         quickSlots[index].useResourceBinding = false;
         quickSlots[index].item = item;
+        quickSlots[index].boundBackpackSlotIndex = -1;
 
         EnsureQuickSlotCooldownSize();
         OnQuickSlotsLayoutChanged?.Invoke();
@@ -597,7 +601,18 @@ public class PlayerHungerThirst : MonoBehaviour
         if (inventory == null) return 0;
 
         if (TryGetQuickSlotBoundResourceType(index, out var boundType))
+        {
+            var qs = quickSlots[index];
+            if (qs != null && qs.boundBackpackSlotIndex >= 0)
+            {
+                var cell = inventory.GetSlot(qs.boundBackpackSlotIndex);
+                if (!cell.IsEmpty && cell.type == boundType)
+                    return Mathf.Max(0, cell.amount);
+                return 0;
+            }
+
             return Mathf.Max(0, inventory.Get(boundType));
+        }
 
         var item = ResolveQuickSlotItem(index);
         if (item == null) return 0;
@@ -654,7 +669,23 @@ public class PlayerHungerThirst : MonoBehaviour
                 slotIndex = index,
                 pushMessage = inventory.PushMessage
             };
-            used = usable.Use(ctx);
+
+            bool scoped = quickSlots != null && index >= 0 && index < quickSlots.Count &&
+                          quickSlots[index] != null && quickSlots[index].useResourceBinding &&
+                          quickSlots[index].boundBackpackSlotIndex >= 0;
+
+            if (scoped)
+                inventory.BeginQuickUseBackpackSlotScope(quickSlots[index].boundBackpackSlotIndex);
+
+            try
+            {
+                used = usable.Use(ctx);
+            }
+            finally
+            {
+                if (scoped)
+                    inventory.EndQuickUseBackpackSlotScope();
+            }
         }
         else
         {

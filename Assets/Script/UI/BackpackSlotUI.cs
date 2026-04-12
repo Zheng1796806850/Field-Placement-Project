@@ -82,6 +82,7 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         DragPayload.source = this;
         DragPayload.sourceSlotIndex = _slotIndex;
         DragPayload.resourceType = _resourceType;
+        DragPayload.DropConsumedByValidTarget = false;
 
         if (_dragCanvas == null)
             _dragCanvas = GetComponentInParent<Canvas>() != null ? GetComponentInParent<Canvas>().rootCanvas : null;
@@ -113,6 +114,25 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     public void OnEndDrag(PointerEventData eventData)
     {
         ClearDragVisual();
+
+        if (DragPayload.active && DragPayload.source == this && _owner != null)
+        {
+            var inv = _owner.Inventory;
+            if (inv != null && !DragPayload.DropConsumedByValidTarget &&
+                !_owner.IsScreenPointOverBackpackPanel(eventData.position, eventData.pressEventCamera))
+            {
+                inv.DropSlotToWorld(DragPayload.sourceSlotIndex);
+                DragPayload.DropConsumedByValidTarget = true;
+                DragPayload.Reset();
+                if (_deferredPayloadReset != null)
+                {
+                    StopCoroutine(_deferredPayloadReset);
+                    _deferredPayloadReset = null;
+                }
+                return;
+            }
+        }
+
         if (_deferredPayloadReset != null)
             StopCoroutine(_deferredPayloadReset);
         _deferredPayloadReset = StartCoroutine(ResetPayloadAfterPointerEvents());
@@ -125,6 +145,7 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         if (DragPayload.source == this) return;
         if (_owner == null) return;
 
+        DragPayload.DropConsumedByValidTarget = true;
         _owner.HandleSlotDrop(DragPayload.sourceSlotIndex, _slotIndex);
         DragPayload.Reset();
         if (_deferredPayloadReset != null)
@@ -169,6 +190,8 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         public static BackpackSlotUI source;
         public static int sourceSlotIndex = -1;
         public static ResourceType resourceType;
+        /// <summary>Backpack slot OnDrop or quick-slot bind consumed the drag; suppress world drop.</summary>
+        public static bool DropConsumedByValidTarget;
 
         public static void Reset()
         {
@@ -176,6 +199,7 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             source = null;
             sourceSlotIndex = -1;
             resourceType = default;
+            DropConsumedByValidTarget = false;
         }
     }
 }

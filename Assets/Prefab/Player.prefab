@@ -165,7 +165,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0.17}
-  m_Radius: 0.65
+  m_Radius: 0.4
 --- !u!114 &4546242170312488274
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -179,7 +179,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerPickupMagnet2D
   attractTarget: {fileID: 4976344338439898418}
-  attractionSpeed: 3
+  attractionSpeed: 2
+  attractDelaySeconds: 1
+  useUnscaledTimeForDelay: 0
   dropLayers:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -680,8 +682,9 @@ MonoBehaviour:
   rules: {fileID: 11400000, guid: 6814f7017dadd3246b4824404d5ff0bc, type: 2}
   overflowModeOverride: 0
   useRulesOverflowMode: 1
-  overflowDropPrefab: {fileID: 0}
+  overflowDropPrefab: {fileID: 240201751570076137, guid: 18adf4fc49352e14ebe5ba88fcd6650c, type: 3}
   overflowDropScatterRadius: 0.25
+  dropResourcePrefab: {fileID: 240201751570076137, guid: 18adf4fc49352e14ebe5ba88fcd6650c, type: 3}
   defaultResources:
   - type: 0
     amount: 5
@@ -703,6 +706,7 @@ MonoBehaviour:
   defaultSeeds: 5
   defaultWater: 5
   defaultFood: 5
+  _slots: []
 --- !u!1 &9068058516804646890
 GameObject:
   m_ObjectHideFlags: 0
@@ -742,7 +746,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9068058516804646890}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 1
@@ -966,7 +970,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b9359d475988cd40938e0963b24af5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovementController
-  speed: 2
+  speed: 1
 --- !u!114 &6712024594513438194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -984,7 +988,7 @@ MonoBehaviour:
   attackLeft: {fileID: 1695496754794659338}
   attackRight: {fileID: 1060414340542720554}
   attackKey: 323
-  attackLockTime: 0.5
+  attackLockTime: 1.5
   localInputEnabled: 1
 --- !u!114 &3917528503583871862
 MonoBehaviour:
@@ -1075,15 +1079,19 @@ MonoBehaviour:
   quickSlots:
   - useResourceBinding: 0
     boundResourceType: 0
+    boundBackpackSlotIndex: -1
     item: {fileID: 11400000, guid: 44f6f101124ddbb47ba198a724d3fc62, type: 2}
   - useResourceBinding: 0
     boundResourceType: 0
+    boundBackpackSlotIndex: -1
     item: {fileID: 11400000, guid: c6baa6280e966b14db41e947c60cdaa2, type: 2}
   - useResourceBinding: 0
     boundResourceType: 0
+    boundBackpackSlotIndex: -1
     item: {fileID: 11400000, guid: 7799e5af29d48de4aa8b14a2f945c10a, type: 2}
   - useResourceBinding: 0
     boundResourceType: 0
+    boundBackpackSlotIndex: -1
     item: {fileID: 0}
   quickSlotKeys: 31000000320000003300000034000000
   showCooldownMessage: 1
@@ -1128,7 +1136,7 @@ MonoBehaviour:
   spatialBlend: 0
   footstepId: 30
   minMoveSpeed: 0.05
-  speedForFastSteps: 2
+  speedForFastSteps: 4
   minStepInterval: 0.21
   maxStepInterval: 0.47
   audioSource: {fileID: 0}

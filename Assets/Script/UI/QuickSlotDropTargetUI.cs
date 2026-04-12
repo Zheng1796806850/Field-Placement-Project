@@ -28,10 +28,11 @@ public class QuickSlotDropTargetUI : MonoBehaviour, IDropHandler
         if (quickSlotController == null) return;
         if (backpackPanel == null) return;
 
-        if (!backpackPanel.TryGetResourceTypeAtDisplaySlot(BackpackSlotUI.DragPayload.sourceSlotIndex, out var type))
+        if (!backpackPanel.TryGetQuickSlotBindData(BackpackSlotUI.DragPayload.sourceSlotIndex, out var type, out var backpackSlotIndex))
             return;
 
-        quickSlotController.BindQuickSlotResource(quickSlotIndex, type);
+        BackpackSlotUI.DragPayload.DropConsumedByValidTarget = true;
+        quickSlotController.BindQuickSlotResource(quickSlotIndex, type, backpackSlotIndex);
 
         if (saveInventoryAfterBind)
             PlayerResourceInventory.Instance?.SaveInMemory();

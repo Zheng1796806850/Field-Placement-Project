@@ -31,6 +31,7 @@ public class QuickSlotDropTarget : MonoBehaviour, IDropHandler
         if (controller == null) return;
         if (!BackpackSlotUI.DragPayload.active) return;
 
-        controller.BindQuickSlotResource(slotIndex, BackpackSlotUI.DragPayload.resourceType);
+        BackpackSlotUI.DragPayload.DropConsumedByValidTarget = true;
+        controller.BindQuickSlotResource(slotIndex, BackpackSlotUI.DragPayload.resourceType, BackpackSlotUI.DragPayload.sourceSlotIndex);
     }
 }

@@ -46,6 +46,9 @@ public class BackpackPanelHUD : MonoBehaviour
     private bool _lastVisibleState;
     public bool IsOpen => panelRoot != null && panelRoot.activeSelf;
 
+    /// <summary>Resolved inventory for drag/drop helpers (e.g. BackpackSlotUI).</summary>
+    public PlayerResourceInventory Inventory => inventory;
+
     private void Awake()
     {
         ResolveRefs();
@@ -132,8 +135,7 @@ public class BackpackPanelHUD : MonoBehaviour
         if (inventory == null) return;
 
         int maxSlots = inventory.MaxSlots;
-        var stacks = inventory.GetStackViewsSnapshot();
-        int used = stacks.Count;
+        int used = inventory.GetUsedSlots();
 
         if (capacityLabel != null) capacityLabel.text = $"Slots {used}/{maxSlots}";
 
@@ -151,20 +153,35 @@ public class BackpackPanelHUD : MonoBehaviour
         for (int i = 0; i < maxSlots; i++)
         {
             _slots[i].Configure(this, i);
-            _slots[i].SetEmpty();
-        }
-
-        int fillCount = Mathf.Min(used, maxSlots);
-        for (int i = 0; i < fillCount; i++)
-        {
-            var v = stacks[i];
-            Sprite icon = rules != null ? rules.GetIcon(v.type) : null;
-            string name = rules != null ? rules.GetDisplayName(v.type) : v.type.ToString();
-            _slots[i].Set(v.type, v.amountInStack, v.stackSize, icon, name);
+            var cell = inventory.GetSlot(i);
+            if (cell.IsEmpty)
+            {
+                _slots[i].SetEmpty();
+            }
+            else
+            {
+                int stackSize = inventory.GetStackSize(cell.type);
+                Sprite icon = rules != null ? rules.GetIcon(cell.type) : null;
+                string name = rules != null ? rules.GetDisplayName(cell.type) : cell.type.ToString();
+                _slots[i].Set(cell.type, cell.amount, stackSize, icon, name);
+            }
         }
 
         for (int i = 0; i < maxSlots; i++)
             _slots[i].gameObject.SetActive(i < visibleSlots);
+    }
+
+    /// <summary>True if the point lies inside the backpack panel rect (screen space).</summary>
+    public bool IsScreenPointOverBackpackPanel(Vector2 screenPosition, Camera eventCamera)
+    {
+        if (panelRoot == null || !panelRoot.activeInHierarchy)
+            return false;
+
+        var rt = panelRoot.transform as RectTransform;
+        if (rt == null)
+            return false;
+
+        return RectTransformUtility.RectangleContainsScreenPoint(rt, screenPosition, eventCamera);
     }
 
     public bool TryGetResourceTypeAtDisplaySlot(int displayIndex, out ResourceType type)
@@ -179,6 +196,17 @@ public class BackpackPanelHUD : MonoBehaviour
         return inventory.BindQuickSlotCandidateFromDisplayIndex(displayIndex, out type);
     }
 
+    public bool TryGetQuickSlotBindData(int displayIndex, out ResourceType type, out int backpackSlotIndex)
+    {
+        ResolveRefs();
+        type = default;
+        backpackSlotIndex = -1;
+        if (inventory == null)
+            return false;
+
+        return inventory.TryGetBackpackSlotForQuickBind(displayIndex, out type, out backpackSlotIndex);
+    }
+
     public void HandleSlotDrop(int fromSlotIndex, int toSlotIndex)
     {
         ResolveRefs();
@@ -186,7 +214,7 @@ public class BackpackPanelHUD : MonoBehaviour
         if (fromSlotIndex < 0 || toSlotIndex < 0) return;
         if (fromSlotIndex == toSlotIndex) return;
 
-        bool changed = inventory.ReorderDisplaySlot(fromSlotIndex, toSlotIndex);
+        bool changed = inventory.TryApplyBackpackSlotDrag(fromSlotIndex, toSlotIndex);
         if (!changed) return;
 
         if (saveInventoryAfterReorder)

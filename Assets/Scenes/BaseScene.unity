@@ -143993,6 +143993,14 @@ PrefabInstance:
       propertyPath: grid
       value: 
       objectReference: {fileID: 1541765669}
+    - target: {fileID: 4879680865712586085, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
+      propertyPath: dropResourcePrefab
+      value: 
+      objectReference: {fileID: 240201751570076137, guid: 18adf4fc49352e14ebe5ba88fcd6650c, type: 3}
+    - target: {fileID: 4879680865712586085, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
+      propertyPath: overflowDropPrefab
+      value: 
+      objectReference: {fileID: 240201751570076137, guid: 18adf4fc49352e14ebe5ba88fcd6650c, type: 3}
     - target: {fileID: 4976344338439898418, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
