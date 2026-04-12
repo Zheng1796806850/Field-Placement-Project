@@ -16815,6 +16815,7 @@ MonoBehaviour:
     - {fileID: 3858639233306164413}
     - {fileID: 8146970959449234590}
     matureVisual: {fileID: 1323171848819028003}
+  plotId: 
   debugLogs: 1
   enableActionLoopSfx: 1
   plantActionLoopClips: []
@@ -17192,6 +17193,10 @@ PrefabInstance:
     - target: {fileID: 945630127330316080, guid: c8d2cd43f076bb74cb70e55223c50eea, type: 3}
       propertyPath: m_Name
       value: InteractionTargetRoot
+      objectReference: {fileID: 0}
+    - target: {fileID: 945630127330316080, guid: c8d2cd43f076bb74cb70e55223c50eea, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6020774463555156773, guid: c8d2cd43f076bb74cb70e55223c50eea, type: 3}
       propertyPath: m_LocalPosition.x

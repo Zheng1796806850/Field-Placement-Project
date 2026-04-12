@@ -40,6 +40,7 @@ public class TimedActionLoopSfxEmitter : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
+        GameAudioSettings.ApplySfxRoute(audioSource);
     }
 
     private void ApplySourceSettings()

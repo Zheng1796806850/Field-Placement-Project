@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
+[DefaultExecutionOrder(-40)]
 [DisallowMultipleComponent]
 public class SfxPlayer : MonoBehaviour
 {
@@ -8,6 +10,10 @@ public class SfxPlayer : MonoBehaviour
 
     [Header("Library")]
     public SfxLibrarySO library;
+
+    [Header("Mixer routing")]
+    [Tooltip("Used when GameAudioSettings.Instance / sfxMixerGroup is not available (e.g. editor tests).")]
+    public AudioMixerGroup outputMixerGroup;
 
     [Header("Pool")]
     [Min(1)] public int initialPoolSize = 12;
@@ -30,6 +36,8 @@ public class SfxPlayer : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
         WarmPool();
+
+        GameAudioSettings.Instance?.ApplyAll();
     }
 
     private void WarmPool()
@@ -50,6 +58,11 @@ public class SfxPlayer : MonoBehaviour
         src.rolloffMode = AudioRolloffMode.Linear;
         src.minDistance = 1f;
         src.maxDistance = 15f;
+
+        GameAudioSettings.ApplySfxRoute(src);
+        if (src.outputAudioMixerGroup == null && outputMixerGroup != null)
+            src.outputAudioMixerGroup = outputMixerGroup;
+
         return src;
     }
 

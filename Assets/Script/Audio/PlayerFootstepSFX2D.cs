@@ -41,7 +41,15 @@ public class PlayerFootstepSFX2D : MonoBehaviour
         audioSource.volume = 1f;
         audioSource.pitch = 1f;
 
+        GameAudioSettings.ApplySfxRoute(audioSource);
+
         _stepTimer = 0f;
+    }
+
+    private void OnEnable()
+    {
+        if (audioSource != null)
+            GameAudioSettings.ApplySfxRoute(audioSource);
     }
 
     private void Update()

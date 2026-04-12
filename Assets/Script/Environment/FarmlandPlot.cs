@@ -139,6 +139,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         _actionLoopSource.spatialBlend = 0f;
         _actionLoopSource.volume = 1f;
         _actionLoopSource.pitch = 1f;
+        GameAudioSettings.ApplySfxRoute(_actionLoopSource);
     }
 
     private void BeginActionLoop(SfxId id, AudioClip[] overrideClips)
@@ -191,6 +192,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         _actionLoopSource.spatialBlend = Mathf.Clamp01(spatialBlend);
         _actionLoopSource.volume = Mathf.Clamp01(volume * Mathf.Max(0f, actionLoopVolumeMultiplier));
         _actionLoopSource.pitch = pitch;
+        GameAudioSettings.ApplySfxRoute(_actionLoopSource);
         _actionLoopSource.Play();
     }
 

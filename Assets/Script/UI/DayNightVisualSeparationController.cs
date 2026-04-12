@@ -132,15 +132,28 @@ public class DayNightVisualSeparationController : MonoBehaviour
 
     private void EnsureAmbienceSource()
     {
-        if (ambienceSource != null) return;
+        if (ambienceSource == null)
+        {
+            ambienceSource = GetComponent<AudioSource>();
+            if (ambienceSource == null) ambienceSource = gameObject.AddComponent<AudioSource>();
 
-        ambienceSource = GetComponent<AudioSource>();
-        if (ambienceSource == null) ambienceSource = gameObject.AddComponent<AudioSource>();
+            ambienceSource.playOnAwake = false;
+            ambienceSource.loop = true;
+            ambienceSource.spatialBlend = 0f;
+            ambienceSource.volume = 0f;
+        }
 
-        ambienceSource.playOnAwake = false;
-        ambienceSource.loop = true;
-        ambienceSource.spatialBlend = 0f;
-        ambienceSource.volume = 0f;
+        ApplyAmbienceMixerRouting();
+    }
+
+    private void ApplyAmbienceMixerRouting()
+    {
+        GameAudioSettings.ApplyMusicRoute(ambienceSource);
+    }
+
+    private void Start()
+    {
+        ApplyAmbienceMixerRouting();
     }
 
     private void RebuildLightBindings()

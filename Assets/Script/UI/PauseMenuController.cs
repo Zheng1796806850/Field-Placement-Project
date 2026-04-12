@@ -225,6 +225,23 @@ public class PauseMenuController : MonoBehaviour
         ClosePauseMenu();
     }
 
+    /// <summary>
+    /// Wire the settings Back button to this (not only ESC): reverts un-applied changes and returns to pause root.
+    /// </summary>
+    public void BackFromSettings()
+    {
+        if (settingsPanel != null)
+        {
+            var shell = settingsPanel.GetComponentInChildren<SettingsShellController>(true);
+            if (shell != null)
+                shell.BackWithoutCloseEvent();
+            else
+                SettingsManager.Instance?.EndSettingsSessionIfAborted();
+        }
+
+        ShowPausePanelOnly();
+    }
+
     private void ShowSettings()
     {
         // Open settings and hide pause panel visuals.
