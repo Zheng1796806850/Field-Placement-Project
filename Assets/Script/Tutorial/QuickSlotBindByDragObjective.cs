@@ -8,22 +8,40 @@ public class QuickSlotBindByDragObjective : TutorialObjective
 
     private readonly HashSet<int> _boundSlots = new HashSet<int>();
     private int _bindCount;
+    private int _lastEventFrame = -1;
+    private int _lastEventSlot = -1;
+    private ResourceType _lastEventType;
 
     protected override void OnBegin()
     {
         _boundSlots.Clear();
         _bindCount = 0;
+        _lastEventFrame = -1;
+        _lastEventSlot = -1;
+        _lastEventType = default;
         QuickSlotDropTargetUI.OnAnyQuickSlotBound -= HandleBound;
         QuickSlotDropTargetUI.OnAnyQuickSlotBound += HandleBound;
+        QuickSlotDropTarget.OnAnyQuickSlotBound -= HandleBound;
+        QuickSlotDropTarget.OnAnyQuickSlotBound += HandleBound;
     }
 
     protected override void OnEnd()
     {
         QuickSlotDropTargetUI.OnAnyQuickSlotBound -= HandleBound;
+        QuickSlotDropTarget.OnAnyQuickSlotBound -= HandleBound;
     }
 
     private void HandleBound(int slotIndex, ResourceType type)
     {
+        if (Time.frameCount == _lastEventFrame &&
+            slotIndex == _lastEventSlot &&
+            type == _lastEventType)
+            return;
+
+        _lastEventFrame = Time.frameCount;
+        _lastEventSlot = slotIndex;
+        _lastEventType = type;
+
         _bindCount++;
         _boundSlots.Add(slotIndex);
 

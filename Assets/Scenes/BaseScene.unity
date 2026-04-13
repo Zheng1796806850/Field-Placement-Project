@@ -124266,6 +124266,66 @@ PrefabInstance:
       propertyPath: inventory
       value: 
       objectReference: {fileID: 197486640}
+    - target: {fileID: 131129937585994054, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 131129937585994054, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 131129937585994054, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 131129937585994054, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 131129937585994054, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 167950360041922218, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 167950360041922218, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 167950360041922218, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 167950360041922218, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 167950360041922218, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 536080771691084171, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 536080771691084171, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 536080771691084171, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 536080771691084171, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 536080771691084171, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1268578985418796248, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
       propertyPath: controller
       value: 
@@ -124402,6 +124462,22 @@ PrefabInstance:
       propertyPath: gameState
       value: 
       objectReference: {fileID: 403308085}
+    - target: {fileID: 6100623112927466305, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6100623112927466305, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6100623112927466305, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6100623112927466305, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6224812760008495182, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
       propertyPath: controller
       value: 
@@ -124430,6 +124506,22 @@ PrefabInstance:
       propertyPath: hungerThirst
       value: 
       objectReference: {fileID: 1817910279}
+    - target: {fileID: 7666108601517269626, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7666108601517269626, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7666108601517269626, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7666108601517269626, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8777189511051847002, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
       propertyPath: m_Camera
       value: 
@@ -124451,6 +124543,18 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1409394768791019987, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: d3b20686905c5fb4e9dd2d6c463dbaa5, type: 2}
+    - target: {fileID: 1409394768791019987, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -3420322645040745660, guid: d3b20686905c5fb4e9dd2d6c463dbaa5, type: 2}
+    - target: {fileID: 1409394768791019987, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4552219531590130918, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_Name
       value: WaterCollectorSpot
@@ -124458,6 +124562,18 @@ PrefabInstance:
     - target: {fileID: 6180384242341235040, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: questStructureId
       value: water_collector
+      objectReference: {fileID: 0}
+    - target: {fileID: 7157920198904569706, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: d3b20686905c5fb4e9dd2d6c463dbaa5, type: 2}
+    - target: {fileID: 7157920198904569706, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -3420322645040745660, guid: d3b20686905c5fb4e9dd2d6c463dbaa5, type: 2}
+    - target: {fileID: 7157920198904569706, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7545031342684364423, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_LocalPosition.x

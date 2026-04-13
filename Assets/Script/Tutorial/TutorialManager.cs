@@ -23,6 +23,7 @@ public class TutorialManager : MonoBehaviour
     public TutorialStepTeleporter teleporter;
     public TutorialScreenFader fader;
     public Transform player;
+    public WaveEventBannerHUD waveBannerHUD;
 
     [Header("UI")]
     public TextMeshProUGUI stepTitleLabel;
@@ -47,6 +48,18 @@ public class TutorialManager : MonoBehaviour
     [Tooltip("WaterCollectorBuildSpot collectorSaveKey values — cleared when loading Base after tutorial so tutorial session state is not kept (match Main Menu list).")]
     public List<string> waterCollectorSaveKeysToClearBeforeGameplay = new List<string> { "wc_base_01" };
 
+    [Header("Step Transition Banner")]
+    public string stepCompleteBannerText = "Step complete! Great work.";
+    public string nextStepCountdownFormat = "Next step starts in {0}...";
+    [Min(0f)] public float stepCompleteBannerSeconds = 2f;
+    [Min(0f)] public float countdownSecondsPerNumber = 1f;
+
+    [Header("Tutorial Complete Banner")]
+    public string tutorialCompleteBannerText = "Congratulations! You completed the tutorial.";
+    public string pressEnterBannerText = "Press Enter to start the full game.";
+    public string gameStartCountdownFormat = "Game starts in {0}...";
+    [Min(0f)] public float tutorialCompleteBannerSeconds = 2f;
+
     private int _stepIndex = -1;
     private TutorialStep _currentStep;
     private TutorialObjective[] _currentObjectives = new TutorialObjective[0];
@@ -67,7 +80,41 @@ public class TutorialManager : MonoBehaviour
 
     private void Start()
     {
+        ApplyTutorialSessionFixups();
         ActivateStep(0);
+    }
+
+    /// <summary>
+    /// Tutorial uses the same inventory save key as the main game. Loading Tutorial after Base (or with an old save)
+    /// can leave 0 seeds so FarmlandPlot.CanInteract is always false, with no obvious feedback.
+    /// Persisted Player (DontDestroyOnLoad) can also keep another scene's position so overlap with tutorial plots never happens.
+    /// Reset defaults + clear save, then snap to the first step's teleport target before objectives run.
+    /// </summary>
+    private void ApplyTutorialSessionFixups()
+    {
+        ResolveRefs();
+
+        var inv = PlayerResourceInventory.Instance;
+        if (inv == null)
+            inv = FindFirstObjectByType<PlayerResourceInventory>(FindObjectsInactive.Include);
+        if (inv != null)
+            inv.ResetToDefaults(true);
+
+        if (player == null)
+        {
+            var m = FindFirstObjectByType<PlayerMovementController>(FindObjectsInactive.Include);
+            if (m != null)
+                player = m.transform;
+        }
+
+        if (steps == null || steps.Count == 0)
+            return;
+
+        TutorialStep first = steps[0];
+        if (first == null || first.teleportTarget == null || player == null)
+            return;
+
+        TutorialStepTeleporter.ApplyWorldPosition(player, first.teleportTarget);
     }
 
     private void Update()
@@ -81,6 +128,7 @@ public class TutorialManager : MonoBehaviour
         if (abilityGate == null) abilityGate = FindFirstObjectByType<TutorialAbilityGate>(FindObjectsInactive.Include);
         if (teleporter == null) teleporter = FindFirstObjectByType<TutorialStepTeleporter>(FindObjectsInactive.Include);
         if (fader == null) fader = FindFirstObjectByType<TutorialScreenFader>(FindObjectsInactive.Include);
+        if (waveBannerHUD == null) waveBannerHUD = FindFirstObjectByType<WaveEventBannerHUD>(FindObjectsInactive.Include);
 
         if (player == null)
         {
@@ -96,7 +144,11 @@ public class TutorialManager : MonoBehaviour
     {
         if (index < 0 || index >= steps.Count)
         {
-            HandleTutorialCompleted();
+            if (!_transitioning)
+            {
+                _transitioning = true;
+                StartCoroutine(HandleTutorialCompletedRoutine());
+            }
             return;
         }
 
@@ -179,8 +231,7 @@ public class TutorialManager : MonoBehaviour
 
         if (next >= steps.Count)
         {
-            _transitioning = false;
-            HandleTutorialCompleted();
+            yield return HandleTutorialCompletedRoutine();
             yield break;
         }
 
@@ -188,6 +239,9 @@ public class TutorialManager : MonoBehaviour
         float delay = prev != null ? Mathf.Max(0f, prev.completeDelaySeconds) : 0f;
         if (delay > 0f)
             yield return new WaitForSecondsRealtime(delay);
+
+        yield return ShowBannerForSeconds(stepCompleteBannerText, stepCompleteBannerSeconds);
+        yield return ShowCountdown(nextStepCountdownFormat, countdownSecondsPerNumber);
 
         TutorialScreenFader stepFader = teleporter != null ? teleporter.fader : fader;
         float fadeDur = teleporter != null ? teleporter.fadeDuration : (fader != null ? fader.defaultFadeDuration : 0.35f);
@@ -361,7 +415,7 @@ public class TutorialManager : MonoBehaviour
         return sb.ToString();
     }
 
-    private void HandleTutorialCompleted()
+    private IEnumerator HandleTutorialCompletedRoutine()
     {
         if (abilityGate != null)
             abilityGate.RestoreDefaults();
@@ -372,7 +426,15 @@ public class TutorialManager : MonoBehaviour
         ReleaseTutorialCameraPointLock(snapInstant: true);
 
         if (!loadGameplayAfterComplete)
-            return;
+        {
+            _transitioning = false;
+            yield break;
+        }
+
+        yield return ShowBannerForSeconds(tutorialCompleteBannerText, tutorialCompleteBannerSeconds);
+        yield return ShowBannerForSeconds(pressEnterBannerText, stepCompleteBannerSeconds);
+        yield return WaitForEnterToContinue();
+        yield return ShowCountdown(gameStartCountdownFormat, countdownSecondsPerNumber);
 
         if (waterCollectorSaveKeysToClearBeforeGameplay != null && waterCollectorSaveKeysToClearBeforeGameplay.Count > 0)
             BaseWorldSession.DeleteWaterCollectorKeysForAllRuns(waterCollectorSaveKeysToClearBeforeGameplay);
@@ -393,12 +455,52 @@ public class TutorialManager : MonoBehaviour
             else
                 SceneManager.LoadScene(loadingSceneName, LoadSceneMode.Single);
 
-            return;
+            yield break;
         }
 
         if (gameplaySceneBuildIndex >= 0)
             SceneManager.LoadScene(gameplaySceneBuildIndex, LoadSceneMode.Single);
         else
             SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
+    }
+
+    private IEnumerator ShowBannerForSeconds(string message, float seconds)
+    {
+        float hold = Mathf.Max(0f, seconds);
+        if (waveBannerHUD == null || string.IsNullOrWhiteSpace(message))
+        {
+            if (hold > 0f)
+                yield return new WaitForSecondsRealtime(hold);
+            yield break;
+        }
+
+        float oldHold = waveBannerHUD.holdDuration;
+        waveBannerHUD.holdDuration = Mathf.Max(0.01f, hold);
+        waveBannerHUD.Show(message);
+
+        float wait = waveBannerHUD.fadeInDuration + waveBannerHUD.holdDuration + waveBannerHUD.fadeOutDuration;
+        yield return new WaitForSecondsRealtime(wait + 0.03f);
+        waveBannerHUD.holdDuration = oldHold;
+    }
+
+    private IEnumerator ShowCountdown(string format, float secondsPerNumber)
+    {
+        float sec = Mathf.Max(0f, secondsPerNumber);
+        for (int i = 3; i >= 1; i--)
+        {
+            string line = string.Format(format, i);
+            yield return ShowBannerForSeconds(line, sec);
+        }
+    }
+
+    private static IEnumerator WaitForEnterToContinue()
+    {
+        while (true)
+        {
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+                yield break;
+
+            yield return null;
+        }
     }
 }

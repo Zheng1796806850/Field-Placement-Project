@@ -15,6 +15,11 @@ public class TimedActionController : MonoBehaviour
     private PlayerMovementController _mover;
     private bool _movementLocked;
     private int _cancelInputUnlockedFrame = -1;
+    /// <summary>
+    /// When starting from a single key-down, the key may be released before the next Update.
+    /// Skip one hold check so tap-to-start timed actions are not cancelled immediately.
+    /// </summary>
+    private bool _skipHoldCheckOnce;
 
     private void Update()
     {
@@ -93,6 +98,7 @@ public class TimedActionController : MonoBehaviour
         _req = request;
         _elapsed = 0f;
         _active = true;
+        _skipHoldCheckOnce = request != null && request.requireHold;
         _cancelInputUnlockedFrame = Time.frameCount + Mathf.Max(0, _req.suppressCancelInputFrames);
 
         if (_req.cancelKey == KeyCode.None)
@@ -175,6 +181,7 @@ public class TimedActionController : MonoBehaviour
         _active = false;
         _elapsed = 0f;
         _cancelInputUnlockedFrame = -1;
+        _skipHoldCheckOnce = false;
     }
 
     private void OnDisable()

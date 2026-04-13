@@ -1,8 +1,11 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using System;
 
 public class QuickSlotDropTarget : MonoBehaviour, IDropHandler
 {
+    public static event Action<int, ResourceType> OnAnyQuickSlotBound;
+
     [Header("Refs")]
     public PlayerHungerThirst controller;
 
@@ -32,6 +35,8 @@ public class QuickSlotDropTarget : MonoBehaviour, IDropHandler
         if (!BackpackSlotUI.DragPayload.active) return;
 
         BackpackSlotUI.DragPayload.DropConsumedByValidTarget = true;
-        controller.BindQuickSlotResource(slotIndex, BackpackSlotUI.DragPayload.resourceType, BackpackSlotUI.DragPayload.sourceSlotIndex);
+        ResourceType type = BackpackSlotUI.DragPayload.resourceType;
+        controller.BindQuickSlotResource(slotIndex, type, BackpackSlotUI.DragPayload.sourceSlotIndex);
+        OnAnyQuickSlotBound?.Invoke(slotIndex, type);
     }
 }
