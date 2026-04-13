@@ -3260,6 +3260,7 @@ MonoBehaviour:
   fallbackSpeedMultiplier: 1
   fallbackWallDamageMultiplier: 1
   autoAddWaveEnemyAgent: 1
+  applyWaveSpeedToEnemyMoveSpeed: 1
   logSpawn: 0
 --- !u!1 &228414935
 GameObject:
@@ -3295,6 +3296,7 @@ MonoBehaviour:
   useRulesOverflowMode: 1
   overflowDropPrefab: {fileID: 0}
   overflowDropScatterRadius: 0.25
+  dropResourcePrefab: {fileID: 0}
   defaultResources:
   - type: 0
     amount: 5
@@ -3316,6 +3318,7 @@ MonoBehaviour:
   defaultSeeds: 5
   defaultWater: 5
   defaultFood: 5
+  _slots: []
 --- !u!4 &228414937
 Transform:
   m_ObjectHideFlags: 0
@@ -24666,6 +24669,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerPickupMagnet2D
   attractTarget: {fileID: 1486234443}
   attractionSpeed: 3
+  attractDelaySeconds: 0.35
+  useUnscaledTimeForDelay: 0
   dropLayers:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -71236,6 +71241,11 @@ MonoBehaviour:
   minimumLoadingScreenTime: 0.25
   carryPlayerVitals: 1
   carryDayNightPhase: 0
+  restrictByPhase: 0
+  allowInDay: 1
+  allowInNight: 1
+  showDenyMessage: 1
+  denyMessageByPhase: Cannot travel now.
   promptText: Press E to Enter
   priority: 100
 --- !u!61 &1046161251
@@ -120916,15 +120926,19 @@ MonoBehaviour:
   quickSlots:
   - useResourceBinding: 0
     boundResourceType: 0
+    boundBackpackSlotIndex: -1
     item: {fileID: 11400000, guid: 44f6f101124ddbb47ba198a724d3fc62, type: 2}
   - useResourceBinding: 0
     boundResourceType: 0
+    boundBackpackSlotIndex: -1
     item: {fileID: 11400000, guid: c6baa6280e966b14db41e947c60cdaa2, type: 2}
   - useResourceBinding: 0
     boundResourceType: 0
+    boundBackpackSlotIndex: -1
     item: {fileID: 11400000, guid: 7799e5af29d48de4aa8b14a2f945c10a, type: 2}
   - useResourceBinding: 0
     boundResourceType: 0
+    boundBackpackSlotIndex: -1
     item: {fileID: 0}
   quickSlotKeys: 31000000320000003300000034000000
   showCooldownMessage: 1
@@ -120990,9 +121004,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat2D
   movement: {fileID: 1486234437}
   animator: {fileID: 1486234438}
-  spriteRenderer: {fileID: 1486234442}
-  attackUp: {fileID: 1676450191}
-  attackDown: {fileID: 350720291}
   attackLeft: {fileID: 192737683}
   attackRight: {fileID: 1814573616}
   attackKey: 323
@@ -135396,6 +135407,11 @@ MonoBehaviour:
   minimumLoadingScreenTime: 0.25
   carryPlayerVitals: 1
   carryDayNightPhase: 0
+  restrictByPhase: 0
+  allowInDay: 1
+  allowInNight: 1
+  showDenyMessage: 1
+  denyMessageByPhase: Cannot travel now.
   promptText: Press E to Enter
   priority: 100
 --- !u!61 &2136423730
