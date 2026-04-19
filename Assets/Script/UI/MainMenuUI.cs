@@ -15,6 +15,9 @@ public class MainMenuUI : MonoBehaviour
         public Button button;
         public GameObject selectedRoot;
         public RectTransform scaleTarget;
+        public Image imageTarget;
+        public Sprite normalSprite;
+        public Sprite hoverSprite;
     }
 
     [Header("Gameplay Target")]
@@ -44,6 +47,12 @@ public class MainMenuUI : MonoBehaviour
     public GameObject settingsPanel;
     public GameObject creditsPanel;
     public bool hideMainMenuWhenSubPanelOpen = false;
+
+    [Header("Panel Pop Animation")]
+    public bool usePanelPopAnimation = true;
+    [Min(0.01f)] public float panelShowDuration = 0.2f;
+    [Min(0.01f)] public float panelHideDuration = 0.16f;
+    [Range(0.01f, 1f)] public float panelHiddenScaleMultiplier = 0.75f;
 
     [Header("Selection")]
     public bool selectDefaultOnEnable = true;
@@ -100,6 +109,9 @@ public class MainMenuUI : MonoBehaviour
     private bool _tutorialChoiceOpen;
 
     private readonly Dictionary<RectTransform, Vector3> baseScales = new Dictionary<RectTransform, Vector3>();
+    private readonly Dictionary<Image, Sprite> baseSprites = new Dictionary<Image, Sprite>();
+    private readonly Dictionary<GameObject, Coroutine> panelAnimRoutines = new Dictionary<GameObject, Coroutine>();
+    private readonly Dictionary<GameObject, Vector3> panelBaseScales = new Dictionary<GameObject, Vector3>();
     private readonly List<RaycastResult> raycastResults = new List<RaycastResult>(16);
     private Coroutine selectRoutine;
 
@@ -110,6 +122,7 @@ public class MainMenuUI : MonoBehaviour
         WireButtons();
         ApplyOpenState();
         ApplyInitialPanelState();
+        CachePanelScales();
         RefreshSelectionVisuals(true);
     }
 
@@ -200,16 +213,14 @@ public class MainMenuUI : MonoBehaviour
 
         _tutorialChoiceOpen = true;
 
-        if (settingsPanel != null)
-            settingsPanel.SetActive(false);
+        SetPanelVisible(settingsPanel, false, instant: false);
 
-        if (creditsPanel != null)
-            creditsPanel.SetActive(false);
+        SetPanelVisible(creditsPanel, false, instant: false);
 
         if (mainMenuPanel != null && hideMainMenuWhenSubPanelOpen)
             mainMenuPanel.SetActive(false);
 
-        tutorialChoicePanel.SetActive(true);
+        SetPanelVisible(tutorialChoicePanel, true, instant: false);
 
         if (selectDefaultOnEnable && EventSystem.current != null && tutorialChoiceYesButton != null)
             EventSystem.current.SetSelectedGameObject(tutorialChoiceYesButton.gameObject);
@@ -217,8 +228,7 @@ public class MainMenuUI : MonoBehaviour
 
     public void CloseTutorialChoicePanel()
     {
-        if (tutorialChoicePanel != null)
-            tutorialChoicePanel.SetActive(false);
+        SetPanelVisible(tutorialChoicePanel, false, instant: false);
 
         if (mainMenuPanel != null && hideMainMenuWhenSubPanelOpen)
             mainMenuPanel.SetActive(true);
@@ -255,11 +265,9 @@ public class MainMenuUI : MonoBehaviour
         if (isBusy)
             return;
 
-        if (settingsPanel != null)
-            settingsPanel.SetActive(true);
+        SetPanelVisible(settingsPanel, true, instant: false);
 
-        if (creditsPanel != null)
-            creditsPanel.SetActive(false);
+        SetPanelVisible(creditsPanel, false, instant: false);
 
         if (mainMenuPanel != null && hideMainMenuWhenSubPanelOpen)
             mainMenuPanel.SetActive(false);
@@ -270,8 +278,7 @@ public class MainMenuUI : MonoBehaviour
 
     public void CloseSettings()
     {
-        if (settingsPanel != null)
-            settingsPanel.SetActive(false);
+        SetPanelVisible(settingsPanel, false, instant: false);
 
         if (mainMenuPanel != null && hideMainMenuWhenSubPanelOpen)
             mainMenuPanel.SetActive(true);
@@ -285,11 +292,9 @@ public class MainMenuUI : MonoBehaviour
         if (isBusy)
             return;
 
-        if (creditsPanel != null)
-            creditsPanel.SetActive(true);
+        SetPanelVisible(creditsPanel, true, instant: false);
 
-        if (settingsPanel != null)
-            settingsPanel.SetActive(false);
+        SetPanelVisible(settingsPanel, false, instant: false);
 
         if (mainMenuPanel != null && hideMainMenuWhenSubPanelOpen)
             mainMenuPanel.SetActive(false);
@@ -300,8 +305,7 @@ public class MainMenuUI : MonoBehaviour
 
     public void CloseCredits()
     {
-        if (creditsPanel != null)
-            creditsPanel.SetActive(false);
+        SetPanelVisible(creditsPanel, false, instant: false);
 
         if (mainMenuPanel != null && hideMainMenuWhenSubPanelOpen)
             mainMenuPanel.SetActive(true);
@@ -561,6 +565,7 @@ public class MainMenuUI : MonoBehaviour
             defaultSelectedButton = startButton != null ? startButton : settingsButton;
 
         baseScales.Clear();
+        baseSprites.Clear();
 
         for (int i = 0; i < buttonVisuals.Count; i++)
         {
@@ -573,6 +578,18 @@ public class MainMenuUI : MonoBehaviour
 
             if (entry.scaleTarget != null && !baseScales.ContainsKey(entry.scaleTarget))
                 baseScales.Add(entry.scaleTarget, entry.scaleTarget.localScale);
+
+            if (entry.imageTarget == null)
+                entry.imageTarget = entry.button.targetGraphic as Image;
+
+            if (entry.imageTarget != null)
+            {
+                if (entry.normalSprite == null)
+                    entry.normalSprite = entry.imageTarget.sprite;
+
+                if (!baseSprites.ContainsKey(entry.imageTarget))
+                    baseSprites.Add(entry.imageTarget, entry.imageTarget.sprite);
+            }
         }
     }
 
@@ -625,14 +642,97 @@ public class MainMenuUI : MonoBehaviour
         if (mainMenuPanel != null)
             mainMenuPanel.SetActive(true);
 
-        if (settingsPanel != null)
-            settingsPanel.SetActive(false);
+        SetPanelVisible(settingsPanel, false, instant: true);
 
-        if (creditsPanel != null)
-            creditsPanel.SetActive(false);
+        SetPanelVisible(creditsPanel, false, instant: true);
 
-        if (tutorialChoicePanel != null)
-            tutorialChoicePanel.SetActive(false);
+        SetPanelVisible(tutorialChoicePanel, false, instant: true);
+    }
+
+    private void CachePanelScales()
+    {
+        CachePanelBaseScale(settingsPanel);
+        CachePanelBaseScale(creditsPanel);
+        CachePanelBaseScale(tutorialChoicePanel);
+    }
+
+    private void CachePanelBaseScale(GameObject panel)
+    {
+        if (panel == null || panelBaseScales.ContainsKey(panel))
+            return;
+
+        panelBaseScales[panel] = panel.transform.localScale;
+    }
+
+    private void SetPanelVisible(GameObject panel, bool visible, bool instant)
+    {
+        if (panel == null)
+            return;
+
+        CachePanelBaseScale(panel);
+        StopPanelAnimation(panel);
+
+        Transform tr = panel.transform;
+        if (tr == null || instant || !usePanelPopAnimation)
+        {
+            panel.SetActive(visible);
+            if (visible && panelBaseScales.TryGetValue(panel, out Vector3 baseScale))
+                tr.localScale = baseScale;
+            return;
+        }
+
+        panelAnimRoutines[panel] = StartCoroutine(AnimatePanelScale(panel, tr, visible));
+    }
+
+    private void StopPanelAnimation(GameObject panel)
+    {
+        if (panel == null)
+            return;
+
+        if (panelAnimRoutines.TryGetValue(panel, out Coroutine running) && running != null)
+            StopCoroutine(running);
+
+        panelAnimRoutines.Remove(panel);
+    }
+
+    private IEnumerator AnimatePanelScale(GameObject panel, Transform tr, bool show)
+    {
+        if (panel == null || tr == null)
+            yield break;
+
+        if (!panelBaseScales.TryGetValue(panel, out Vector3 baseScale))
+            baseScale = tr.localScale;
+
+        Vector3 hiddenScale = baseScale * panelHiddenScaleMultiplier;
+        float duration = show ? panelShowDuration : panelHideDuration;
+        duration = Mathf.Max(0.01f, duration);
+
+        if (show)
+        {
+            panel.SetActive(true);
+            tr.localScale = hiddenScale;
+        }
+
+        Vector3 from = show ? hiddenScale : tr.localScale;
+        Vector3 to = show ? baseScale : hiddenScale;
+
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            float k = Mathf.Clamp01(t / duration);
+            // Slight ease-out when popping in, ease-in when closing.
+            float eased = show ? 1f - Mathf.Pow(1f - k, 3f) : k * k;
+            tr.localScale = Vector3.LerpUnclamped(from, to, eased);
+            yield return null;
+        }
+
+        tr.localScale = to;
+
+        if (!show)
+            panel.SetActive(false);
+
+        panelAnimRoutines.Remove(panel);
     }
 
     private void EnsureEventSystem()
@@ -659,7 +759,7 @@ public class MainMenuUI : MonoBehaviour
 
     private void RefreshSelectionVisuals(bool instant)
     {
-        Button target = ResolveVisualTarget();
+        Button hovered = GetHoveredButton();
 
         for (int i = 0; i < buttonVisuals.Count; i++)
         {
@@ -667,10 +767,24 @@ public class MainMenuUI : MonoBehaviour
             if (entry == null || entry.button == null)
                 continue;
 
-            bool selected = entry.button == target;
+            bool hoveredState = entry.button == hovered;
 
             if (entry.selectedRoot != null)
-                entry.selectedRoot.SetActive(selected);
+                entry.selectedRoot.SetActive(false);
+
+            if (entry.imageTarget != null)
+            {
+                Sprite fallbackNormal = entry.normalSprite;
+                if (fallbackNormal == null)
+                    baseSprites.TryGetValue(entry.imageTarget, out fallbackNormal);
+
+                Sprite desiredSprite = hoveredState && entry.hoverSprite != null
+                    ? entry.hoverSprite
+                    : fallbackNormal;
+
+                if (desiredSprite != null && entry.imageTarget.sprite != desiredSprite)
+                    entry.imageTarget.sprite = desiredSprite;
+            }
 
             if (!useScaleFeedback || entry.scaleTarget == null)
                 continue;
@@ -678,7 +792,7 @@ public class MainMenuUI : MonoBehaviour
             if (!baseScales.TryGetValue(entry.scaleTarget, out Vector3 baseScale))
                 baseScale = entry.scaleTarget.localScale;
 
-            Vector3 desired = baseScale * (selected ? selectedScale : normalScale);
+            Vector3 desired = baseScale * (hoveredState ? selectedScale : normalScale);
 
             if (instant)
                 entry.scaleTarget.localScale = desired;
