@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: bac6728281999534bac1b314b7e0b79c
+guid: 64c07a50e6b7fff4482102394a08eb16
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4635956999989388180
-    second: Rural_Walltrim_1_Dif_0
+      213: 3158662244995184933
+    second: HighLight_0
+  - first:
+      213: -8653868160445914907
+    second: HighLight_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -99,9 +102,9 @@ TextureImporter:
   - serializedVersion: 4
     buildTarget: Android
     maxTextureSize: 2048
-    resizeAlgorithm: 1
+    resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,13 +116,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Rural_Walltrim_1_Dif_0
+      name: HighLight_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 512
-        height: 2048
+        y: 1
+        width: 790
+        height: 622
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +131,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c6c95adbba5c9afb0800000000000000
-      internalID: -4635956999989388180
+      spriteID: 52930669392d5db20800000000000000
+      internalID: 3158662244995184933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: HighLight_1
+      rect:
+        serializedVersion: 2
+        x: 347
+        y: 0
+        width: 6
+        height: 5
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e0ee8b12c847e780800000000000000
+      internalID: -8653868160445914907
       vertices: []
       indices: 
       edges: []
@@ -148,7 +173,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Rural_Walltrim_1_Dif_0: -4635956999989388180
+      HighLight_0: 3158662244995184933
+      HighLight_1: -8653868160445914907
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
