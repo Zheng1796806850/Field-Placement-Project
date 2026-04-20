@@ -17,5 +17,7 @@ public enum SfxId
     Movement_FootstepLoop = 30,
 
     Action_BuildLoop = 40,
-    Action_RepairLoop = 41
+    Action_RepairLoop = 41,
+
+    UI_SelectNavigate = 50
 }

@@ -1940,7 +1940,7 @@ GameObject:
   - component: {fileID: 391060946}
   - component: {fileID: 391060945}
   m_Layer: 5
-  m_Name: 'GameAudioSettings '
+  m_Name: '_GameAudioSettings '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2379,6 +2379,7 @@ GameObject:
   - component: {fileID: 486584990}
   - component: {fileID: 486584989}
   - component: {fileID: 486584988}
+  - component: {fileID: 5544332230}
   m_Layer: 5
   m_Name: Panel_Canvas
   m_TagString: Untagged
@@ -2403,6 +2404,21 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &5544332230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 486584987}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8a9e3c21d6b4a1583f2c9d0e7b1a456, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CanvasSelectableFocusSfx
+  selectionSfxId: 50
+  pointerHoverTakesPriority: 1
+  playOnPointerHover: 1
 --- !u!114 &486584989
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4673,7 +4689,7 @@ GameObject:
   - component: {fileID: 892645408}
   - component: {fileID: 892645409}
   m_Layer: 0
-  m_Name: MainMenuRoot
+  m_Name: _MainMenuRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4824,6 +4840,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPanelController
   panelRoot: {fileID: 1542975129}
+  panelScaleTarget: {fileID: 0}
   pages:
   - {fileID: 788579191}
   - {fileID: 1906491550}
@@ -4837,6 +4854,10 @@ MonoBehaviour:
   hideNextOnLastPage: 0
   hidePreviousOnFirstPage: 1
   selectNextOnOpen: 1
+  usePanelPopAnimation: 1
+  showDuration: 0.2
+  hideDuration: 0.16
+  hiddenScaleMultiplier: 0.75
 --- !u!114 &892645409
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5053,6 +5074,57 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &901901901
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 901901902}
+  - component: {fileID: 901901903}
+  m_Layer: 0
+  m_Name: _BGM
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &901901902
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 901901901}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &901901903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 901901901}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f4e3d28c1b4069b5d2e8f0c3a9147e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BackgroundMusicController
+  mainMenuSceneName: MainMenu
+  loadingSceneName: Loading
+  menuClip: {fileID: 8300000, guid: 26b6642cbee30a544a2db217b2b00ad7, type: 3}
+  dayClip: {fileID: 8300000, guid: 98103a97eac801a4182bd83910a565c5, type: 3}
+  nightClip: {fileID: 8300000, guid: 6367a664c5fa2794d80279bc89bd32f3, type: 3}
+  fadeDuration: 1.25
+  maxSourceVolume: 0.75
 --- !u!1 &931643037
 GameObject:
   m_ObjectHideFlags: 0
@@ -7105,6 +7177,7 @@ GameObject:
   - component: {fileID: 1321006313}
   - component: {fileID: 1321006312}
   - component: {fileID: 1321006311}
+  - component: {fileID: 5544332220}
   m_Layer: 5
   m_Name: Main_Canvas
   m_TagString: Untagged
@@ -7129,6 +7202,21 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &5544332220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1321006310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8a9e3c21d6b4a1583f2c9d0e7b1a456, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CanvasSelectableFocusSfx
+  selectionSfxId: 50
+  pointerHoverTakesPriority: 1
+  playOnPointerHover: 1
 --- !u!114 &1321006312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10044,7 +10132,7 @@ GameObject:
   - component: {fileID: 1754140417}
   - component: {fileID: 1754140416}
   m_Layer: 0
-  m_Name: SettingsManager
+  m_Name: _SettingsManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11840,6 +11928,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2091012953}
   m_CullTransparentMesh: 1
+--- !u!1 &1837462950
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1837462952}
+  - component: {fileID: 1837462951}
+  m_Layer: 0
+  m_Name: _SfxPlayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1837462951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837462950}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7adeacf8eb5740542a2e54f7a3be7366, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SfxPlayer
+  library: {fileID: 11400000, guid: b11965b109c8aa945bfbacce50898863, type: 2}
+  outputMixerGroup: {fileID: 0}
+  initialPoolSize: 20
+  dontDestroyOnLoad: 1
+--- !u!4 &1837462952
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837462950}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -11848,6 +11984,8 @@ SceneRoots:
   - {fileID: 2039279807}
   - {fileID: 892645407}
   - {fileID: 391060946}
+  - {fileID: 1837462952}
+  - {fileID: 901901902}
   - {fileID: 1754140417}
   - {fileID: 1321006314}
   - {fileID: 486584991}

@@ -894,6 +894,7 @@ GameObject:
   - component: {fileID: 1371274572}
   - component: {fileID: 1371274571}
   - component: {fileID: 1371274570}
+  - component: {fileID: 5544332240}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -939,6 +940,21 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &5544332240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1371274568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8a9e3c21d6b4a1583f2c9d0e7b1a456, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CanvasSelectableFocusSfx
+  selectionSfxId: 50
+  pointerHoverTakesPriority: 1
+  playOnPointerHover: 1
 --- !u!114 &1371274571
 MonoBehaviour:
   m_ObjectHideFlags: 0
