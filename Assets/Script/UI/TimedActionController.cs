@@ -21,6 +21,16 @@ public class TimedActionController : MonoBehaviour
     /// </summary>
     private bool _skipHoldCheckOnce;
 
+    private void Awake()
+    {
+        ResolveHudIfMissing();
+    }
+
+    private void OnEnable()
+    {
+        ResolveHudIfMissing();
+    }
+
     private void Update()
     {
         if (!_active) return;
@@ -187,5 +197,13 @@ public class TimedActionController : MonoBehaviour
     private void OnDisable()
     {
         if (_active) Cancel();
+    }
+
+    private void ResolveHudIfMissing()
+    {
+        if (hud != null)
+            return;
+
+        hud = FindFirstObjectByType<TimedActionHUD>(FindObjectsInactive.Include);
     }
 }

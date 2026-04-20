@@ -33,6 +33,10 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
     [Header("Cooldown")]
     [Min(0f)] public float retryCooldownSeconds = 0.35f;
 
+    [Header("Spawn Grace")]
+    [Tooltip("Block pickup/magnet for a short time right after spawn to avoid immediate self-pickup.")]
+    [Min(0f)] public float spawnPickupGraceSeconds = 0.35f;
+
     private Rigidbody2D _rb;
     private Collider2D _col;
     private Sprite _fallbackSprite;
@@ -85,6 +89,15 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
         }
 
         RefreshVisual();
+
+        // Prevent instant pickup when spawned inside/near player trigger.
+        float now = Time.time;
+        float grace = Mathf.Max(0f, spawnPickupGraceSeconds);
+        if (grace > 0f)
+        {
+            _pickupBlockedUntil = Mathf.Max(_pickupBlockedUntil, now + grace);
+            _magnetBlockedUntil = Mathf.Max(_magnetBlockedUntil, now + grace);
+        }
 
         if (lifetimeSeconds > 0f)
             Destroy(gameObject, lifetimeSeconds);
