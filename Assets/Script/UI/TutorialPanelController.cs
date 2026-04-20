@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -8,6 +9,8 @@ public class TutorialPanelController : MonoBehaviour
 {
     [Header("Panel Root (must start inactive)")]
     [SerializeField] private GameObject panelRoot;
+    [Tooltip("Scale animation target. If empty, uses panelRoot so nav buttons and page content share one scale.")]
+    [SerializeField] private Transform panelScaleTarget;
 
     [Header("Tutorial Pages (multiple GameObjects)")]
     [SerializeField] private List<GameObject> pages = new List<GameObject>();
@@ -26,15 +29,29 @@ public class TutorialPanelController : MonoBehaviour
     [Header("Optional Focus")]
     [SerializeField] private bool selectNextOnOpen = true;
 
+    [Header("Panel Pop Animation")]
+    [SerializeField] private bool usePanelPopAnimation = true;
+    [SerializeField, Min(0.01f)] private float showDuration = 0.2f;
+    [SerializeField, Min(0.01f)] private float hideDuration = 0.16f;
+    [SerializeField, Range(0.01f, 1f)] private float hiddenScaleMultiplier = 0.75f;
+
     public bool IsCompleted { get; private set; }
     public bool IsOpen => panelRoot != null && panelRoot.activeSelf;
 
     public event Action OnTutorialCompleted;
 
     private int _pageIndex;
+    private Coroutine _panelAnimRoutine;
+    private Vector3 _baseScale = Vector3.one;
+    private Transform _cachedScaleTarget;
+    private bool _baseScaleCached;
 
     private void Awake()
     {
+        ResolveScaleTarget();
+        if (panelScaleTarget != null)
+            _baseScale = panelScaleTarget.localScale;
+
         if (panelRoot != null)
             panelRoot.SetActive(false);
 
@@ -93,8 +110,7 @@ public class TutorialPanelController : MonoBehaviour
             return;
         }
 
-        if (panelRoot != null)
-            panelRoot.SetActive(true);
+        SetPanelVisible(true, instant: false);
 
         _pageIndex = FindFirstValidPageIndex();
         ApplyPage(_pageIndex);
@@ -107,8 +123,7 @@ public class TutorialPanelController : MonoBehaviour
     public void HidePanelOnly()
     {
         DisableAllPages();
-        if (panelRoot != null)
-            panelRoot.SetActive(false);
+        SetPanelVisible(false, instant: false);
     }
 
     private int FindFirstValidPageIndex()
@@ -223,10 +238,85 @@ public class TutorialPanelController : MonoBehaviour
         IsCompleted = true;
 
         DisableAllPages();
-        if (panelRoot != null)
-            panelRoot.SetActive(false);
+        SetPanelVisible(false, instant: false);
 
         OnTutorialCompleted?.Invoke();
+    }
+
+    private void SetPanelVisible(bool visible, bool instant)
+    {
+        if (panelRoot == null)
+            return;
+        ResolveScaleTarget();
+
+        if (_panelAnimRoutine != null)
+            StopCoroutine(_panelAnimRoutine);
+
+        if (!usePanelPopAnimation || instant)
+        {
+            panelRoot.SetActive(visible);
+            if (visible && panelScaleTarget != null)
+                panelScaleTarget.localScale = _baseScale;
+            return;
+        }
+
+        _panelAnimRoutine = StartCoroutine(AnimatePanelScale(visible));
+    }
+
+    private IEnumerator AnimatePanelScale(bool show)
+    {
+        if (panelRoot == null)
+            yield break;
+        ResolveScaleTarget();
+        if (panelScaleTarget == null)
+            yield break;
+
+        Vector3 hidden = _baseScale * hiddenScaleMultiplier;
+        float duration = Mathf.Max(0.01f, show ? showDuration : hideDuration);
+
+        if (show)
+        {
+            panelRoot.SetActive(true);
+            panelScaleTarget.localScale = hidden;
+        }
+
+        Vector3 from = show ? hidden : panelScaleTarget.localScale;
+        Vector3 to = show ? _baseScale : hidden;
+
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            float k = Mathf.Clamp01(t / duration);
+            float eased = show ? 1f - Mathf.Pow(1f - k, 3f) : k * k;
+            panelScaleTarget.localScale = Vector3.LerpUnclamped(from, to, eased);
+            yield return null;
+        }
+
+        panelScaleTarget.localScale = to;
+        if (!show)
+            panelRoot.SetActive(false);
+
+        _panelAnimRoutine = null;
+    }
+
+    private void ResolveScaleTarget()
+    {
+        if (panelRoot == null)
+            return;
+
+        if (panelScaleTarget == null)
+            panelScaleTarget = panelRoot.transform;
+
+        if (panelScaleTarget == null)
+            return;
+
+        if (!_baseScaleCached || _cachedScaleTarget != panelScaleTarget)
+        {
+            _baseScale = panelScaleTarget.localScale;
+            _cachedScaleTarget = panelScaleTarget;
+            _baseScaleCached = true;
+        }
     }
 }
 

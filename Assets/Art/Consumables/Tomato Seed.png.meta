@@ -5,33 +5,6 @@ TextureImporter:
   - first:
       213: 7755194802971549892
     second: Tomato Seed_0
-  - first:
-      213: -5296039479743539748
-    second: Tomato Seed_1
-  - first:
-      213: 6094618393464021614
-    second: Tomato Seed_2
-  - first:
-      213: -5441678520696961656
-    second: Tomato Seed_3
-  - first:
-      213: 3200950181260819808
-    second: Tomato Seed_4
-  - first:
-      213: -4683147199637378782
-    second: Tomato Seed_5
-  - first:
-      213: 5345252740426638213
-    second: Tomato Seed_6
-  - first:
-      213: 6389872771505067996
-    second: Tomato Seed_7
-  - first:
-      213: -8891954960650397313
-    second: Tomato Seed_8
-  - first:
-      213: -3621363278259614287
-    second: Tomato Seed_9
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -64,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -123,19 +96,6 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: Android
-    maxTextureSize: 2048
-    resizeAlgorithm: 1
-    textureFormat: -1
-    textureCompression: 0
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -143,10 +103,10 @@ TextureImporter:
       name: Tomato Seed_0
       rect:
         serializedVersion: 2
-        x: 305
-        y: 402
-        width: 32
-        height: 27
+        x: 101
+        y: 148
+        width: 310
+        height: 201
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -157,204 +117,6 @@ TextureImporter:
       bones: []
       spriteID: 4c02313a59cff9b60800000000000000
       internalID: 7755194802971549892
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Tomato Seed_1
-      rect:
-        serializedVersion: 2
-        x: 332
-        y: 391
-        width: 51
-        height: 35
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: cd5117d1720b086b0800000000000000
-      internalID: -5296039479743539748
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Tomato Seed_2
-      rect:
-        serializedVersion: 2
-        x: 341
-        y: 414
-        width: 9
-        height: 27
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e622cff532f649450800000000000000
-      internalID: 6094618393464021614
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Tomato Seed_3
-      rect:
-        serializedVersion: 2
-        x: 103
-        y: 335
-        width: 80
-        height: 38
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 8850cf777364b74b0800000000000000
-      internalID: -5441678520696961656
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Tomato Seed_4
-      rect:
-        serializedVersion: 2
-        x: 140
-        y: 358
-        width: 9
-        height: 27
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 06df5c10b3f0c6c20800000000000000
-      internalID: 3200950181260819808
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Tomato Seed_5
-      rect:
-        serializedVersion: 2
-        x: 268
-        y: 286
-        width: 150
-        height: 119
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 229afbe2f6e120fb0800000000000000
-      internalID: -4683147199637378782
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Tomato Seed_6
-      rect:
-        serializedVersion: 2
-        x: 66
-        y: 229
-        width: 152
-        height: 121
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 58320db0c072e2a40800000000000000
-      internalID: 5345252740426638213
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Tomato Seed_7
-      rect:
-        serializedVersion: 2
-        x: 265
-        y: 207
-        width: 80
-        height: 38
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: cd710814e636da850800000000000000
-      internalID: 6389872771505067996
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Tomato Seed_8
-      rect:
-        serializedVersion: 2
-        x: 302
-        y: 230
-        width: 9
-        height: 27
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: f7919ab231e699480800000000000000
-      internalID: -8891954960650397313
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Tomato Seed_9
-      rect:
-        serializedVersion: 2
-        x: 228
-        y: 101
-        width: 152
-        height: 121
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 1bd01b409455ebdc0800000000000000
-      internalID: -3621363278259614287
       vertices: []
       indices: 
       edges: []
@@ -374,15 +136,6 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       Tomato Seed_0: 7755194802971549892
-      Tomato Seed_1: -5296039479743539748
-      Tomato Seed_2: 6094618393464021614
-      Tomato Seed_3: -5441678520696961656
-      Tomato Seed_4: 3200950181260819808
-      Tomato Seed_5: -4683147199637378782
-      Tomato Seed_6: 5345252740426638213
-      Tomato Seed_7: 6389872771505067996
-      Tomato Seed_8: -8891954960650397313
-      Tomato Seed_9: -3621363278259614287
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

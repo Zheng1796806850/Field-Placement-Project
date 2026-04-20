@@ -1,8 +1,17 @@
+using System;
 using UnityEngine;
 using Pathfinding;
+using Object = UnityEngine.Object;
 
 public class PlayerWallPlacementController : MonoBehaviour
 {
+    public const string ExitReasonToggleOff = "toggle_off";
+    public const string ExitReasonEscCancel = "esc_cancel";
+    public const string ExitReasonAutoSwitch = "switch_to_other_wall_item";
+    public const string ExitReasonBuildCompleteAutoExit = "build_complete_auto_exit";
+    public const string ExitReasonDisable = "controller_disabled";
+    public const string ExitReasonExternal = "external_cancel";
+
     [Header("Refs")]
     public Grid grid;
     public Transform placementOrigin;
@@ -58,9 +67,15 @@ public class PlayerWallPlacementController : MonoBehaviour
     private bool _interactorPreviousEnabled = true;
     private bool _combatBlockApplied;
     private bool _suppressAutoResolveGrid;
+    private int _activeSourceSlotIndex = -1;
 
     public bool IsPlacementModeActive => _placementActive && _activeConfig != null;
     public bool IsActiveWith(WallPlacementQuickUseSO config) => IsPlacementModeActive && _activeConfig == config;
+    public int ActiveSourceSlotIndex => IsPlacementModeActive ? _activeSourceSlotIndex : -1;
+    public WallPlacementQuickUseSO ActiveConfig => _activeConfig;
+
+    public event Action<int, WallPlacementQuickUseSO> OnModeEntered;
+    public event Action<int, string> OnModeExited;
 
     /// <summary>
     /// Tutorial (or other systems) can pin a Grid and block FindFirstObjectByType from replacing it each frame.
@@ -78,7 +93,7 @@ public class PlayerWallPlacementController : MonoBehaviour
 
     private void OnDisable()
     {
-        CancelPlacement(false, null);
+        CancelPlacement(false, null, ExitReasonDisable);
     }
 
     private void Update()
@@ -94,7 +109,7 @@ public class PlayerWallPlacementController : MonoBehaviour
 
         if (allowCancelKey && cancelPlacementKey != KeyCode.None && Input.GetKeyDown(cancelPlacementKey))
         {
-            CancelPlacement(true, _activeConfig != null ? _activeConfig.deactivateMessage : "Wall placement cancelled");
+            CancelPlacement(false, null, ExitReasonEscCancel);
             return;
         }
 
@@ -115,14 +130,15 @@ public class PlayerWallPlacementController : MonoBehaviour
 
         if (IsActiveWith(config))
         {
-            CancelPlacement(true, string.IsNullOrWhiteSpace(config.deactivateMessage) ? "Wall placement cancelled" : config.deactivateMessage);
+            CancelPlacement(false, null, ExitReasonToggleOff);
             return true;
         }
 
         if (IsPlacementModeActive)
-            CancelPlacement(false, null);
+            CancelPlacement(false, null, ExitReasonAutoSwitch);
 
         _context = context;
+        _activeSourceSlotIndex = context.slotIndex;
         ResolveRefs(context.user != null ? context.user : gameObject);
 
         if (inventory == null)
@@ -176,17 +192,24 @@ public class PlayerWallPlacementController : MonoBehaviour
 
         UpdatePreview(true);
 
-        if (!string.IsNullOrWhiteSpace(config.activateMessage))
-            PushMessage(config.activateMessage);
-
         if (debugLogs)
             Debug.Log($"[WallPlacement] Activated {config.name}");
+
+        OnModeEntered?.Invoke(_activeSourceSlotIndex, config);
 
         return true;
     }
 
     public void CancelPlacement(bool pushMessage, string message)
     {
+        CancelPlacement(pushMessage, message, ExitReasonExternal);
+    }
+
+    public void CancelPlacement(bool pushMessage, string message, string reason)
+    {
+        int exitedSlot = _activeSourceSlotIndex;
+        bool wasActive = IsPlacementModeActive;
+
         if (_buildInProgress && timedAction != null && timedAction.IsBusy)
             timedAction.CancelActive();
 
@@ -201,6 +224,7 @@ public class PlayerWallPlacementController : MonoBehaviour
 
         _activeConfig = null;
         _placementActive = false;
+        _activeSourceSlotIndex = -1;
         _previewValid = false;
         _previewInRange = false;
         currentPreviewDistance = 0f;
@@ -209,6 +233,9 @@ public class PlayerWallPlacementController : MonoBehaviour
 
         if (pushMessage && !string.IsNullOrWhiteSpace(message))
             PushMessage(message);
+
+        if (wasActive)
+            OnModeExited?.Invoke(exitedSlot, reason);
 
         SyncTutorialGateAfterPlacementExit();
     }
@@ -649,7 +676,7 @@ public class PlayerWallPlacementController : MonoBehaviour
             if (stayInPlacementModeAfterBuild)
                 UpdatePreview(true);
             else
-                CancelPlacement(false, null);
+                CancelPlacement(false, null, ExitReasonBuildCompleteAutoExit);
         };
 
         timedAction.TryBegin(req);

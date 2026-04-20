@@ -1,19 +1,19 @@
 fileFormatVersion: 2
-guid: 430c9ba37200a784a988ff21152d3f7a
+guid: 61afcf99e4464f54abb0d744e5f22986
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1660761858345613354
-    second: Bread_0
+      213: 1813879973796809213
+    second: Bread 1_0
   - first:
-      213: 3213964991207198630
-    second: Bread_1
+      213: 496655186379812848
+    second: Bread 1_1
   - first:
-      213: -6928146447125103246
-    second: Bread_2
+      213: 4570448475183614840
+    second: Bread 1_2
   - first:
-      213: -5148103042973654371
-    second: Bread_3
+      213: -328637562964365827
+    second: Bread 1_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +46,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -55,7 +55,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -84,7 +84,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -105,30 +105,17 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: Android
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Bread_0
+      name: Bread 1_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 1451
-        height: 898
+        y: 62
+        width: 448
+        height: 366
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -137,20 +124,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6d7cac093e9c3f8e0800000000000000
-      internalID: -1660761858345613354
+      spriteID: df98a5fc9323c2910800000000000000
+      internalID: 1813879973796809213
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bread_1
+      name: Bread 1_1
       rect:
         serializedVersion: 2
-        x: 238
-        y: 219
-        width: 54
-        height: 32
+        x: 53
+        y: 137
+        width: 13
+        height: 13
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -159,20 +146,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6af4275912c4a9c20800000000000000
-      internalID: 3213964991207198630
+      spriteID: 0ff2608b24974e600800000000000000
+      internalID: 496655186379812848
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bread_2
+      name: Bread 1_2
       rect:
         serializedVersion: 2
-        x: 177
-        y: 186
-        width: 33
-        height: 25
+        x: 72
+        y: 150
+        width: 19
+        height: 16
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -181,20 +168,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 27d393363874adf90800000000000000
-      internalID: -6928146447125103246
+      spriteID: 87b8b834cae7d6f30800000000000000
+      internalID: 4570448475183614840
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Bread_3
+      name: Bread 1_3
       rect:
         serializedVersion: 2
-        x: 631
-        y: 88
-        width: 31
-        height: 29
+        x: 193
+        y: 97
+        width: 12
+        height: 15
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -203,8 +190,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d92a278ee834e88b0800000000000000
-      internalID: -5148103042973654371
+      spriteID: dfda8afa0e1707bf0800000000000000
+      internalID: -328637562964365827
       vertices: []
       indices: 
       edges: []
@@ -213,7 +200,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -223,10 +210,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Bread_0: -1660761858345613354
-      Bread_1: 3213964991207198630
-      Bread_2: -6928146447125103246
-      Bread_3: -5148103042973654371
+      Bread 1_0: 1813879973796809213
+      Bread 1_1: 496655186379812848
+      Bread 1_2: 4570448475183614840
+      Bread 1_3: -328637562964365827
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

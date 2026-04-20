@@ -1,7 +1,15 @@
+using System;
 using UnityEngine;
 
 public class PlayerSeedPlantingController : MonoBehaviour
 {
+    public const string ExitReasonToggleOff = "toggle_off";
+    public const string ExitReasonEscCancel = "esc_cancel";
+    public const string ExitReasonAutoSwitch = "switch_to_other_seed";
+    public const string ExitReasonAutoNoResource = "seed_depleted";
+    public const string ExitReasonDisable = "controller_disabled";
+    public const string ExitReasonExternal = "external_cancel";
+
     [Header("Refs")]
     public PlayerCombat2D combat;
     public PlayerInteractor2D interactor;
@@ -19,9 +27,15 @@ public class PlayerSeedPlantingController : MonoBehaviour
     private SeedPlantingQuickUseSO _activeConfig;
     private UseContext _context;
     private bool _combatBlockApplied;
+    private int _activeSourceSlotIndex = -1;
 
     public bool IsPlantingModeActive => _activeConfig != null;
     public bool IsActiveWith(SeedPlantingQuickUseSO config) => IsPlantingModeActive && _activeConfig == config;
+    public int ActiveSourceSlotIndex => IsPlantingModeActive ? _activeSourceSlotIndex : -1;
+    public SeedPlantingQuickUseSO ActiveConfig => _activeConfig;
+
+    public event Action<int, SeedPlantingQuickUseSO> OnModeEntered;
+    public event Action<int, string> OnModeExited;
 
     private void Awake()
     {
@@ -30,7 +44,7 @@ public class PlayerSeedPlantingController : MonoBehaviour
 
     private void OnDisable()
     {
-        CancelPlanting(false, null);
+        CancelPlanting(false, null, ExitReasonDisable);
     }
 
     private void Update()
@@ -45,7 +59,7 @@ public class PlayerSeedPlantingController : MonoBehaviour
         ResolveRefs(_context.user != null ? _context.user : gameObject);
 
         if (allowCancelKey && cancelPlantingKey != KeyCode.None && Input.GetKeyDown(cancelPlantingKey))
-            CancelPlanting(true, string.IsNullOrWhiteSpace(_activeConfig.deactivateMessage) ? "Planting mode cancelled" : _activeConfig.deactivateMessage);
+            CancelPlanting(false, null, ExitReasonEscCancel);
     }
 
     public bool TogglePlanting(SeedPlantingQuickUseSO config, UseContext context)
@@ -54,14 +68,15 @@ public class PlayerSeedPlantingController : MonoBehaviour
 
         if (IsActiveWith(config))
         {
-            CancelPlanting(true, string.IsNullOrWhiteSpace(config.deactivateMessage) ? "Planting mode cancelled" : config.deactivateMessage);
+            CancelPlanting(false, null, ExitReasonToggleOff);
             return true;
         }
 
         if (IsPlantingModeActive)
-            CancelPlanting(false, null);
+            CancelPlanting(false, null, ExitReasonAutoSwitch);
 
         _context = context;
+        _activeSourceSlotIndex = context.slotIndex;
         ResolveRefs(context.user != null ? context.user : gameObject);
 
         if (inventory == null)
@@ -79,24 +94,33 @@ public class PlayerSeedPlantingController : MonoBehaviour
         _activeConfig = config;
         ApplyCombatBlock(true);
 
-        string message = !string.IsNullOrWhiteSpace(config.activateMessage)
-            ? config.activateMessage
-            : $"{config.cropConfig.displayName} planting ready";
-        PushMessage(message);
-
         if (debugLogs)
             Debug.Log($"[SeedPlanting] Activated {config.name}");
+
+        OnModeEntered?.Invoke(_activeSourceSlotIndex, config);
 
         return true;
     }
 
     public void CancelPlanting(bool pushMessage, string message)
     {
+        CancelPlanting(pushMessage, message, ExitReasonExternal);
+    }
+
+    public void CancelPlanting(bool pushMessage, string message, string reason)
+    {
+        int exitedSlot = _activeSourceSlotIndex;
+        bool wasActive = IsPlantingModeActive;
+
         ApplyCombatBlock(false);
         _activeConfig = null;
+        _activeSourceSlotIndex = -1;
 
         if (pushMessage && !string.IsNullOrWhiteSpace(message))
             PushMessage(message);
+
+        if (wasActive)
+            OnModeExited?.Invoke(exitedSlot, reason);
     }
 
     public bool TryGetSelectedCrop(out CropConfigSO crop)
@@ -139,14 +163,14 @@ public class PlayerSeedPlantingController : MonoBehaviour
 
         if (!stayInPlantingModeAfterPlant)
         {
-            CancelPlanting(false, null);
+            CancelPlanting(false, null, ExitReasonExternal);
             return;
         }
 
         var targetInventory = inv != null ? inv : inventory;
         if (targetInventory == null)
         {
-            CancelPlanting(false, null);
+            CancelPlanting(false, null, ExitReasonExternal);
             return;
         }
 
@@ -154,7 +178,7 @@ public class PlayerSeedPlantingController : MonoBehaviour
         if (required > 0 && !targetInventory.CanSpend(_activeConfig.resourceType, required))
         {
             string itemName = !string.IsNullOrWhiteSpace(_activeConfig.cropConfig.displayName) ? _activeConfig.cropConfig.displayName : _activeConfig.name;
-            CancelPlanting(true, $"{itemName} seeds depleted");
+            CancelPlanting(true, $"{itemName} seeds depleted", ExitReasonAutoNoResource);
         }
     }
 
