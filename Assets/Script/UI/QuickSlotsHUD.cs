@@ -11,6 +11,7 @@ public class QuickSlotsHUD : MonoBehaviour
     {
         public Image icon;
         public Image highlight;
+        public Image modeHighlight;
         public Image cooldownFill;
         public TextMeshProUGUI countLabel;
     }
@@ -21,6 +22,11 @@ public class QuickSlotsHUD : MonoBehaviour
     [Header("UI")]
     public List<SlotUI> slots = new List<SlotUI>();
 
+    [Header("Mode Highlight")]
+    public bool autoCreateModeHighlightIfMissing = true;
+    public Color modeHighlightColor = new Color(0.35f, 1f, 0.35f, 0.42f);
+    [Min(0f)] public float modeHighlightScale = 1.08f;
+
     [Header("Behavior")]
     public bool hideIconWhenEmpty = true;
     public bool showCountWhenZero = false;
@@ -28,14 +34,19 @@ public class QuickSlotsHUD : MonoBehaviour
 
     private void Awake()
     {
+        EnsureBridgeExists();
         ResolveController();
+        EnsureModeHighlightBindings();
         RefreshStatic();
         RefreshDynamic();
+        ClearModeHighlights();
     }
 
     private void OnEnable()
     {
+        EnsureBridgeExists();
         ResolveController();
+        EnsureModeHighlightBindings();
         if (controller != null) controller.OnQuickSlotsLayoutChanged += RefreshStatic;
         RefreshStatic();
         RefreshDynamic();
@@ -52,9 +63,102 @@ public class QuickSlotsHUD : MonoBehaviour
         RefreshDynamic();
     }
 
+    public void SetModeHighlight(int slotIndex, bool on)
+    {
+        if (slotIndex < 0 || slotIndex >= slots.Count)
+            return;
+
+        var ui = slots[slotIndex];
+        if (ui == null)
+            return;
+
+        EnsureModeHighlightBinding(slotIndex, ui);
+        if (ui.modeHighlight == null)
+            return;
+
+        ui.modeHighlight.enabled = on;
+    }
+
+    public void ClearModeHighlights()
+    {
+        for (int i = 0; i < slots.Count; i++)
+        {
+            var ui = slots[i];
+            if (ui == null || ui.modeHighlight == null)
+                continue;
+
+            ui.modeHighlight.enabled = false;
+        }
+    }
+
     private void ResolveController()
     {
         if (controller == null) controller = FindFirstObjectByType<PlayerHungerThirst>(FindObjectsInactive.Include);
+    }
+
+    private void EnsureBridgeExists()
+    {
+        if (GetComponent<GameplayModeQuickSlotHighlightBridge>() == null)
+            gameObject.AddComponent<GameplayModeQuickSlotHighlightBridge>();
+    }
+
+    private void EnsureModeHighlightBindings()
+    {
+        for (int i = 0; i < slots.Count; i++)
+        {
+            var ui = slots[i];
+            if (ui == null)
+                continue;
+
+            EnsureModeHighlightBinding(i, ui);
+        }
+    }
+
+    private void EnsureModeHighlightBinding(int slotIndex, SlotUI ui)
+    {
+        if (ui.modeHighlight != null || !autoCreateModeHighlightIfMissing)
+            return;
+
+        RectTransform host = null;
+        if (ui.icon != null)
+            host = ui.icon.transform.parent as RectTransform;
+        if (host == null && ui.cooldownFill != null)
+            host = ui.cooldownFill.transform.parent as RectTransform;
+        if (host == null)
+            return;
+
+        string overlayName = $"ModeHighlight_{slotIndex + 1:00}";
+        Transform existing = host.Find(overlayName);
+        Image img;
+
+        if (existing != null)
+        {
+            img = existing.GetComponent<Image>();
+            if (img == null)
+                img = existing.gameObject.AddComponent<Image>();
+        }
+        else
+        {
+            var go = new GameObject(overlayName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            var rt = go.GetComponent<RectTransform>();
+            rt.SetParent(host, false);
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = host.sizeDelta * Mathf.Max(1f, modeHighlightScale);
+            rt.SetAsFirstSibling();
+
+            img = go.GetComponent<Image>();
+        }
+
+        if (img != null)
+        {
+            img.raycastTarget = false;
+            img.color = modeHighlightColor;
+            img.enabled = false;
+            ui.modeHighlight = img;
+        }
     }
 
     private void RefreshStatic()

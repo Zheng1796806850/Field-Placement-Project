@@ -117,6 +117,19 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
 
         if (DragPayload.active && DragPayload.source == this && _owner != null)
         {
+            // Fallback path: some UI hierarchies may swallow OnDrop on quick slots.
+            // Raycast and bind manually so slot 2/3/4 behave the same as slot 1.
+            if (!DragPayload.DropConsumedByValidTarget && QuickSlotDropTarget.TryConsumeDragAtPointer(eventData))
+            {
+                DragPayload.Reset();
+                if (_deferredPayloadReset != null)
+                {
+                    StopCoroutine(_deferredPayloadReset);
+                    _deferredPayloadReset = null;
+                }
+                return;
+            }
+
             var inv = _owner.Inventory;
             if (inv != null && !DragPayload.DropConsumedByValidTarget &&
                 !_owner.IsScreenPointOverBackpackPanel(eventData.position, eventData.pressEventCamera))

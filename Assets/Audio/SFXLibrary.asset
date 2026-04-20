@@ -135,7 +135,7 @@ MonoBehaviour:
   - id: 50
     clips:
     - {fileID: 8300000, guid: c3e68422516adf746bb0a0d15231f2db, type: 3}
-    volume: 0.85
-    minInterval: 0.04
+    volume: 0.5
+    minInterval: 0.01
     pitchRange: {x: 0.98, y: 1.02}
     spatialBlend: 0

@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class WaveEventBannerHUD : MonoBehaviour
 {
+    public static bool ForceDisableAllMessages = false;
+
     [Header("UI")]
     public CanvasGroup canvasGroup;
     public TextMeshProUGUI label;
@@ -16,6 +18,8 @@ public class WaveEventBannerHUD : MonoBehaviour
 
     [Header("Behavior")]
     public bool queueMessages = true;
+    [Tooltip("Temporarily disable all banner Show() messages from other systems.")]
+    public bool disableMessages = false;
 
     private readonly Queue<string> _queue = new Queue<string>(16);
     private Coroutine _runner;
@@ -35,6 +39,9 @@ public class WaveEventBannerHUD : MonoBehaviour
 
     public void Show(string message)
     {
+        if (ForceDisableAllMessages || disableMessages)
+            return;
+
         if (string.IsNullOrWhiteSpace(message)) return;
 
         if (!queueMessages) _queue.Clear();
