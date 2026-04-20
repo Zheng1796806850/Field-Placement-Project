@@ -2124,6 +2124,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackpackPanelHUD
   inventory: {fileID: 0}
   rules: {fileID: 11400000, guid: 6814f7017dadd3246b4824404d5ff0bc, type: 2}
+  quickSlotOwner: {fileID: 0}
   autoWireRulesIntoInventory: 1
   panelRoot: {fileID: 4154989236494613724}
   gridRoot: {fileID: 7762738645522642334}
@@ -7573,10 +7574,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhaseClockHUD
   gameState: {fileID: 0}
+  backgroundImage: {fileID: 1648203355980170771}
   radialFill: {fileID: 68108862115025626}
   timeLabel: {fileID: 4145932538776265703}
   phaseLabel: {fileID: 4855670321934060010}
+  dayBackgroundSprite: {fileID: 8740491524576469797, guid: bf471e45df9b1ba47a095f7c6cc97388, type: 3}
+  nightBackgroundSprite: {fileID: 7699978436774145253, guid: 30f485dc9196d0a41af3efcfacbc59c7, type: 3}
+  dayFillSprite: {fileID: 7699978436774145253, guid: 30f485dc9196d0a41af3efcfacbc59c7, type: 3}
+  nightFillSprite: {fileID: 8740491524576469797, guid: bf471e45df9b1ba47a095f7c6cc97388, type: 3}
+  swapClockSpritesByPhase: 1
   fillShowsRemaining: 1
+  shrinkClockwise: 1
+  invertFillAmount: 1
   showPhaseText: 1
   dayText: Day
   nightText: Night
@@ -21578,7 +21587,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.31132078, g: 0.31132078, b: 0.31132078, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

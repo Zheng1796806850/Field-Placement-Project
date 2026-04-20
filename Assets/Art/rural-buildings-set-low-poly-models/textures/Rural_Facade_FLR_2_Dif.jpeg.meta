@@ -1,19 +1,10 @@
 fileFormatVersion: 2
-guid: 430c9ba37200a784a988ff21152d3f7a
+guid: 7518a7cf0edfa0a42a08971a05360d59
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1660761858345613354
-    second: Bread_0
-  - first:
-      213: 3213964991207198630
-    second: Bread_1
-  - first:
-      213: -6928146447125103246
-    second: Bread_2
-  - first:
-      213: -5148103042973654371
-    second: Bread_3
+      213: 4367984347589496008
+    second: Rural_Facade_FLR_2_Dif_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -105,40 +96,27 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: Android
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Bread_0
+      name: Rural_Facade_FLR_2_Dif_0
       rect:
         serializedVersion: 2
-        x: 175
-        y: 86
-        width: 1276
-        height: 812
+        x: 0
+        y: 0
+        width: 2048
+        height: 2048
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6d7cac093e9c3f8e0800000000000000
-      internalID: -1660761858345613354
+      spriteID: 8ccc98e1f923e9c30800000000000000
+      internalID: 4367984347589496008
       vertices: []
       indices: 
       edges: []
@@ -147,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: a2cab9a1656312c49b63f101c571a406
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -157,10 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Bread_0: -1660761858345613354
-      Bread_1: 3213964991207198630
-      Bread_2: -6928146447125103246
-      Bread_3: -5148103042973654371
+      Rural_Facade_FLR_2_Dif_0: 4367984347589496008
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
