@@ -1,10 +1,16 @@
 fileFormatVersion: 2
-guid: 2b3409dd74a1f0948868e6123d99f3b3
+guid: f9c41804349a30540864c89e432f22e6
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4054130352070756771
-    second: potato (1)_0
+      213: 3340265839741567831
+    second: plant-seed (1)_0
+  - first:
+      213: 8011751865466220833
+    second: plant-seed (1)_1
+  - first:
+      213: -309037141158886845
+    second: plant-seed (1)_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -96,17 +102,30 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 1
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: potato (1)_0
+      name: plant-seed (1)_0
       rect:
         serializedVersion: 2
-        x: 26
-        y: 24
-        width: 462
-        height: 468
+        x: 56
+        y: 289
+        width: 193
+        height: 194
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +134,52 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d5671bbace5dcb7c0800000000000000
-      internalID: -4054130352070756771
+      spriteID: 7530b2175120b5e20800000000000000
+      internalID: 3340265839741567831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: plant-seed (1)_1
+      rect:
+        serializedVersion: 2
+        x: 255
+        y: 246
+        width: 208
+        height: 145
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 121ffa1afd57f2f60800000000000000
+      internalID: 8011751865466220833
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: plant-seed (1)_2
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 29
+        width: 377
+        height: 240
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34282d28b5416bbf0800000000000000
+      internalID: -309037141158886845
       vertices: []
       indices: 
       edges: []
@@ -135,7 +198,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      potato (1)_0: -4054130352070756771
+      plant-seed (1)_0: 3340265839741567831
+      plant-seed (1)_1: 8011751865466220833
+      plant-seed (1)_2: -309037141158886845
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
