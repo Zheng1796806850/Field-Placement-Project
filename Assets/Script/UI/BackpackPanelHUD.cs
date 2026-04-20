@@ -8,6 +8,7 @@ public class BackpackPanelHUD : MonoBehaviour
     [Header("Refs")]
     public PlayerResourceInventory inventory;
     public BackpackRulesSO rules;
+    public PlayerHungerThirst quickSlotOwner;
 
     [Header("Auto Wiring")]
     public bool autoWireRulesIntoInventory = true;
@@ -98,6 +99,8 @@ public class BackpackPanelHUD : MonoBehaviour
     {
         if (inventory == null)
             inventory = PlayerResourceInventory.Instance != null ? PlayerResourceInventory.Instance : FindFirstObjectByType<PlayerResourceInventory>(FindObjectsInactive.Include);
+        if (quickSlotOwner == null)
+            quickSlotOwner = FindFirstObjectByType<PlayerHungerThirst>(FindObjectsInactive.Include);
 
         if (rules == null && inventory != null)
             rules = inventory.rules;
@@ -216,6 +219,8 @@ public class BackpackPanelHUD : MonoBehaviour
 
         bool changed = inventory.TryApplyBackpackSlotDrag(fromSlotIndex, toSlotIndex);
         if (!changed) return;
+
+        quickSlotOwner?.NotifyBackpackSlotsReordered(fromSlotIndex, toSlotIndex);
 
         if (saveInventoryAfterReorder)
             inventory.SaveInMemory();

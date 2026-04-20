@@ -19,6 +19,9 @@ public class BackgroundMusicController : MonoBehaviour
     [Tooltip("Loading scene: do not change BGM here; keep whatever is playing.")]
     [SerializeField] private string loadingSceneName = "Loading";
 
+    [Tooltip("Tutorial scene: always use Day BGM (same clip as daytime gameplay), regardless of day/night phase.")]
+    [SerializeField] private string tutorialSceneName = "TutorialScene";
+
     [Header("Clips")]
     [SerializeField] private AudioClip menuClip;
     [SerializeField] private AudioClip dayClip;
@@ -165,8 +168,15 @@ public class BackgroundMusicController : MonoBehaviour
 
     private void HandleNightStarted()
     {
-        if (!IsGameplayScene(SceneManager.GetActiveScene().name))
+        string active = SceneManager.GetActiveScene().name;
+        if (!IsGameplayScene(active))
             return;
+
+        if (IsTutorialScene(active))
+        {
+            RequestMusic(dayClip);
+            return;
+        }
 
         RequestMusic(nightClip);
     }
@@ -189,6 +199,12 @@ public class BackgroundMusicController : MonoBehaviour
 
         if (!IsGameplayScene(sceneName))
             return;
+
+        if (IsTutorialScene(sceneName))
+        {
+            RequestMusic(dayClip);
+            return;
+        }
 
         if (_gsm == null)
             _gsm = FindFirstObjectByType<GameStateManager>(FindObjectsInactive.Include);
@@ -314,5 +330,11 @@ public class BackgroundMusicController : MonoBehaviour
     private bool IsGameplayScene(string sceneName)
     {
         return !IsMainMenuScene(sceneName) && !IsLoadingScene(sceneName);
+    }
+
+    private bool IsTutorialScene(string sceneName)
+    {
+        return !string.IsNullOrEmpty(tutorialSceneName)
+               && string.Equals(sceneName, tutorialSceneName, System.StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -16228,6 +16228,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BackgroundMusicController
   mainMenuSceneName: MainMenu
   loadingSceneName: Loading
+  tutorialSceneName: TutorialScene
   menuClip: {fileID: 8300000, guid: 26b6642cbee30a544a2db217b2b00ad7, type: 3}
   dayClip: {fileID: 8300000, guid: 98103a97eac801a4182bd83910a565c5, type: 3}
   nightClip: {fileID: 8300000, guid: 6367a664c5fa2794d80279bc89bd32f3, type: 3}
@@ -109376,6 +109377,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1812424490418816305, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1812424490418816305, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: disableMessages
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2063552684442663516, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -112
@@ -109532,6 +109541,14 @@ PrefabInstance:
       propertyPath: inventory
       value: 
       objectReference: {fileID: 1130329435}
+    - target: {fileID: 5161943176880892790, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5166478226742869361, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5218654624196326423, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
       propertyPath: inventory
       value: 
@@ -109646,11 +109663,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7666108601517269626, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 100
+      value: 900
       objectReference: {fileID: 0}
     - target: {fileID: 7666108601517269626, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 50
+      value: 450
       objectReference: {fileID: 0}
     - target: {fileID: 7751290915552343969, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
       propertyPath: m_AnchorMax.y

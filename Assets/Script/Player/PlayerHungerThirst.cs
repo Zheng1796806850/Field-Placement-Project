@@ -526,6 +526,20 @@ public class PlayerHungerThirst : MonoBehaviour
         if (index < 0 || index >= quickSlots.Count) return;
         if (quickSlots[index] == null) quickSlots[index] = new QuickSlot();
 
+        // A single backpack slot can only be bound by one quick slot.
+        // Rebinding the same backpack cell to a new quick slot clears previous owners.
+        if (backpackSlotIndex >= 0)
+        {
+            for (int i = 0; i < quickSlots.Count; i++)
+            {
+                if (i == index) continue;
+                var other = quickSlots[i];
+                if (other == null || !other.useResourceBinding) continue;
+                if (other.boundBackpackSlotIndex != backpackSlotIndex) continue;
+                ClearQuickSlot(i);
+            }
+        }
+
         quickSlots[index].useResourceBinding = true;
         quickSlots[index].boundResourceType = type;
         quickSlots[index].boundBackpackSlotIndex = backpackSlotIndex;
@@ -602,13 +616,10 @@ public class PlayerHungerThirst : MonoBehaviour
 
         if (TryGetQuickSlotBoundResourceType(index, out var boundType))
         {
-            var qs = quickSlots[index];
-            if (qs != null && qs.boundBackpackSlotIndex >= 0)
+            if (TryGetValidBoundBackpackSlotIndex(index, boundType, out int validBoundSlotIndex))
             {
-                var cell = inventory.GetSlot(qs.boundBackpackSlotIndex);
-                if (!cell.IsEmpty && cell.type == boundType)
-                    return Mathf.Max(0, cell.amount);
-                return 0;
+                var cell = inventory.GetSlot(validBoundSlotIndex);
+                return (!cell.IsEmpty && cell.type == boundType) ? Mathf.Max(0, cell.amount) : 0;
             }
 
             return Mathf.Max(0, inventory.Get(boundType));
@@ -670,12 +681,15 @@ public class PlayerHungerThirst : MonoBehaviour
                 pushMessage = inventory.PushMessage
             };
 
-            bool scoped = quickSlots != null && index >= 0 && index < quickSlots.Count &&
-                          quickSlots[index] != null && quickSlots[index].useResourceBinding &&
-                          quickSlots[index].boundBackpackSlotIndex >= 0;
+            bool scoped = false;
+            int scopedBackpackSlotIndex = -1;
+            if (TryGetQuickSlotBoundResourceType(index, out var boundTypeForScope))
+            {
+                scoped = TryGetValidBoundBackpackSlotIndex(index, boundTypeForScope, out scopedBackpackSlotIndex);
+            }
 
             if (scoped)
-                inventory.BeginQuickUseBackpackSlotScope(quickSlots[index].boundBackpackSlotIndex);
+                inventory.BeginQuickUseBackpackSlotScope(scopedBackpackSlotIndex);
 
             try
             {
@@ -702,6 +716,140 @@ public class PlayerHungerThirst : MonoBehaviour
         OnQuickSlotsLayoutChanged?.Invoke();
 
         return true;
+    }
+
+    /// <summary>
+    /// Called by backpack UI after slot drag/swap/merge so quick-slot bindings can follow moved items.
+    /// </summary>
+    public void NotifyBackpackSlotsReordered(int fromIndex, int toIndex)
+    {
+        if (quickSlots == null || inventory == null)
+            return;
+
+        bool changed = false;
+        for (int i = 0; i < quickSlots.Count; i++)
+        {
+            var qs = quickSlots[i];
+            if (qs == null || !qs.useResourceBinding)
+                continue;
+
+            if (TryRefreshQuickSlotBindingIndex(i, qs.boundResourceType))
+                changed = true;
+        }
+
+        if (changed)
+            OnQuickSlotsLayoutChanged?.Invoke();
+    }
+
+    private bool TryGetValidBoundBackpackSlotIndex(int quickSlotIndex, ResourceType boundType, out int backpackSlotIndex)
+    {
+        backpackSlotIndex = -1;
+
+        if (quickSlots == null || quickSlotIndex < 0 || quickSlotIndex >= quickSlots.Count)
+            return false;
+
+        var qs = quickSlots[quickSlotIndex];
+        if (qs == null)
+            return false;
+
+        if (qs.boundBackpackSlotIndex < 0)
+        {
+            if (TryFindFirstBackpackSlotWithResource(boundType, out int recoveredSlot))
+            {
+                qs.boundBackpackSlotIndex = recoveredSlot;
+                backpackSlotIndex = recoveredSlot;
+                OnQuickSlotsLayoutChanged?.Invoke();
+                return true;
+            }
+
+            ClearQuickSlot(quickSlotIndex);
+            OnQuickSlotsLayoutChanged?.Invoke();
+            return false;
+        }
+
+        int candidate = qs.boundBackpackSlotIndex;
+        var cell = inventory != null ? inventory.GetSlot(candidate) : InventorySlot.Empty;
+        if (!cell.IsEmpty && cell.type == boundType)
+        {
+            backpackSlotIndex = candidate;
+            return true;
+        }
+
+        // Bound slot became stale after backpack reordering/swapping/consuming.
+        // Try auto-rebind to another slot that still has this resource.
+        if (TryFindFirstBackpackSlotWithResource(boundType, out int fallbackSlot))
+        {
+            qs.boundBackpackSlotIndex = fallbackSlot;
+            backpackSlotIndex = fallbackSlot;
+            OnQuickSlotsLayoutChanged?.Invoke();
+            return true;
+        }
+
+        // No more such resource in backpack: clear quick slot completely.
+        ClearQuickSlot(quickSlotIndex);
+        OnQuickSlotsLayoutChanged?.Invoke();
+        return false;
+    }
+
+    private bool TryRefreshQuickSlotBindingIndex(int quickSlotIndex, ResourceType boundType)
+    {
+        if (quickSlots == null || quickSlotIndex < 0 || quickSlotIndex >= quickSlots.Count)
+            return false;
+        if (inventory == null)
+            return false;
+
+        var qs = quickSlots[quickSlotIndex];
+        if (qs == null || !qs.useResourceBinding)
+            return false;
+
+        int oldIndex = qs.boundBackpackSlotIndex;
+        if (oldIndex >= 0)
+        {
+            var cell = inventory.GetSlot(oldIndex);
+            if (!cell.IsEmpty && cell.type == boundType)
+                return false;
+        }
+
+        if (TryFindFirstBackpackSlotWithResource(boundType, out int newIndex))
+        {
+            qs.boundBackpackSlotIndex = newIndex;
+            return newIndex != oldIndex;
+        }
+
+        ClearQuickSlot(quickSlotIndex);
+        return true;
+    }
+
+    private bool TryFindFirstBackpackSlotWithResource(ResourceType type, out int slotIndex)
+    {
+        slotIndex = -1;
+        if (inventory == null)
+            return false;
+
+        int max = inventory.MaxSlots;
+        for (int i = 0; i < max; i++)
+        {
+            var cell = inventory.GetSlot(i);
+            if (!cell.IsEmpty && cell.type == type && cell.amount > 0)
+            {
+                slotIndex = i;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void ClearQuickSlot(int index)
+    {
+        if (quickSlots == null || index < 0 || index >= quickSlots.Count)
+            return;
+        if (quickSlots[index] == null)
+            quickSlots[index] = new QuickSlot();
+
+        quickSlots[index].useResourceBinding = false;
+        quickSlots[index].boundBackpackSlotIndex = -1;
+        quickSlots[index].item = null;
     }
 
     private QuickUseItemSO ResolveQuickSlotItem(int index)
