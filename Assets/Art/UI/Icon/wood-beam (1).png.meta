@@ -1,10 +1,16 @@
 fileFormatVersion: 2
-guid: 501813eb315f4604d9ac44355490d8ae
+guid: a7c66bfe3531e6747b713569ba0cfc54
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7627461992103659838
-    second: "\u5C0F\u9EA6_0"
+      213: 4723967367354592719
+    second: wood-beam (1)_0
+  - first:
+      213: 1010144954635217510
+    second: wood-beam (1)_1
+  - first:
+      213: -1812194086475535195
+    second: wood-beam (1)_2
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +43,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +52,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -96,30 +102,17 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: Android
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "\u5C0F\u9EA6_0"
+      name: wood-beam (1)_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1096
-        height: 915
+        x: 41
+        y: 176
+        width: 431
+        height: 288
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +121,52 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e39c12115403ad960800000000000000
-      internalID: 7627461992103659838
+      spriteID: fcd25bdba47ee8140800000000000000
+      internalID: 4723967367354592719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: wood-beam (1)_1
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 69
+        width: 192
+        height: 375
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66a6fa8fb71c40e00800000000000000
+      internalID: 1010144954635217510
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: wood-beam (1)_2
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 48
+        width: 241
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5acef8b641bc9d6e0800000000000000
+      internalID: -1812194086475535195
       vertices: []
       indices: 
       edges: []
@@ -138,7 +175,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +185,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      "\u5C0F\u9EA6_0": 7627461992103659838
+      wood-beam (1)_0: 4723967367354592719
+      wood-beam (1)_1: 1010144954635217510
+      wood-beam (1)_2: -1812194086475535195
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

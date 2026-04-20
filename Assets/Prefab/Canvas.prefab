@@ -5017,7 +5017,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 1.2998505, y: 0}
-  m_SizeDelta: {x: 50, y: 50}
+  m_SizeDelta: {x: 55.8, y: 50}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &1450613737836988810
 CanvasRenderer:
@@ -5047,7 +5047,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: fe8a2ad2a51fc3d41a3748d031485c81, type: 3}
+  m_Sprite: {fileID: 21300000, guid: a7c66bfe3531e6747b713569ba0cfc54, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -9155,7 +9155,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 4460523360529384044, guid: 21cc35e94ea611f48a8d4332edb5a7a1, type: 3}
+  m_Sprite: {fileID: 4460523360529384044, guid: 10980386db1b39f4ea7c16fcd44d9c76, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -9803,14 +9803,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.023529414, g: 0.6431373, b: 0.854902, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: c103cffd03792f445b908c0db8252946, type: 3}
+  m_Texture: {fileID: 2800000, guid: f3e4b81de7a83704381b22dae23fbbc7, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
