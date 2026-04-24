@@ -7,6 +7,7 @@ public static class SceneTransitionContext
 
     public static bool HasClockSnapshot { get; private set; }
     public static DayNightPhase Phase { get; private set; } = DayNightPhase.Day;
+    public static int Day { get; private set; } = 1;
     public static float PhaseTimeRemaining { get; private set; }
     public static float PhaseElapsed { get; private set; }
 
@@ -38,11 +39,12 @@ public static class SceneTransitionContext
         return HasPendingEntryRoute && !string.IsNullOrWhiteSpace(entryPointId);
     }
 
-    public static bool TryGetClockSnapshot(out DayNightPhase phase, out float timeRemaining, out float elapsed)
+    public static bool TryGetClockSnapshot(out DayNightPhase phase, out float timeRemaining, out float elapsed, out int day)
     {
         phase = Phase;
         timeRemaining = PhaseTimeRemaining;
         elapsed = PhaseElapsed;
+        day = Day;
         return HasClockSnapshot;
     }
 
@@ -86,6 +88,7 @@ public static class SceneTransitionContext
 
         HasClockSnapshot = true;
         Phase = gsm.CurrentPhase;
+        Day = Mathf.Max(1, gsm.CurrentDay);
         PhaseTimeRemaining = Mathf.Max(0f, gsm.PhaseTimeRemaining);
         PhaseElapsed = Mathf.Max(0f, gsm.PhaseElapsed);
     }
@@ -123,6 +126,7 @@ public static class SceneTransitionContext
     {
         HasClockSnapshot = false;
         Phase = DayNightPhase.Day;
+        Day = 1;
         PhaseTimeRemaining = 0f;
         PhaseElapsed = 0f;
     }

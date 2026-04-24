@@ -37,6 +37,7 @@ public class PauseMenuController : MonoBehaviour
     [Header("ESC Toggle")]
     [SerializeField] private bool enableEscToggle = true;
     [SerializeField] private KeyCode escKey = KeyCode.Escape;
+    private bool _externalPauseBlocked;
 
     [Header("Panel Pop Animation")]
     [SerializeField] private bool usePanelPopAnimation = true;
@@ -193,7 +194,7 @@ public class PauseMenuController : MonoBehaviour
 
     private void Update()
     {
-        if (!enableEscToggle)
+        if (!enableEscToggle || _externalPauseBlocked)
             return;
 
         if (!Input.GetKeyDown(escKey))
@@ -221,6 +222,13 @@ public class PauseMenuController : MonoBehaviour
 
         // If pause panel is open, ESC closes all pause UI.
         ClosePauseMenu();
+    }
+
+    public void SetExternalPauseBlocked(bool blocked)
+    {
+        _externalPauseBlocked = blocked;
+        if (_externalPauseBlocked && _isOpen)
+            ClosePauseMenu();
     }
 
     private void LateUpdate()

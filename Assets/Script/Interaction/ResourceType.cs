@@ -7,5 +7,6 @@ public enum ResourceType
     PotatoSeed,
     Potato,
     TomatoSeed,
-    Tomato
+    Tomato,
+    Flashlight
 }

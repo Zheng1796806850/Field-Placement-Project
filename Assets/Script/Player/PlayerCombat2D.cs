@@ -1,8 +1,13 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using System.Globalization;
+using UnityEngine.Animations;
 
 public class PlayerCombat2D : MonoBehaviour
 {
+    private const string AxeUpgradeGrantedKeyLocal = "player_axe_upgrade_granted";
+    private const string AxeDamageMultiplierKeyLocal = "player_axe_damage_multiplier";
+
     [Header("Refs")]
     public PlayerMovementController movement;
     public Animator animator;
@@ -18,6 +23,11 @@ public class PlayerCombat2D : MonoBehaviour
     [Header("Input State")]
     public bool localInputEnabled = true;
 
+    [Header("Quest Upgrade")]
+    [SerializeField, Min(1f)] private float axeDamageMultiplier = 1f;
+    [SerializeField] private bool axeUpgradeGranted;
+    [SerializeField] private RuntimeAnimatorController axeUpgradeAnimatorController;
+
     private bool isAttacking;
     private float attackTimer;
     private BoxCollider2D currentCollider;
@@ -25,12 +35,16 @@ public class PlayerCombat2D : MonoBehaviour
 
     public bool IsAttacking => isAttacking;
     public bool InputEnabled => localInputEnabled && externalInputBlockCount <= 0;
+    public float AxeDamageMultiplier => Mathf.Max(1f, axeDamageMultiplier);
+    public bool AxeUpgradeGranted => axeUpgradeGranted;
 
     private void Awake()
     {
         if (movement == null) movement = GetComponent<PlayerMovementController>();
         if (animator == null) animator = GetComponent<Animator>();
 
+        LoadAxeUpgradeState();
+        ApplyAxeUpgradeAnimatorIfNeeded();
         DisableAllColliders();
     }
 
@@ -151,5 +165,77 @@ public class PlayerCombat2D : MonoBehaviour
     {
         if (currentCollider != null)
             currentCollider.enabled = false;
+    }
+
+    public bool GrantAxeUpgrade(float multiplier, RuntimeAnimatorController overrideAnimatorController = null)
+    {
+        float next = Mathf.Max(1f, multiplier);
+        bool changed = false;
+
+        if (!axeUpgradeGranted)
+        {
+            axeUpgradeGranted = true;
+            changed = true;
+        }
+
+        if (next > axeDamageMultiplier)
+        {
+            axeDamageMultiplier = next;
+            changed = true;
+        }
+
+        if (overrideAnimatorController != null)
+            axeUpgradeAnimatorController = overrideAnimatorController;
+
+        if (!changed)
+        {
+            ApplyAxeUpgradeAnimatorIfNeeded();
+            return false;
+        }
+
+        SaveAxeUpgradeState();
+        ApplyAxeUpgradeAnimatorIfNeeded();
+        NotifyDamagePipelineChanged();
+        return true;
+    }
+
+    private void NotifyDamagePipelineChanged()
+    {
+        var vitals = GetComponent<PlayerHungerThirst>();
+        if (vitals == null)
+            vitals = GetComponentInChildren<PlayerHungerThirst>(true);
+        vitals?.RefreshDebuffsNow();
+    }
+
+    private void LoadAxeUpgradeState()
+    {
+        string grantedKey = BaseWorldSession.ScopePlayerPrefsKey(AxeUpgradeGrantedKeyLocal);
+        string multKey = BaseWorldSession.ScopePlayerPrefsKey(AxeDamageMultiplierKeyLocal);
+
+        axeUpgradeGranted = PlayerPrefs.GetInt(grantedKey, 0) == 1;
+        string s = PlayerPrefs.GetString(multKey, "");
+        if (float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed))
+            axeDamageMultiplier = Mathf.Max(1f, parsed);
+        else
+            axeDamageMultiplier = Mathf.Max(1f, axeDamageMultiplier);
+    }
+
+    private void SaveAxeUpgradeState()
+    {
+        string grantedKey = BaseWorldSession.ScopePlayerPrefsKey(AxeUpgradeGrantedKeyLocal);
+        string multKey = BaseWorldSession.ScopePlayerPrefsKey(AxeDamageMultiplierKeyLocal);
+
+        PlayerPrefs.SetInt(grantedKey, axeUpgradeGranted ? 1 : 0);
+        PlayerPrefs.SetString(multKey, axeDamageMultiplier.ToString(CultureInfo.InvariantCulture));
+        PlayerPrefs.Save();
+    }
+
+    private void ApplyAxeUpgradeAnimatorIfNeeded()
+    {
+        if (!axeUpgradeGranted || animator == null || axeUpgradeAnimatorController == null)
+            return;
+
+        if (animator.runtimeAnimatorController != axeUpgradeAnimatorController)
+            animator.runtimeAnimatorController = axeUpgradeAnimatorController;
     }
 }

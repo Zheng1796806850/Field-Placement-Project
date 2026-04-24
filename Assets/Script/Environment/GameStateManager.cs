@@ -33,6 +33,7 @@ public class GameStateManager : MonoBehaviour
     public bool logPauseStateChanges = false;
 
     public DayNightPhase CurrentPhase { get; private set; }
+    public int CurrentDay { get; private set; } = 1;
     public float PhaseTimeRemaining { get; private set; }
     public float PhaseElapsed { get; private set; }
     public bool IsPaused { get; private set; }
@@ -49,13 +50,14 @@ public class GameStateManager : MonoBehaviour
 
     private void Start()
     {
-        if (restorePhaseFromSceneTransition && SceneTransitionContext.TryGetClockSnapshot(out var phase, out var timeRemaining, out var elapsed))
+        if (restorePhaseFromSceneTransition && SceneTransitionContext.TryGetClockSnapshot(out var phase, out var timeRemaining, out var elapsed, out var day))
         {
             bool invokePhaseStartEvents = invokePhaseEventsOnRestore || SceneTransitionContext.ForceInvokePhaseStartEventOnRestore;
-            ApplyPhaseState(phase, timeRemaining, elapsed, invokePhaseStartEvents);
+            ApplyPhaseState(phase, timeRemaining, elapsed, day, invokePhaseStartEvents);
             return;
         }
 
+        CurrentDay = Mathf.Max(1, CurrentDay);
         SetPhaseInternal(startPhase, force: true);
     }
 
@@ -97,7 +99,13 @@ public class GameStateManager : MonoBehaviour
 
     public void ApplyPhaseState(DayNightPhase phase, float timeRemaining, float elapsed, bool invokeEvents)
     {
+        ApplyPhaseState(phase, timeRemaining, elapsed, CurrentDay, invokeEvents);
+    }
+
+    public void ApplyPhaseState(DayNightPhase phase, float timeRemaining, float elapsed, int day, bool invokeEvents)
+    {
         CurrentPhase = phase;
+        CurrentDay = Mathf.Max(1, day);
 
         float total = phase == DayNightPhase.Day ? dayDuration : nightDuration;
         if (total <= 0f)
@@ -144,7 +152,10 @@ public class GameStateManager : MonoBehaviour
         {
             OnDayStarted?.Invoke();
             if (previous == DayNightPhase.Night)
+            {
+                CurrentDay = Mathf.Max(1, CurrentDay + 1);
                 GameplayEventHub.RaiseNightSurvived();
+            }
         }
         else
             OnNightStarted?.Invoke();
