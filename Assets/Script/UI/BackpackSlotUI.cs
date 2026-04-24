@@ -6,6 +6,13 @@ using UnityEngine.UI;
 
 public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
 {
+    public enum DragContainerType
+    {
+        None = 0,
+        Backpack = 1,
+        Storage = 2
+    }
+
     [Header("UI")]
     public Image icon;
     public TextMeshProUGUI countLabel;
@@ -83,6 +90,9 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         DragPayload.sourceSlotIndex = _slotIndex;
         DragPayload.resourceType = _resourceType;
         DragPayload.DropConsumedByValidTarget = false;
+        DragPayload.sourceContainerType = DragContainerType.Backpack;
+        DragPayload.sourceBackpackPanel = _owner;
+        DragPayload.sourceStoragePanel = null;
 
         if (_dragCanvas == null)
             _dragCanvas = GetComponentInParent<Canvas>() != null ? GetComponentInParent<Canvas>().rootCanvas : null;
@@ -115,7 +125,8 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     {
         ClearDragVisual();
 
-        if (DragPayload.active && DragPayload.source == this && _owner != null)
+        if (DragPayload.active && DragPayload.source == this && _owner != null &&
+            DragPayload.sourceContainerType == DragContainerType.Backpack)
         {
             // Fallback path: some UI hierarchies may swallow OnDrop on quick slots.
             // Raycast and bind manually so slot 2/3/4 behave the same as slot 1.
@@ -154,12 +165,30 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
     public void OnDrop(PointerEventData eventData)
     {
         if (!DragPayload.active) return;
-        if (DragPayload.source == null) return;
-        if (DragPayload.source == this) return;
         if (_owner == null) return;
 
-        DragPayload.DropConsumedByValidTarget = true;
-        _owner.HandleSlotDrop(DragPayload.sourceSlotIndex, _slotIndex);
+        bool moved = false;
+        if (DragPayload.sourceContainerType == DragContainerType.Backpack)
+        {
+            if (DragPayload.source != null && DragPayload.source == this) return;
+            if (DragPayload.sourceBackpackPanel == _owner)
+            {
+                _owner.HandleSlotDrop(DragPayload.sourceSlotIndex, _slotIndex);
+                moved = true;
+            }
+            else if (DragPayload.sourceStoragePanel != null)
+            {
+                moved = _owner.HandleDropFromStorage(DragPayload.sourceStoragePanel, DragPayload.sourceSlotIndex, _slotIndex);
+            }
+        }
+        else if (DragPayload.sourceContainerType == DragContainerType.Storage && DragPayload.sourceStoragePanel != null)
+        {
+            moved = _owner.HandleDropFromStorage(DragPayload.sourceStoragePanel, DragPayload.sourceSlotIndex, _slotIndex);
+        }
+
+        if (moved)
+            DragPayload.DropConsumedByValidTarget = true;
+
         DragPayload.Reset();
         if (_deferredPayloadReset != null)
         {
@@ -203,6 +232,9 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
         public static BackpackSlotUI source;
         public static int sourceSlotIndex = -1;
         public static ResourceType resourceType;
+        public static DragContainerType sourceContainerType;
+        public static BackpackPanelHUD sourceBackpackPanel;
+        public static StoragePanelHUD sourceStoragePanel;
         /// <summary>Backpack slot OnDrop or quick-slot bind consumed the drag; suppress world drop.</summary>
         public static bool DropConsumedByValidTarget;
 
@@ -212,6 +244,9 @@ public class BackpackSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IE
             source = null;
             sourceSlotIndex = -1;
             resourceType = default;
+            sourceContainerType = DragContainerType.None;
+            sourceBackpackPanel = null;
+            sourceStoragePanel = null;
             DropConsumedByValidTarget = false;
         }
     }

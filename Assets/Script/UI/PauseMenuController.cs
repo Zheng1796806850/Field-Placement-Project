@@ -396,7 +396,6 @@ public class PauseMenuController : MonoBehaviour
         if (_combat != null)
             _combat.SetInputEnabled(false);
 
-        // Keep references for restoration; do not overwrite prev values after first pause open.
     }
 
     private void RestorePlayerInput()
@@ -426,7 +425,6 @@ public class PauseMenuController : MonoBehaviour
 
     private void GoToMainMenu()
     {
-        // Close pause immediately so state is consistent.
         ClosePauseMenu();
 
         SceneLoadRequest.SetRequest(

@@ -56,8 +56,7 @@ MonoBehaviour:
     pitchRange: {x: 0.95, y: 1.05}
     spatialBlend: 0
   - id: 13
-    clips:
-    - {fileID: 8300000, guid: a6621fa8444ee4f4e8385efd408e59ad, type: 3}
+    clips: []
     volume: 0.8
     minInterval: 0.05
     pitchRange: {x: 0.95, y: 1.05}

@@ -288,6 +288,8 @@ MonoBehaviour:
   magnetAcceleration: 0
   interactPriority: 1
   retryCooldownSeconds: 0.35
+  spawnPickupGraceSeconds: 0.35
+  debugPickupLogs: 1
 --- !u!114 &-414381415183782360
 MonoBehaviour:
   m_ObjectHideFlags: 0

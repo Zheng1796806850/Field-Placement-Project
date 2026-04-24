@@ -5,6 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class ResourceDrop2D : MonoBehaviour, IInteractable
 {
+
     [Header("Reward")]
     public ResourceType resourceType = ResourceType.Planks;
     [Min(1)] public int amount = 1;
@@ -36,6 +37,9 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
     [Header("Spawn Grace")]
     [Tooltip("Block pickup/magnet for a short time right after spawn to avoid immediate self-pickup.")]
     [Min(0f)] public float spawnPickupGraceSeconds = 0.35f;
+
+    [Header("Audio")]
+    public bool debugPickupLogs = false;
 
     private Rigidbody2D _rb;
     private Collider2D _col;
@@ -133,7 +137,11 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
         _rb.MovePosition(next);
 
         if (Vector2.Distance(next, target) <= pickupDistance)
+        {
+            if (debugPickupLogs)
+                Debug.Log($"[ResourceDrop2D] FixedUpdate magnet reached pickupDistance -> TryPickup ({name}) frame={Time.frameCount}");
             TryPickup(_attractTarget.gameObject);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -142,7 +150,11 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
         if (other == null) return;
 
         if (!requireInteractKey && other.CompareTag(playerTag))
+        {
+            if (debugPickupLogs)
+                Debug.Log($"[ResourceDrop2D] OnTriggerEnter2D -> TryPickup ({name}) frame={Time.frameCount}");
             TryPickup(other.gameObject);
+        }
     }
 
     public void BeginAttract(Transform target, float speed)
@@ -192,6 +204,9 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
 
     private void TryPickup(GameObject interactor)
     {
+        if (debugPickupLogs)
+            Debug.Log($"[ResourceDrop2D] TryPickup enter ({name}) frame={Time.frameCount}, picked={_picked}, interactor={(interactor != null ? interactor.name : "null")}");
+
         if (_picked) return;
         if (interactor == null) return;
         if (!interactor.CompareTag(playerTag)) return;
@@ -208,13 +223,12 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
         int rejected;
 
         bool ok = inv.TryAdd(resourceType, amount, transform.position, out accepted, out rejected, true);
+        if (debugPickupLogs)
+            Debug.Log($"[ResourceDrop2D] TryAdd result ({name}) frame={Time.frameCount}, accepted={accepted}, rejected={rejected}, ok={ok}, type={resourceType}, amount={amount}");
 
         if (accepted > 0)
         {
-            if (resourceType == ResourceType.Planks)
-                SfxPlayer.TryPlay(SfxId.Economy_PlankPickup, transform.position);
-            else
-                SfxPlayer.TryPlay(SfxId.Economy_DropPickup, transform.position);
+            TryPlayPickupSfx();
         }
 
         if (ok || rejected <= 0)
@@ -295,6 +309,16 @@ public class ResourceDrop2D : MonoBehaviour, IInteractable
             iconRenderer.sprite = sprite;
         else if (_fallbackSprite != null)
             iconRenderer.sprite = _fallbackSprite;
+    }
+
+    private void TryPlayPickupSfx()
+    {
+        if (debugPickupLogs)
+            Debug.Log($"[ResourceDrop2D] Play pickup SFX ({name}) frame={Time.frameCount}, type={resourceType}");
+        if (resourceType == ResourceType.Planks)
+            SfxPlayer.TryPlay(SfxId.Economy_PlankPickup, transform.position);
+        else
+            SfxPlayer.TryPlay(SfxId.Economy_DropPickup, transform.position);
     }
 
 #if UNITY_EDITOR
