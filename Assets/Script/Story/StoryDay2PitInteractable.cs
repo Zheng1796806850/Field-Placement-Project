@@ -5,7 +5,7 @@ public class StoryDay2PitInteractable : MonoBehaviour, IInteractable
 {
     [Header("Identity")]
     public string promptText = "Press E to listen";
-    public int priority = 40;
+    public int priority = 120;
 
     [Header("Refs")]
     public LinearStoryDirector storyDirector;
@@ -32,7 +32,7 @@ public class StoryDay2PitInteractable : MonoBehaviour, IInteractable
     public void Interact(GameObject interactor)
     {
         if (!CanInteract(interactor)) return;
-        storyDirector.HandleDay2PitInteract(interactor);
+        storyDirector.HandleDay2PitInteraction(interactor);
     }
 
     static Transform ResolvePlayer(GameObject interactor)

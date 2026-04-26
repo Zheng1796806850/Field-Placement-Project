@@ -24,6 +24,7 @@ public class PlayerInteractor2D : MonoBehaviour
 
     private readonly Dictionary<IInteractable, int> overlapCounts = new Dictionary<IInteractable, int>(32);
     private readonly List<IInteractable> candidates = new List<IInteractable>(32);
+    private readonly List<IInteractable> _resolvedInteractables = new List<IInteractable>(8);
     private IInteractable current;
     private bool _interactedThisHold = false;
 
@@ -94,50 +95,63 @@ public class PlayerInteractor2D : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other == null) return;
-
-        var interactable = other.GetComponentInParent<IInteractable>();
-        if (interactable == null) return;
-
-        if (requireTag && !PassesTagFilter(other, interactable))
-            return;
-
-        if (overlapCounts.TryGetValue(interactable, out int count))
+        ResolveInteractables(other, _resolvedInteractables);
+        for (int i = 0; i < _resolvedInteractables.Count; i++)
         {
-            overlapCounts[interactable] = count + 1;
-        }
-        else
-        {
-            overlapCounts.Add(interactable, 1);
-            candidates.Add(interactable);
+            var interactable = _resolvedInteractables[i];
+            if (overlapCounts.TryGetValue(interactable, out int count))
+            {
+                overlapCounts[interactable] = count + 1;
+            }
+            else
+            {
+                overlapCounts.Add(interactable, 1);
+                candidates.Add(interactable);
+            }
         }
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
         if (other == null) return;
-
-        var interactable = other.GetComponentInParent<IInteractable>();
-        if (interactable == null) return;
-
-        if (requireTag && !PassesTagFilter(other, interactable))
-            return;
-
-        if (!overlapCounts.TryGetValue(interactable, out int count))
-            return;
-
-        count -= 1;
-
-        if (count <= 0)
+        ResolveInteractables(other, _resolvedInteractables);
+        for (int i = 0; i < _resolvedInteractables.Count; i++)
         {
-            overlapCounts.Remove(interactable);
-            candidates.Remove(interactable);
+            var interactable = _resolvedInteractables[i];
+            if (!overlapCounts.TryGetValue(interactable, out int count))
+                continue;
 
-            if (current == interactable)
-                current = null;
+            count -= 1;
+
+            if (count <= 0)
+            {
+                overlapCounts.Remove(interactable);
+                candidates.Remove(interactable);
+
+                if (current == interactable)
+                    current = null;
+            }
+            else
+            {
+                overlapCounts[interactable] = count;
+            }
         }
-        else
+    }
+
+    private void ResolveInteractables(Collider2D other, List<IInteractable> result)
+    {
+        result.Clear();
+        if (other == null) return;
+
+        var behaviours = other.GetComponentsInParent<MonoBehaviour>(true);
+        for (int i = 0; i < behaviours.Length; i++)
         {
-            overlapCounts[interactable] = count;
+            var mb = behaviours[i];
+            if (mb == null) continue;
+            if (mb is not IInteractable interactable) continue;
+            if (requireTag && !PassesTagFilter(other, interactable)) continue;
+            if (!result.Contains(interactable))
+                result.Add(interactable);
         }
     }
 
@@ -206,6 +220,17 @@ public class PlayerInteractor2D : MonoBehaviour
     {
         var c = item as Component;
         if (c == null) return float.MaxValue;
+
+        var col = c.GetComponent<Collider2D>();
+        if (col == null)
+            col = c.GetComponentInChildren<Collider2D>(true);
+
+        if (col != null)
+        {
+            Vector2 closest = col.ClosestPoint(origin);
+            return Vector2.Distance(origin, closest);
+        }
+
         return Vector2.Distance(origin, c.transform.position);
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -31,6 +32,7 @@ public class LinearStoryDirector : MonoBehaviour
     public PlayerResourceInventory playerInventory;
     public BackpackPanelHUD backpackHud;
     public PauseMenuController pauseMenuController;
+    public StoryEndingController endingController;
 
     [Header("Story area ids (must match triggers / volumes)")]
     public string frontYardPresenceAreaId = "story_front_yard";
@@ -47,6 +49,8 @@ public class LinearStoryDirector : MonoBehaviour
     [Header("Day2 reward")]
     [Min(1f)] public float day2AxeDamageMultiplier = 2f;
     public RuntimeAnimatorController day2AxeAnimatorOverride;
+    public GameObject day2PitObject;
+    public bool activatePitOnDay2Morning = true;
 
     [Header("Fade")]
     [Min(0.05f)] public float openingBlackHoldSeconds = 0.35f;
@@ -65,6 +69,14 @@ public class LinearStoryDirector : MonoBehaviour
     [Header("Step pacing")]
     [Min(0.1f)] public float day1InitialMovementSeconds = 2f;
 
+    [Header("Opening UI hide (before first dialogue)")]
+    [Tooltip("These UI roots are hidden at game start and restored right after the first opening dialogue finishes.")]
+    public GameObject[] openingHideTargets = Array.Empty<GameObject>();
+
+    [Header("Ending trigger")]
+    [Tooltip("Project currently uses 1-based day counting (GameStateManager.CurrentDay starts at 1). Ending checks CurrentDay >= endingTriggerDay on Day start.")]
+    [Min(1)] public int endingTriggerDay = 4;
+
     int _checkpoint;
     bool _day2HandoffGranted;
     bool _bootStarted;
@@ -78,11 +90,18 @@ public class LinearStoryDirector : MonoBehaviour
     bool _stepBusy;
     bool _day2MorningLaunched;
     bool _pitInteractBusy;
+    bool _hasTriggeredBackyardPitObservation;
+    bool _hasPlayedPitIntroDialogue;
     bool _openingUiRevealed;
+    bool _pitObjectMissingWarned;
+    readonly List<(GameObject go, bool wasActive)> _openingHiddenStates = new List<(GameObject go, bool wasActive)>(8);
+    bool _endingTriggered;
+    EndingType _endingType = EndingType.None;
+    bool _boundToGameStateDayStarted;
 
-    public bool IsLinearStoryActive => enableLinearStory && isActiveAndEnabled;
+    public bool IsLinearStoryActive => enableLinearStory && isActiveAndEnabled && !_endingTriggered;
     public int CurrentCheckpoint => _checkpoint;
-    public bool IsDay2PitInteractablePhase => IsLinearStoryActive && _checkpoint >= 8;
+    public bool IsDay2PitInteractablePhase => IsLinearStoryActive && (_checkpoint >= 7 || _hasTriggeredBackyardPitObservation || _hasPlayedPitIntroDialogue);
 
     void Awake()
     {
@@ -103,14 +122,28 @@ public class LinearStoryDirector : MonoBehaviour
         ApplyStoryFontIfAny();
         _checkpoint = StoryProgressStore.LoadCheckpoint(0);
         _day2HandoffGranted = StoryProgressStore.LoadDay2HandoffComplete();
+        _hasTriggeredBackyardPitObservation = StoryProgressStore.LoadHasTriggeredBackyardPitObservation();
+        _hasPlayedPitIntroDialogue = StoryProgressStore.LoadHasPlayedPitIntroDialogue();
+        _endingTriggered = StoryProgressStore.LoadEndingTriggered();
+        _endingType = StoryProgressStore.LoadEndingType();
+        if (_checkpoint == 0)
+            HideDialogueTargetsForOpening();
         if (_checkpoint == 0 && storyFade != null)
             storyFade.SnapToBlack();
         ApplyRestrictionForCheckpoint();
         if (_checkpoint >= 7)
             _day2MorningLaunched = true;
 
+        if (_hasPlayedPitIntroDialogue && _checkpoint < 8)
+            _checkpoint = 8;
+        if (_day2HandoffGranted && _checkpoint < 9)
+            _checkpoint = 9;
+
+        ApplyPitObjectVisibility();
+
         if (gameStateManager != null)
             gameStateManager.SetStoryClockFrozen(_checkpoint > 0 && _checkpoint < 5);
+        TryBindDayStarted();
     }
 
     void OnDestroy()
@@ -130,6 +163,8 @@ public class LinearStoryDirector : MonoBehaviour
     void OnEnable()
     {
         if (!enableLinearStory) return;
+        if (_checkpoint == 0)
+            HideDialogueTargetsForOpening();
         if (_checkpoint == 0 && storyFade != null)
             storyFade.SnapToBlack();
         GameplayEventHub.OnStructureBuilt += HandleStructureBuiltGlobal;
@@ -140,6 +175,7 @@ public class LinearStoryDirector : MonoBehaviour
 
         if (gameStateManager == null)
             gameStateManager = GameStateManager.Instance;
+        TryBindDayStarted();
     }
 
     void OnDisable()
@@ -149,6 +185,7 @@ public class LinearStoryDirector : MonoBehaviour
         GameplayEventHub.OnPlotWatered -= HandlePlotWateredGlobal;
         GameplayEventHub.OnPlayerEnteredArea -= HandlePlayerEnteredAreaGlobal;
         GameplayEventHub.OnNightSurvived -= HandleNightSurvivedGlobal;
+        TryUnbindDayStarted();
 
         if (Instance == this)
             StoryRestrictionGate.ClearAll();
@@ -157,6 +194,9 @@ public class LinearStoryDirector : MonoBehaviour
     void Update()
     {
         if (!IsLinearStoryActive) return;
+        if (_endingTriggered) return;
+        if (!_openingUiRevealed && _checkpoint == 0)
+            KeepOpeningTargetsHidden();
         if (dialogueHud != null && dialogueHud.IsRunning) return;
 
         TickMovementAccumulation(Time.deltaTime);
@@ -187,6 +227,29 @@ public class LinearStoryDirector : MonoBehaviour
         if (playerInventory == null) playerInventory = PlayerResourceInventory.Instance != null ? PlayerResourceInventory.Instance : FindFirstObjectByType<PlayerResourceInventory>();
         if (backpackHud == null) backpackHud = FindFirstObjectByType<BackpackPanelHUD>(FindObjectsInactive.Include);
         if (pauseMenuController == null) pauseMenuController = FindFirstObjectByType<PauseMenuController>(FindObjectsInactive.Include);
+        if (endingController == null) endingController = FindFirstObjectByType<StoryEndingController>(FindObjectsInactive.Include);
+        TryBindDayStarted();
+        if (day2PitObject == null && !_pitObjectMissingWarned)
+        {
+            Debug.LogWarning("[LinearStoryDirector] day2PitObject is not assigned; pit visibility automation is disabled.");
+            _pitObjectMissingWarned = true;
+        }
+    }
+
+    void TryBindDayStarted()
+    {
+        if (_boundToGameStateDayStarted) return;
+        if (gameStateManager == null) return;
+        gameStateManager.OnDayStarted += HandleDayStartedForEnding;
+        _boundToGameStateDayStarted = true;
+    }
+
+    void TryUnbindDayStarted()
+    {
+        if (!_boundToGameStateDayStarted) return;
+        if (gameStateManager != null)
+            gameStateManager.OnDayStarted -= HandleDayStartedForEnding;
+        _boundToGameStateDayStarted = false;
     }
 
     void ApplyStoryFontIfAny()
@@ -228,6 +291,7 @@ public class LinearStoryDirector : MonoBehaviour
         }
 
         TryScheduleDay2MorningIfNeeded();
+        TryTriggerEndingForCurrentDay();
     }
 
     void TickMovementAccumulation(float dt)
@@ -413,7 +477,34 @@ public class LinearStoryDirector : MonoBehaviour
     void HandleNightSurvivedGlobal()
     {
         if (!IsLinearStoryActive) return;
+        if (_endingTriggered) return;
         TryScheduleDay2MorningIfNeeded();
+    }
+
+    void HandleDayStartedForEnding()
+    {
+        TryTriggerEndingForCurrentDay();
+    }
+
+    void TryTriggerEndingForCurrentDay()
+    {
+        if (!enableLinearStory) return;
+        if (_endingTriggered) return;
+        if (gameStateManager == null) return;
+        if (gameStateManager.CurrentPhase != DayNightPhase.Day) return;
+        if (gameStateManager.CurrentDay < Mathf.Max(1, endingTriggerDay)) return;
+
+        _endingTriggered = true;
+        _endingType = _day2HandoffGranted ? EndingType.Bad01CompletedPitQuest : EndingType.Bad02DidNotCompletePitQuest;
+        Persist();
+
+        StoryRestrictionGate.ClearAll();
+        if (endingController == null)
+            endingController = FindFirstObjectByType<StoryEndingController>(FindObjectsInactive.Include);
+        if (endingController != null)
+            endingController.PlayEnding(_endingType);
+        else
+            Debug.LogWarning("[LinearStoryDirector] Ending triggered but StoryEndingController was not found in scene.");
     }
 
     void TryScheduleDay2MorningIfNeeded()
@@ -445,28 +536,29 @@ public class LinearStoryDirector : MonoBehaviour
         StoryRestrictionGate.SetTownBlocked(true, denyTownBackyard);
         StoryRestrictionGate.SetFrontYardBlocked(false, denyFrontYardThirsty);
         _checkpoint = 7;
+        ApplyPitObjectVisibility(forceActive: activatePitOnDay2Morning);
         Persist();
     }
 
     void HandlePlayerEnteredAreaGlobal(string areaId)
     {
         if (!IsLinearStoryActive) return;
-        if (_checkpoint != 7) return;
+        if (_checkpoint < 7) return;
         if (string.IsNullOrEmpty(areaId)) return;
         if (!string.Equals(areaId, backyardPresenceAreaId, StringComparison.Ordinal)) return;
+        if (_hasTriggeredBackyardPitObservation) return;
         if (_step8IntroStarted) return;
         _step8IntroStarted = true;
-        StartCoroutine(RunStep8BackyardRoutine());
+        StartCoroutine(RunStep8BackyardObservationRoutine());
     }
 
-    IEnumerator RunStep8BackyardRoutine()
+    IEnumerator RunStep8BackyardObservationRoutine()
     {
         if (_processingStep8) yield break;
         _processingStep8 = true;
-        yield return RunStoryDialogueLines("???", "Survivor", StoryLines.Step8, freezeTimeScale: true);
-        BeginQuestOrLog(questTownFetchSupplies, "questTownFetchSupplies");
-        StoryRestrictionGate.SetTownBlocked(false, denyTownBackyard);
-        _checkpoint = 8;
+        yield return RunStoryDialogueLines("Narrator", "Survivor", StoryLines.Step8Observation, freezeTimeScale: true);
+        _hasTriggeredBackyardPitObservation = true;
+        if (_checkpoint < 8) _checkpoint = 8;
         Persist();
         _processingStep8 = false;
     }
@@ -475,6 +567,11 @@ public class LinearStoryDirector : MonoBehaviour
     {
         if (!IsLinearStoryActive) return;
         StartCoroutine(Day2PitRoutine());
+    }
+
+    public void HandleDay2PitInteraction(GameObject interactor)
+    {
+        HandleDay2PitInteract(interactor);
     }
 
     IEnumerator Day2PitRoutine()
@@ -489,6 +586,17 @@ public class LinearStoryDirector : MonoBehaviour
 
         try
         {
+            if (!_hasPlayedPitIntroDialogue)
+            {
+                yield return RunStoryDialogueLines("???", "Survivor", StoryLines.Step8Intro, freezeTimeScale: true);
+                _hasPlayedPitIntroDialogue = true;
+                BeginQuestOrLog(questTownFetchSupplies, "questTownFetchSupplies");
+                StoryRestrictionGate.SetTownBlocked(false, denyTownBackyard);
+                if (_checkpoint < 8) _checkpoint = 8;
+                Persist();
+                yield break;
+            }
+
             if (_day2HandoffGranted || _checkpoint >= 9)
             {
                 yield return RunStoryDialogueLines("???", "Survivor", StoryLines.PitSilent, freezeTimeScale: true);
@@ -578,8 +686,9 @@ public class LinearStoryDirector : MonoBehaviour
 
     void Persist()
     {
-        StoryProgressStore.Save(Mathf.Max(0, _checkpoint), _day2HandoffGranted);
+        StoryProgressStore.Save(Mathf.Max(0, _checkpoint), _day2HandoffGranted, _hasTriggeredBackyardPitObservation, _hasPlayedPitIntroDialogue, _endingTriggered, _endingType);
         ApplyRestrictionForCheckpoint();
+        ApplyPitObjectVisibility();
     }
 
     void ApplyRestrictionForCheckpoint()
@@ -593,7 +702,7 @@ public class LinearStoryDirector : MonoBehaviour
             StoryRestrictionGate.SetFrontYardBlocked(true, msg);
         }
 
-        if (_checkpoint == 7)
+        if (_checkpoint >= 7 && !_hasPlayedPitIntroDialogue)
             StoryRestrictionGate.SetTownBlocked(true, denyTownBackyard);
 
         bool blockPlanting = _checkpoint < 3;
@@ -623,13 +732,18 @@ public class LinearStoryDirector : MonoBehaviour
     void HideDialogueTargetsForOpening()
     {
         if (_openingUiRevealed) return;
-        if (dialogueHud == null || dialogueHud.uiToHideDuringDialogue == null) return;
-
-        for (int i = 0; i < dialogueHud.uiToHideDuringDialogue.Length; i++)
+        if (_openingHiddenStates.Count > 0)
         {
-            var go = dialogueHud.uiToHideDuringDialogue[i];
-            if (go != null)
-                go.SetActive(false);
+            KeepOpeningTargetsHidden();
+            return;
+        }
+        if (openingHideTargets == null || openingHideTargets.Length == 0) return;
+
+        foreach (var go in openingHideTargets.Where(x => x != null))
+        {
+            bool was = go.activeSelf;
+            _openingHiddenStates.Add((go, was));
+            if (was) go.SetActive(false);
         }
     }
 
@@ -637,13 +751,60 @@ public class LinearStoryDirector : MonoBehaviour
     {
         if (_openingUiRevealed) return;
         _openingUiRevealed = true;
-        if (dialogueHud == null || dialogueHud.uiToHideDuringDialogue == null) return;
-
-        for (int i = 0; i < dialogueHud.uiToHideDuringDialogue.Length; i++)
+        for (int i = 0; i < _openingHiddenStates.Count; i++)
         {
-            var go = dialogueHud.uiToHideDuringDialogue[i];
-            if (go != null)
-                go.SetActive(true);
+            var entry = _openingHiddenStates[i];
+            if (entry.go != null && entry.wasActive)
+                entry.go.SetActive(true);
+        }
+        _openingHiddenStates.Clear();
+    }
+
+    void KeepOpeningTargetsHidden()
+    {
+        for (int i = 0; i < _openingHiddenStates.Count; i++)
+        {
+            var entry = _openingHiddenStates[i];
+            if (entry.go != null && entry.wasActive && entry.go.activeSelf)
+                entry.go.SetActive(false);
+        }
+    }
+
+    void ApplyPitObjectVisibility(bool forceActive = false)
+    {
+        if (day2PitObject == null)
+            return;
+
+        bool shouldActive = forceActive
+            || (activatePitOnDay2Morning && (_checkpoint >= 7 || _hasTriggeredBackyardPitObservation || _hasPlayedPitIntroDialogue || _day2HandoffGranted));
+        if (day2PitObject.activeSelf != shouldActive)
+            day2PitObject.SetActive(shouldActive);
+
+        if (shouldActive)
+            EnsurePitInteractionReady();
+    }
+
+    void EnsurePitInteractionReady()
+    {
+        if (day2PitObject == null)
+            return;
+
+        var pit = day2PitObject.GetComponentInChildren<StoryDay2PitInteractable>(true);
+        if (pit != null)
+        {
+            if (!pit.enabled)
+                pit.enabled = true;
+            if (pit.storyDirector == null)
+                pit.storyDirector = this;
+        }
+
+        var col = day2PitObject.GetComponentInChildren<Collider2D>(true);
+        if (col != null)
+        {
+            if (!col.enabled)
+                col.enabled = true;
+            if (!col.isTrigger)
+                col.isTrigger = true;
         }
     }
 
@@ -722,7 +883,12 @@ public class LinearStoryDirector : MonoBehaviour
             "S: Something moves in the backyard—go see what's going on."
         };
 
-        public static readonly string[] Step8 =
+        public static readonly string[] Step8Observation =
+        {
+            "I: A pit gapes beside the well."
+        };
+
+        public static readonly string[] Step8Intro =
         {
             "S: A pit gapes beside the well.",
             "M: ...Hey, you up there. Voice from the sewer.",

@@ -399,5 +399,25 @@ public class NpcDialoguePanelHUD : MonoBehaviour
             dialogueText.text = _lines[_lineIndex].content;
         _isTyping = false;
     }
+
+    public void ForceCloseDialogue()
+    {
+        if (!_isRunning)
+            return;
+
+        _onComplete = null;
+        _isRunning = false;
+        _lines.Clear();
+        _isTyping = false;
+        if (_typeRoutine != null)
+        {
+            StopCoroutine(_typeRoutine);
+            _typeRoutine = null;
+        }
+        if (panelRoot != null)
+            panelRoot.SetActive(false);
+
+        ExitDialogueMode();
+    }
 }
 
