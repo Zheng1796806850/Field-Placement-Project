@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class WaveEventBannerHUD : MonoBehaviour
 {
@@ -10,6 +11,8 @@ public class WaveEventBannerHUD : MonoBehaviour
     [Header("UI")]
     public CanvasGroup canvasGroup;
     public TextMeshProUGUI label;
+    public LayoutElement layoutElement;
+    RectTransform _layoutRoot;
 
     [Header("Timings")]
     [Min(0.01f)] public float fadeInDuration = 0.15f;
@@ -28,6 +31,12 @@ public class WaveEventBannerHUD : MonoBehaviour
     {
         if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
         if (label == null) label = GetComponentInChildren<TextMeshProUGUI>(true);
+        if (layoutElement == null && canvasGroup != null)
+            layoutElement = canvasGroup.GetComponent<LayoutElement>();
+        if (layoutElement == null && canvasGroup != null)
+            layoutElement = canvasGroup.gameObject.AddComponent<LayoutElement>();
+        if (layoutElement != null)
+            _layoutRoot = layoutElement.transform.parent as RectTransform;
 
         if (canvasGroup != null)
         {
@@ -35,6 +44,8 @@ public class WaveEventBannerHUD : MonoBehaviour
             canvasGroup.blocksRaycasts = false;
             canvasGroup.interactable = false;
         }
+        if (layoutElement != null)
+            layoutElement.ignoreLayout = true;
     }
 
     public void Show(string message)
@@ -57,10 +68,18 @@ public class WaveEventBannerHUD : MonoBehaviour
         {
             string msg = _queue.Dequeue();
             if (label != null) label.text = msg;
+            if (layoutElement != null)
+                layoutElement.ignoreLayout = false;
+            if (_layoutRoot != null)
+                LayoutRebuilder.MarkLayoutForRebuild(_layoutRoot);
 
             yield return Fade(0f, 1f, fadeInDuration);
             yield return new WaitForSecondsRealtime(holdDuration);
             yield return Fade(1f, 0f, fadeOutDuration);
+            if (layoutElement != null)
+                layoutElement.ignoreLayout = true;
+            if (_layoutRoot != null)
+                LayoutRebuilder.MarkLayoutForRebuild(_layoutRoot);
         }
 
         _runner = null;

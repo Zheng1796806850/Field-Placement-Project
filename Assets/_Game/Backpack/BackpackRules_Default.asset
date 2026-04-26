@@ -79,3 +79,10 @@ MonoBehaviour:
     maxCarry: 1
     showInUI: 1
     quickUseItem: {fileID: 11400000, guid: a5fb550c7e020cf49bc91a1b2bf4ab7f, type: 2}
+  - type: 9
+    displayName: Anti-inflammatory Medicine
+    icon: {fileID: -4858183906989900763, guid: 1b796d23f81453745b1d39a85d162d42, type: 3}
+    stackSize: 10
+    maxCarry: -1
+    showInUI: 1
+    quickUseItem: {fileID: 0}

@@ -16,6 +16,8 @@ public static class ObjectiveEvaluatorRegistry
         Evaluators[ObjectiveType.ReachArea] = new ReachAreaObjectiveEvaluator();
         Evaluators[ObjectiveType.SurviveNights] = new SurviveNightsObjectiveEvaluator();
         Evaluators[ObjectiveType.PlantAndWater] = new PlantAndWaterObjectiveEvaluator();
+        Evaluators[ObjectiveType.CropPlanted] = new CropPlantedObjectiveEvaluator();
+        Evaluators[ObjectiveType.PlotWatered] = new PlotWateredObjectiveEvaluator();
     }
 
     public static IObjectiveEvaluator Get(ObjectiveType type)

@@ -31,6 +31,16 @@ public class NpcDialoguePanelHUD : MonoBehaviour
     public bool useTypewriter = true;
     [Min(1f)] public float charactersPerSecond = 40f;
 
+    [Header("Time Scale")]
+    [Tooltip("若为 false，对话期间不调用 GameStateManager.SetPaused（剧情导演自行冻结昼夜等）；仍锁定玩家输入与暂停菜单。")]
+    public bool freezeTimeScaleDuringDialogue = true;
+
+    [Header("Speaker labels (prefix tags)")]
+    public string narratorDisplayName = "Narrator";
+    public string mysteryDisplayName = "???";
+    [Tooltip("内心独白行使用标签 I: / INNER: 时的说话人显示名。")]
+    public string innerThoughtSpeakerName = "Inner Voice";
+
     [Header("Dialogue Hide Targets")]
     public GameObject[] uiToHideDuringDialogue = Array.Empty<GameObject>();
 
@@ -143,7 +153,7 @@ public class NpcDialoguePanelHUD : MonoBehaviour
     private void EnterDialogueMode()
     {
         var gsm = GameStateManager.Instance;
-        if (gsm != null && !gsm.IsPaused)
+        if (freezeTimeScaleDuringDialogue && gsm != null && !gsm.IsPaused)
         {
             gsm.SetPaused(true);
             _pausedByDialogue = true;
@@ -198,7 +208,7 @@ public class NpcDialoguePanelHUD : MonoBehaviour
         if (playerInteractor != null)
             playerInteractor.SetInputEnabled(_prevInteractorEnabled);
 
-        if (_pausedByDialogue)
+        if (_pausedByDialogue && freezeTimeScaleDuringDialogue)
         {
             var gsm = GameStateManager.Instance;
             if (gsm != null)
@@ -282,14 +292,31 @@ public class NpcDialoguePanelHUD : MonoBehaviour
         {
             string head = content.Substring(0, sep).Trim();
             string tail = content.Substring(sep + 1).TrimStart();
-            if (IsPlayerTag(head))
+            string headNorm = head.ToUpperInvariant();
+
+            if (IsPlayerTag(headNorm))
             {
                 speaker = _playerDisplayName;
                 content = tail;
             }
-            else if (IsNpcTag(head))
+            else if (IsNpcTag(headNorm))
             {
                 speaker = _defaultNpcName;
+                content = tail;
+            }
+            else if (IsNarratorTag(headNorm))
+            {
+                speaker = string.IsNullOrWhiteSpace(narratorDisplayName) ? "Narrator" : narratorDisplayName;
+                content = tail;
+            }
+            else if (IsInnerThoughtTag(headNorm))
+            {
+                speaker = string.IsNullOrWhiteSpace(innerThoughtSpeakerName) ? "Inner Voice" : innerThoughtSpeakerName;
+                content = tail;
+            }
+            else if (IsMysteryTag(headNorm))
+            {
+                speaker = string.IsNullOrWhiteSpace(mysteryDisplayName) ? "???" : mysteryDisplayName;
                 content = tail;
             }
         }
@@ -301,17 +328,29 @@ public class NpcDialoguePanelHUD : MonoBehaviour
         };
     }
 
-    private bool IsPlayerTag(string tag)
+    private static bool IsPlayerTag(string headUpper)
     {
-        return string.Equals(tag, "P", StringComparison.OrdinalIgnoreCase)
-               || string.Equals(tag, "PLAYER", StringComparison.OrdinalIgnoreCase)
-               || string.Equals(tag, "YOU", StringComparison.OrdinalIgnoreCase);
+        return headUpper is "P" or "PLAYER" or "YOU";
     }
 
-    private bool IsNpcTag(string tag)
+    private static bool IsNpcTag(string headUpper)
     {
-        return string.Equals(tag, "N", StringComparison.OrdinalIgnoreCase)
-               || string.Equals(tag, "NPC", StringComparison.OrdinalIgnoreCase);
+        return headUpper is "N" or "NPC";
+    }
+
+    private static bool IsNarratorTag(string headUpper)
+    {
+        return headUpper is "S" or "SYS" or "NARR" or "NARRATOR";
+    }
+
+    private static bool IsInnerThoughtTag(string headUpper)
+    {
+        return headUpper is "I" or "INNER" or "THOUGHT";
+    }
+
+    private static bool IsMysteryTag(string headUpper)
+    {
+        return headUpper is "?" or "??" or "???" or "Q" or "UNKNOWN" or "M" or "MYSTERY";
     }
 
     private IEnumerator TypeLine(string text)

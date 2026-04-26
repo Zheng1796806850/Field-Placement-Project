@@ -1115,8 +1115,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 4.8006, y: -26.9511}
-  m_SizeDelta: {x: 1516.3972, y: 155.8203}
+  m_AnchoredPosition: {x: -60.503872, y: -26.951096}
+  m_SizeDelta: {x: 1385.7622, y: 155.8203}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7675741214404510942
 CanvasRenderer:
@@ -2527,6 +2527,10 @@ MonoBehaviour:
   advanceKeySecondary: 32
   useTypewriter: 1
   charactersPerSecond: 40
+  freezeTimeScaleDuringDialogue: 1
+  narratorDisplayName: Narrator
+  mysteryDisplayName: ???
+  innerThoughtSpeakerName: Inner Voice
   uiToHideDuringDialogue:
   - {fileID: 4154989236494613724}
   - {fileID: 1849769214769460951}
@@ -4675,9 +4679,9 @@ RectTransform:
   - {fileID: 3748592293814475373}
   m_Father: {fileID: 7783826024088215395}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 50, y: -312.5}
   m_SizeDelta: {x: 400, y: 125}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4023547667505875861
@@ -9471,9 +9475,9 @@ RectTransform:
   - {fileID: 22199085243339555}
   m_Father: {fileID: 7783826024088215395}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 50, y: 37.5}
   m_SizeDelta: {x: 400, y: 125}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1628511448524887754
@@ -10257,7 +10261,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 24, y: -15}
-  m_SizeDelta: {x: 200, y: 50}
+  m_SizeDelta: {x: 767.2695, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &9047966606016364513
 CanvasRenderer:
@@ -11168,7 +11172,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1742593117983655284
 RectTransform:
   m_ObjectHideFlags: 0
@@ -12225,7 +12229,10 @@ GameObject:
   m_Component:
   - component: {fileID: 4021516237499055493}
   - component: {fileID: 481395289518680198}
-  - component: {fileID: 3718864966818674214}
+  - component: {fileID: 1603000839602657222}
+  - component: {fileID: 8986345153160053458}
+  - component: {fileID: 8454830884110561831}
+  - component: {fileID: 124618519104088301}
   m_Layer: 5
   m_Name: BarsStack
   m_TagString: Untagged
@@ -12281,7 +12288,7 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!114 &3718864966818674214
+--- !u!114 &1603000839602657222
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -12290,17 +12297,72 @@ MonoBehaviour:
   m_GameObject: {fileID: 4853169995351044148}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Script: {fileID: 11500000, guid: 293a2495feb7d6c41aad832a57a73173, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
-  m_IgnoreLayout: 0
-  m_MinWidth: -1
-  m_MinHeight: -1
-  m_PreferredWidth: -1
-  m_PreferredHeight: -1
-  m_FlexibleWidth: -1
-  m_FlexibleHeight: -1
-  m_LayoutPriority: 1
+  m_EditorClassIdentifier: Assembly-CSharp::HouseCoreHpHUD
+  gameState: {fileID: 0}
+  house: {fileID: 0}
+  canvasGroup: {fileID: 6655251017471549640}
+  fillImage: {fileID: 3236769536149766447}
+  label: {fileID: 7502031161424099757}
+  layoutElement: {fileID: 7987954167334506822}
+  showOnlyAtNight: 1
+  showValueText: 0
+  titleText: House HP
+--- !u!114 &8986345153160053458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4853169995351044148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f578e8d1b6c7de47a39572b7d2cd35d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimedActionHUD
+  canvasGroup: {fileID: 3565320840608896193}
+  fillImage: {fileID: 4284191878793362676}
+  actionLabel: {fileID: 6835503381442590595}
+  layoutElement: {fileID: 2750190860944481613}
+--- !u!114 &8454830884110561831
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4853169995351044148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38dd6e422151f6d4887d2866380702f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WaveEventBannerHUD
+  canvasGroup: {fileID: 2907150675824956823}
+  label: {fileID: 28219641722622356}
+  layoutElement: {fileID: 7652631480235998952}
+  fadeInDuration: 0.15
+  holdDuration: 1.4
+  fadeOutDuration: 0.25
+  queueMessages: 1
+  disableMessages: 1
+--- !u!114 &124618519104088301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4853169995351044148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db3e2acb79d764343aad0d7d9723b363, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BackpackToastHUD
+  inventory: {fileID: 0}
+  canvasGroup: {fileID: 2907150675824956823}
+  label: {fileID: 28219641722622356}
+  holdSeconds: 1.2
+  fadeSeconds: 0.25
+  queueMessages: 1
 --- !u!1 &4890816075674301519
 GameObject:
   m_ObjectHideFlags: 0
@@ -13476,7 +13538,7 @@ GameObject:
   m_Component:
   - component: {fileID: 167950360041922218}
   - component: {fileID: 3565320840608896193}
-  - component: {fileID: 96395230154813373}
+  - component: {fileID: 2750190860944481613}
   m_Layer: 5
   m_Name: InteractBar
   m_TagString: Untagged
@@ -13519,7 +13581,7 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &96395230154813373
+--- !u!114 &2750190860944481613
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -13528,12 +13590,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 5166478226742869361}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1f578e8d1b6c7de47a39572b7d2cd35d, type: 3}
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TimedActionHUD
-  canvasGroup: {fileID: 3565320840608896193}
-  fillImage: {fileID: 4284191878793362676}
-  actionLabel: {fileID: 6835503381442590595}
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1 &5184137607617755908
 GameObject:
   m_ObjectHideFlags: 0
@@ -14457,9 +14524,9 @@ RectTransform:
   - {fileID: 3662559981509243163}
   m_Father: {fileID: 7783826024088215395}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 50, y: -137.5}
   m_SizeDelta: {x: 400, y: 125}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6147350045031232171
@@ -15326,7 +15393,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7666108601517269626}
   - component: {fileID: 6655251017471549640}
-  - component: {fileID: 7100300516535466154}
+  - component: {fileID: 7987954167334506822}
   m_Layer: 5
   m_Name: HouseHPBar
   m_TagString: Untagged
@@ -15368,7 +15435,7 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &7100300516535466154
+--- !u!114 &7987954167334506822
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -15377,17 +15444,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 5841663780914346352}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 293a2495feb7d6c41aad832a57a73173, type: 3}
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HouseCoreHpHUD
-  gameState: {fileID: 0}
-  house: {fileID: 0}
-  canvasGroup: {fileID: 6655251017471549640}
-  fillImage: {fileID: 3236769536149766447}
-  label: {fileID: 7502031161424099757}
-  showOnlyAtNight: 1
-  showValueText: 0
-  titleText: House HP
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1 &5855662561563230819
 GameObject:
   m_ObjectHideFlags: 0
@@ -15790,7 +15857,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -159.8, y: 8.2}
+  m_AnchoredPosition: {x: -10.200012, y: 68}
   m_SizeDelta: {x: 139.4723, y: 52.9841}
   m_Pivot: {x: 1, y: 0}
 --- !u!222 &3075894319858113908
@@ -18650,8 +18717,7 @@ GameObject:
   - component: {fileID: 2901618119772104273}
   - component: {fileID: 955674311809702415}
   - component: {fileID: 2907150675824956823}
-  - component: {fileID: 1812424490418816305}
-  - component: {fileID: 5161943176880892790}
+  - component: {fileID: 7652631480235998952}
   m_Layer: 5
   m_Name: WaveBanner
   m_TagString: Untagged
@@ -18730,43 +18796,26 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &1812424490418816305
+--- !u!114 &7652631480235998952
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7221834941148790202}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 38dd6e422151f6d4887d2866380702f0, type: 3}
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WaveEventBannerHUD
-  canvasGroup: {fileID: 2907150675824956823}
-  label: {fileID: 28219641722622356}
-  fadeInDuration: 0.15
-  holdDuration: 1.4
-  fadeOutDuration: 0.25
-  queueMessages: 1
-  disableMessages: 1
---- !u!114 &5161943176880892790
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7221834941148790202}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: db3e2acb79d764343aad0d7d9723b363, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BackpackToastHUD
-  inventory: {fileID: 0}
-  canvasGroup: {fileID: 2907150675824956823}
-  label: {fileID: 28219641722622356}
-  holdSeconds: 1.2
-  fadeSeconds: 0.25
-  queueMessages: 1
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1 &7349445816357574890
 GameObject:
   m_ObjectHideFlags: 0
@@ -20301,7 +20350,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &566740220563239401
 RectTransform:
   m_ObjectHideFlags: 0
@@ -22009,7 +22058,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WaveHUDPackRouter
   gameState: {fileID: 0}
   waveProgress: {fileID: 0}
-  banner: {fileID: 1812424490418816305}
+  banner: {fileID: 0}
   wallBreachCooldown: 1
 --- !u!1 &8683637563126201083
 GameObject:

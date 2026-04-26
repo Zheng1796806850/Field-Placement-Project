@@ -32,6 +32,7 @@ public class PlayerCombat2D : MonoBehaviour
     private float attackTimer;
     private BoxCollider2D currentCollider;
     private int externalInputBlockCount;
+    private PlayerSeedPlantingController seedPlantingController;
 
     public bool IsAttacking => isAttacking;
     public bool InputEnabled => localInputEnabled && externalInputBlockCount <= 0;
@@ -42,6 +43,7 @@ public class PlayerCombat2D : MonoBehaviour
     {
         if (movement == null) movement = GetComponent<PlayerMovementController>();
         if (animator == null) animator = GetComponent<Animator>();
+        if (seedPlantingController == null) seedPlantingController = GetComponent<PlayerSeedPlantingController>();
 
         LoadAxeUpgradeState();
         ApplyAxeUpgradeAnimatorIfNeeded();
@@ -61,10 +63,14 @@ public class PlayerCombat2D : MonoBehaviour
 
     private void Update()
     {
-        if (!isAttacking && InputEnabled && Input.GetKeyDown(attackKey))
+        if (!isAttacking && Input.GetKeyDown(attackKey))
         {
+            TryAutoCancelPlantingForAttack();
             if (!ShouldSuppressAttackForUiOrDrag())
-                StartAttack();
+            {
+                if (InputEnabled)
+                    StartAttack();
+            }
         }
 
         if (isAttacking)
@@ -237,5 +243,15 @@ public class PlayerCombat2D : MonoBehaviour
 
         if (animator.runtimeAnimatorController != axeUpgradeAnimatorController)
             animator.runtimeAnimatorController = axeUpgradeAnimatorController;
+    }
+
+    private void TryAutoCancelPlantingForAttack()
+    {
+        if (seedPlantingController == null)
+            seedPlantingController = GetComponent<PlayerSeedPlantingController>();
+        if (seedPlantingController == null || !seedPlantingController.IsPlantingModeActive)
+            return;
+
+        seedPlantingController.CancelPlanting(false, null, PlayerSeedPlantingController.ExitReasonExternal);
     }
 }

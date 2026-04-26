@@ -12,6 +12,9 @@ public static class GameplayEventHub
     public static event Action OnNightSurvived;
     /// <summary>Args: plotQuestId (matches quest objective targetId), cropId from <see cref="CropConfigSO.cropId"/>.</summary>
     public static event Action<string, string> OnCropPlantedAndWatered;
+    /// <summary>Args: <see cref="FarmlandPlot.plotId"/>（可为空字符串表示未配置 id 的地块）。</summary>
+    public static event Action<string> OnCropPlanted;
+    public static event Action<string> OnPlotWatered;
 
     public static void RaiseResourceCollected(ResourceType type, int delta)
     {
@@ -50,5 +53,15 @@ public static class GameplayEventHub
     {
         if (string.IsNullOrEmpty(plotQuestId)) return;
         OnCropPlantedAndWatered?.Invoke(plotQuestId, cropId ?? "");
+    }
+
+    public static void RaiseCropPlanted(string plotId)
+    {
+        OnCropPlanted?.Invoke(plotId ?? "");
+    }
+
+    public static void RaisePlotWatered(string plotId)
+    {
+        OnPlotWatered?.Invoke(plotId ?? "");
     }
 }

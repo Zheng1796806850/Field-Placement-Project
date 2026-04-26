@@ -38,6 +38,7 @@ public class PauseMenuController : MonoBehaviour
     [SerializeField] private bool enableEscToggle = true;
     [SerializeField] private KeyCode escKey = KeyCode.Escape;
     private bool _externalPauseBlocked;
+    private int _externalPauseLockDepth;
 
     [Header("Panel Pop Animation")]
     [SerializeField] private bool usePanelPopAnimation = true;
@@ -224,11 +225,34 @@ public class PauseMenuController : MonoBehaviour
         ClosePauseMenu();
     }
 
+    /// <summary>与 <see cref="PopExternalPauseBlock"/> 配对；支持嵌套（剧情黑场 + 对话等）。</summary>
+    public void PushExternalPauseBlock()
+    {
+        _externalPauseLockDepth++;
+        if (_externalPauseLockDepth == 1)
+        {
+            _externalPauseBlocked = true;
+            if (_isOpen)
+                ClosePauseMenu();
+        }
+    }
+
+    public void PopExternalPauseBlock()
+    {
+        if (_externalPauseLockDepth <= 0)
+            return;
+        _externalPauseLockDepth--;
+        if (_externalPauseLockDepth == 0)
+            _externalPauseBlocked = false;
+    }
+
+    /// <summary>兼容旧调用：true 等价 Push，false 等价 Pop。</summary>
     public void SetExternalPauseBlocked(bool blocked)
     {
-        _externalPauseBlocked = blocked;
-        if (_externalPauseBlocked && _isOpen)
-            ClosePauseMenu();
+        if (blocked)
+            PushExternalPauseBlock();
+        else
+            PopExternalPauseBlock();
     }
 
     private void LateUpdate()

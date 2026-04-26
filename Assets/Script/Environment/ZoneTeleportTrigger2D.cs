@@ -3,6 +3,17 @@ using UnityEngine.SceneManagement;
 
 public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
 {
+    public enum LinearStoryTravelGate
+    {
+        None = 0,
+        FrontYard = 1,
+        Town = 2
+    }
+
+    [Header("Linear Story (optional)")]
+    [Tooltip("非 None 时由 StoryRestrictionGate 在剧情步骤中拦截传送/进入。")]
+    public LinearStoryTravelGate linearStoryTravelGate = LinearStoryTravelGate.None;
+
     public enum TeleportMode
     {
         LocalTeleport = 0,
@@ -62,6 +73,9 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
 
     public string GetPrompt()
     {
+        if (StoryRestrictionGate.TryGetDenyMessage(linearStoryTravelGate, out string storyMsg))
+            return storyMsg;
+
         if (!restrictByPhase)
             return promptText;
 
@@ -108,6 +122,12 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
 
         var playerT = ResolvePlayerTransform(interactor);
         if (playerT == null) return;
+
+        if (StoryRestrictionGate.TryGetDenyMessage(linearStoryTravelGate, out var storyDeny))
+        {
+            PushStoryDenyFeedback(interactor, storyDeny);
+            return;
+        }
 
         if (!IsPhaseAllowed())
         {
@@ -156,6 +176,20 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
 
         string msg = string.IsNullOrWhiteSpace(denyMessageByPhase) ? "Cannot travel now." : denyMessageByPhase;
 
+        var inv = interactor != null ? interactor.GetComponentInParent<PlayerResourceInventory>() : null;
+        if (inv == null) inv = PlayerResourceInventory.Instance;
+
+        if (inv != null)
+        {
+            inv.PushMessage(msg);
+            return;
+        }
+
+        Debug.Log(msg);
+    }
+
+    private static void PushStoryDenyFeedback(GameObject interactor, string msg)
+    {
         var inv = interactor != null ? interactor.GetComponentInParent<PlayerResourceInventory>() : null;
         if (inv == null) inv = PlayerResourceInventory.Instance;
 

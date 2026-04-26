@@ -11,6 +11,9 @@ public class QuestDefinitionSO : ScriptableObject
 
     [TextArea] public string victoryReason = "Quest complete!";
 
+    [Tooltip("若为 false，任务完成不会弹出胜利结算（线性剧情用）。")]
+    public bool triggerGameFlowVictoryOnComplete = true;
+
     [Tooltip("If true, all objectives track together; quest completes when all are done. If false, objectives unlock in list order (serial).")]
     public bool parallelObjectives;
 
@@ -24,6 +27,7 @@ public class QuestDefinitionSO : ScriptableObject
             displayTitle = displayTitle,
             victoryReason = victoryReason,
             parallelObjectives = parallelObjectives,
+            triggerGameFlowVictoryOnComplete = triggerGameFlowVictoryOnComplete,
             objectives = new List<ObjectiveDefinition>()
         };
 

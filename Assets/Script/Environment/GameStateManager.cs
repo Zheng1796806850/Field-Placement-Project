@@ -38,6 +38,9 @@ public class GameStateManager : MonoBehaviour
     public float PhaseElapsed { get; private set; }
     public bool IsPaused { get; private set; }
 
+    /// <summary>为 true 时昼夜相位倒计时与相位切换检测不推进（与 <see cref="IsPaused"/> 独立；不要用暂停菜单代替此语义）。</summary>
+    public bool StoryClockFrozen { get; private set; }
+
     public event Action<DayNightPhase> OnPhaseChanged;
     public event Action OnDayStarted;
     public event Action OnNightStarted;
@@ -70,6 +73,7 @@ public class GameStateManager : MonoBehaviour
         }
 
         if (IsPaused) return;
+        if (StoryClockFrozen) return;
 
         float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
 
@@ -81,6 +85,11 @@ public class GameStateManager : MonoBehaviour
             if (CurrentPhase == DayNightPhase.Day) SetPhase(DayNightPhase.Night);
             else SetPhase(DayNightPhase.Day);
         }
+    }
+
+    public void SetStoryClockFrozen(bool frozen)
+    {
+        StoryClockFrozen = frozen;
     }
 
     public void TogglePhase()
