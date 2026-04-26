@@ -17,6 +17,8 @@ public class WaveProgressTracker : MonoBehaviour
     public int enemiesAlive = 0;
     public int enemiesTotalThisWave = 0;
     public bool waveInProgress = false;
+    [Tooltip("When true, wave completion can auto-fire when alive reaches 0. Disable for continuous night spawning.")]
+    public bool useFixedWaveCompletion = true;
 
     public event Action<int> OnWaveChanged;
     public event Action<int> OnWaveStarted;
@@ -68,6 +70,31 @@ public class WaveProgressTracker : MonoBehaviour
 
         OnWaveChanged?.Invoke(currentWave);
         OnWaveStarted?.Invoke(currentWave);
+        OnEnemyCountChanged?.Invoke(enemiesAlive, enemiesTotalThisWave);
+    }
+
+    /// <summary>Starts a new night session for continuous spawning (total = cumulative spawned this night).</summary>
+    public void StartNightSession(int dayNumber)
+    {
+        currentWave = Mathf.Max(0, dayNumber);
+        waveInProgress = true;
+        enemiesAlive = 0;
+        enemiesTotalThisWave = 0;
+        _enemyIds.Clear();
+        OnWaveChanged?.Invoke(currentWave);
+        OnEnemyCountChanged?.Invoke(enemiesAlive, enemiesTotalThisWave);
+    }
+
+    public void EndNightSession()
+    {
+        waveInProgress = false;
+    }
+
+    public void NotifyEnemySpawned(int waveId)
+    {
+        if (!waveInProgress) return;
+        if (waveId != currentWave) return;
+        enemiesTotalThisWave = Mathf.Max(0, enemiesTotalThisWave + 1);
         OnEnemyCountChanged?.Invoke(enemiesAlive, enemiesTotalThisWave);
     }
 
@@ -127,7 +154,7 @@ public class WaveProgressTracker : MonoBehaviour
             enemiesAlive = Mathf.Max(0, enemiesAlive - 1);
             OnEnemyCountChanged?.Invoke(enemiesAlive, enemiesTotalThisWave);
 
-            if (waveInProgress && enemiesAlive <= 0 && enemiesTotalThisWave > 0)
+            if (useFixedWaveCompletion && waveInProgress && enemiesAlive <= 0 && enemiesTotalThisWave > 0)
             {
                 waveInProgress = false;
                 OnWaveCompleted?.Invoke(currentWave);

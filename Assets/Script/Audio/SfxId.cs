@@ -20,6 +20,9 @@ public enum SfxId
     Action_RepairLoop = 41,
 
     UI_SelectNavigate = 50,
+    UI_Typing = 51,
+    Food_Eating = 52,
+    Water_Drinking = 53,
 
     /// <summary>线性剧情一次性环境音（需在 SFXLibrary 配置 clip）。</summary>
     Story_DistantGrowl = 60

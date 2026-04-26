@@ -145,3 +145,24 @@ MonoBehaviour:
     minInterval: 0.01
     pitchRange: {x: 0.98, y: 1.02}
     spatialBlend: 0
+  - id: 51
+    clips:
+    - {fileID: 8300000, guid: 01b5edb6abcca3c44ac4d6c7ddeeb348, type: 3}
+    volume: 0.5
+    minInterval: 0
+    pitchRange: {x: 0.98, y: 1.02}
+    spatialBlend: 0
+  - id: 52
+    clips:
+    - {fileID: 8300000, guid: fef9f76e377564f4fb00f98aeacda90d, type: 3}
+    volume: 0.5
+    minInterval: 0.15
+    pitchRange: {x: 0.98, y: 1.02}
+    spatialBlend: 0
+  - id: 53
+    clips:
+    - {fileID: 8300000, guid: 28a68264ce09d9b4091d02b4cd2d67da, type: 3}
+    volume: 0.5
+    minInterval: 0.15
+    pitchRange: {x: 0.98, y: 1.02}
+    spatialBlend: 0

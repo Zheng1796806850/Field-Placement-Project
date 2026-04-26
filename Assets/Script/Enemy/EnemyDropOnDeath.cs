@@ -37,9 +37,11 @@ public class EnemyDropOnDeath : MonoBehaviour
     public bool logDrops = false;
 
     private bool _spawned;
+    private EnemyAI2D _enemyAI;
 
     private void Awake()
     {
+        _enemyAI = GetComponent<EnemyAI2D>();
         if (health == null)
         {
             health = GetComponent<Health>();
@@ -47,14 +49,22 @@ public class EnemyDropOnDeath : MonoBehaviour
                 health = GetComponentInChildren<Health>();
         }
 
-        if (health != null)
-            health.OnDied += HandleDied;
-        else
+        if (health == null)
+        {
             Debug.LogWarning($"[EnemyDropOnDeath] {name}: no Health found, drops won't spawn.");
+            return;
+        }
+
+        if (_enemyAI != null)
+            _enemyAI.OnDeathSequenceFinished += HandleDied;
+        else
+            health.OnDied += HandleDied;
     }
 
     private void OnDestroy()
     {
+        if (_enemyAI != null)
+            _enemyAI.OnDeathSequenceFinished -= HandleDied;
         if (health != null)
             health.OnDied -= HandleDied;
     }

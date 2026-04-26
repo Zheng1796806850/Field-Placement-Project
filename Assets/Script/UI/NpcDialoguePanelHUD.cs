@@ -30,6 +30,7 @@ public class NpcDialoguePanelHUD : MonoBehaviour
     [Header("Typewriter")]
     public bool useTypewriter = true;
     [Min(1f)] public float charactersPerSecond = 40f;
+    public SfxId typingSfxId = SfxId.UI_Typing;
 
     [Header("Time Scale")]
     [Tooltip("若为 false，对话期间不调用 GameStateManager.SetPaused（剧情导演自行冻结昼夜等）；仍锁定玩家输入与暂停菜单。")]
@@ -60,6 +61,7 @@ public class NpcDialoguePanelHUD : MonoBehaviour
     private Coroutine _typeRoutine;
     private string _defaultNpcName = "";
     private string _playerDisplayName = "Player";
+    private AudioSource _typingAudioSource;
 
     public bool IsRunning => _isRunning;
 
@@ -86,6 +88,14 @@ public class NpcDialoguePanelHUD : MonoBehaviour
             confirmButton.onClick.RemoveListener(AdvanceOrFinish);
             confirmButton.onClick.AddListener(AdvanceOrFinish);
         }
+
+        _typingAudioSource = gameObject.GetComponent<AudioSource>();
+        if (_typingAudioSource == null)
+            _typingAudioSource = gameObject.AddComponent<AudioSource>();
+        _typingAudioSource.playOnAwake = false;
+        _typingAudioSource.loop = true;
+        _typingAudioSource.spatialBlend = 0f;
+        _typingAudioSource.volume = 1f;
     }
 
     private void Update()
@@ -231,6 +241,7 @@ public class NpcDialoguePanelHUD : MonoBehaviour
             StopCoroutine(_typeRoutine);
             _typeRoutine = null;
         }
+        StopTypingSfx();
 
         if (dialogueText != null)
             dialogueText.text = "";
@@ -275,6 +286,7 @@ public class NpcDialoguePanelHUD : MonoBehaviour
             StopCoroutine(_typeRoutine);
             _typeRoutine = null;
         }
+        StopTypingSfx();
         if (panelRoot != null)
             panelRoot.SetActive(false);
 
@@ -358,11 +370,16 @@ public class NpcDialoguePanelHUD : MonoBehaviour
         _isTyping = true;
         if (dialogueText == null)
         {
+            StopTypingSfx();
             _isTyping = false;
             yield break;
         }
 
         string line = text ?? string.Empty;
+        if (!string.IsNullOrEmpty(line))
+            StartTypingSfx();
+        else
+            StopTypingSfx();
         float cps = Mathf.Max(1f, charactersPerSecond);
         float interval = 1f / cps;
         float timer = 0f;
@@ -381,6 +398,7 @@ public class NpcDialoguePanelHUD : MonoBehaviour
         }
 
         dialogueText.text = line;
+        StopTypingSfx();
         _isTyping = false;
         _typeRoutine = null;
     }
@@ -397,6 +415,7 @@ public class NpcDialoguePanelHUD : MonoBehaviour
 
         if (dialogueText != null)
             dialogueText.text = _lines[_lineIndex].content;
+        StopTypingSfx();
         _isTyping = false;
     }
 
@@ -414,10 +433,32 @@ public class NpcDialoguePanelHUD : MonoBehaviour
             StopCoroutine(_typeRoutine);
             _typeRoutine = null;
         }
+        StopTypingSfx();
         if (panelRoot != null)
             panelRoot.SetActive(false);
 
         ExitDialogueMode();
+    }
+
+    private void StartTypingSfx()
+    {
+        if (_typingAudioSource == null) return;
+        var player = SfxPlayer.Instance;
+        if (player == null) return;
+        if (_typingAudioSource.isPlaying) return;
+
+        var clip = player.PickClip(typingSfxId);
+        if (clip == null) return;
+
+        _typingAudioSource.clip = clip;
+        _typingAudioSource.pitch = 1f;
+        _typingAudioSource.Play();
+    }
+
+    private void StopTypingSfx()
+    {
+        if (_typingAudioSource != null && _typingAudioSource.isPlaying)
+            _typingAudioSource.Stop();
     }
 }
 

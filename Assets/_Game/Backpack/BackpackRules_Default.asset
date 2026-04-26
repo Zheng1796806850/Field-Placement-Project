@@ -46,7 +46,7 @@ MonoBehaviour:
     quickUseItem: {fileID: 11400000, guid: 44f6f101124ddbb47ba198a724d3fc62, type: 2}
   - type: 4
     displayName: Potato(Seed)
-    icon: {fileID: 21300000, guid: 1d4d66486bc1cc64ab9abba61110a442, type: 3}
+    icon: {fileID: 21300000, guid: 4982c0d0a5ca82245a98f7fc535f48f6, type: 3}
     stackSize: 10
     maxCarry: 99
     showInUI: 1
@@ -72,16 +72,16 @@ MonoBehaviour:
     maxCarry: 99
     showInUI: 1
     quickUseItem: {fileID: 11400000, guid: a5fb550c7e020cf49bc91a1b2bf4ab7f, type: 2}
-  - type: 7
-    displayName: Tomato
-    icon: {fileID: 21300000, guid: f75f1b55bd97fdb4f9c3edb2d92857e2, type: 3}
-    stackSize: 1
-    maxCarry: 1
-    showInUI: 1
-    quickUseItem: {fileID: 11400000, guid: a5fb550c7e020cf49bc91a1b2bf4ab7f, type: 2}
   - type: 9
     displayName: Anti-inflammatory Medicine
     icon: {fileID: -4858183906989900763, guid: 1b796d23f81453745b1d39a85d162d42, type: 3}
+    stackSize: 10
+    maxCarry: -1
+    showInUI: 1
+    quickUseItem: {fileID: 0}
+  - type: 8
+    displayName: Flashlight
+    icon: {fileID: -1375191034538768445, guid: 1b796d23f81453745b1d39a85d162d42, type: 3}
     stackSize: 10
     maxCarry: -1
     showInUI: 1

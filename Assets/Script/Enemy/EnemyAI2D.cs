@@ -11,6 +11,8 @@ using UnityEditor;
 [RequireComponent(typeof(Seeker))]
 public class EnemyAI2D : MonoBehaviour
 {
+    public event Action OnDeathSequenceFinished;
+
     private enum State
     {
         MoveToGoal,
@@ -86,6 +88,8 @@ public class EnemyAI2D : MonoBehaviour
     [Tooltip("SfxId played from AnimEvent_PlayEnemyAttackSfx on attack clip.")]
     public SfxId enemyAttackSfxId = SfxId.Combat_EnemyAttackSwing;
     [Min(0.001f)] public float flipVelocityThreshold = 0.05f;
+    [Tooltip("Enable this if the source sprite/art faces right by default. Disable if it faces left by default.")]
+    public bool spriteFacesRightByDefault = false;
 
     [Header("Debug")]
     public bool logStateChanges = false;
@@ -128,6 +132,8 @@ public class EnemyAI2D : MonoBehaviour
     private bool _baseCaptured;
     private float _baseMoveSpeed;
     private int _baseWallDamage;
+    private int _basePlayerDamage;
+    private int _baseCoreDamage;
 
     private float _forcedAggroUntil;
     private bool _proximityAggro;
@@ -211,6 +217,8 @@ public class EnemyAI2D : MonoBehaviour
 
         _baseMoveSpeed = Mathf.Max(0f, moveSpeed);
         _baseWallDamage = Mathf.Max(0, damageToWall);
+        _basePlayerDamage = Mathf.Max(0, damageToPlayer);
+        _baseCoreDamage = Mathf.Max(0, damageToCore);
     }
 
     private void Update()
@@ -332,7 +340,10 @@ public class EnemyAI2D : MonoBehaviour
         UpdateSpriteFacing();
     }
 
-    /// <summary>Art faces left by default; mirror when moving right or when attacking a target to the right.</summary>
+    /// <summary>
+    /// Computes world-facing direction from movement/attack target, then maps it to SpriteRenderer.flipX
+    /// based on the configured source art default direction.
+    /// </summary>
     private void UpdateSpriteFacing()
     {
         if (spriteRenderer == null) return;
@@ -349,7 +360,9 @@ public class EnemyAI2D : MonoBehaviour
                 _facingRight = vx > flipVelocityThreshold;
         }
 
-        spriteRenderer.flipX = _facingRight;
+        // Unity flipX mirrors the source sprite. If source art already faces right,
+        // we need the opposite mapping compared to left-facing source art.
+        spriteRenderer.flipX = spriteFacesRightByDefault ? !_facingRight : _facingRight;
     }
 
     private void TickMove()
@@ -898,6 +911,7 @@ public class EnemyAI2D : MonoBehaviour
 
     private void DelayedDestroyEnemy()
     {
+        OnDeathSequenceFinished?.Invoke();
         if (this != null && gameObject != null)
             Destroy(gameObject);
     }
@@ -968,6 +982,18 @@ public class EnemyAI2D : MonoBehaviour
         CaptureBaseIfNeeded();
         if (multiplier <= 0f) multiplier = 0.01f;
         damageToWall = Mathf.Max(0, Mathf.RoundToInt(_baseWallDamage * multiplier));
+    }
+
+    /// <summary>
+    /// Applies one runtime multiplier to all outgoing damage channels while preserving prefab-configured base values.
+    /// </summary>
+    public void ApplyAttackMultiplier(float multiplier)
+    {
+        CaptureBaseIfNeeded();
+        if (multiplier <= 0f) multiplier = 0.01f;
+        damageToWall = Mathf.Max(0, Mathf.RoundToInt(_baseWallDamage * multiplier));
+        damageToPlayer = Mathf.Max(0, Mathf.RoundToInt(_basePlayerDamage * multiplier));
+        damageToCore = Mathf.Max(0, Mathf.RoundToInt(_baseCoreDamage * multiplier));
     }
 
 #if UNITY_EDITOR

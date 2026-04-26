@@ -114,8 +114,14 @@ public class GameFlowManager : MonoBehaviour
         if (gameStateManager == null || waveProgress == null)
             return;
 
-        // When scene restored directly into Night, some listeners may miss OnNightStarted
-        // due to script start order. Compensate by starting wave once if needed.
+        if (waveSpawner != null && waveSpawner.ShouldRunContinuousInCurrentScene)
+        {
+            if (gameStateManager.CurrentPhase == DayNightPhase.Night)
+                waveSpawner.HandleNightStarted();
+            return;
+        }
+
+        // Legacy behavior for scenes not using continuous night spawning.
         if (gameStateManager.CurrentPhase == DayNightPhase.Night && !waveProgress.waveInProgress)
             waveProgress.StartNextWave();
     }
@@ -124,9 +130,16 @@ public class GameFlowManager : MonoBehaviour
     {
         if (HasEnded) return;
 
+        if (waveSpawner == null)
+            waveSpawner = FindFirstObjectByType<WaveSpawnController2D>();
+        if (waveSpawner != null && waveSpawner.ShouldRunContinuousInCurrentScene)
+        {
+            waveSpawner.HandleNightStarted();
+            return;
+        }
+
         if (waveProgress == null)
             waveProgress = FindFirstObjectByType<WaveProgressTracker>();
-
         if (waveProgress == null)
         {
             Debug.LogError("[GameFlowManager] WaveProgressTracker not found; cannot start next wave.");
@@ -139,6 +152,11 @@ public class GameFlowManager : MonoBehaviour
     private void HandleDayStarted()
     {
         if (HasEnded) return;
+
+        if (waveSpawner == null)
+            waveSpawner = FindFirstObjectByType<WaveSpawnController2D>();
+        if (waveSpawner != null && waveSpawner.ShouldRunContinuousInCurrentScene)
+            waveSpawner.HandleDayStarted();
 
         if (waveProgress == null)
             waveProgress = FindFirstObjectByType<WaveProgressTracker>();

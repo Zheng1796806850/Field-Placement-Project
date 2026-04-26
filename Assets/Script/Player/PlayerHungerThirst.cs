@@ -81,6 +81,11 @@ public class PlayerHungerThirst : MonoBehaviour
     public bool showEmptySlotMessage = false;
     public string emptySlotMessage = "Empty slot";
 
+    [Header("Quick Use SFX")]
+    [Min(0f)] public float consumeSfxMinInterval = 0.15f;
+    public SfxId foodEatingSfxId = SfxId.Food_Eating;
+    public SfxId waterDrinkingSfxId = SfxId.Water_Drinking;
+
     [Header("Debug")]
     public bool debugLogs = false;
 
@@ -106,6 +111,8 @@ public class PlayerHungerThirst : MonoBehaviour
     private float _hpDrainBuffer;
 
     private readonly List<float> _quickSlotCooldownRemaining = new List<float>();
+    private float _lastFoodEatSfxTime = -999f;
+    private float _lastWaterDrinkSfxTime = -999f;
 
     public float Hunger => hunger;
     public float Thirst => thirst;
@@ -888,6 +895,8 @@ public class PlayerHungerThirst : MonoBehaviour
 
     private void ApplyQuickUseEffects(QuickUseItemSO item)
     {
+        if (item == null) return;
+
         if (item.addHunger != 0f) RestoreHunger(item.addHunger);
         if (item.addThirst != 0f) RestoreThirst(item.addThirst);
 
@@ -895,6 +904,43 @@ public class PlayerHungerThirst : MonoBehaviour
         {
             if (health == null) health = GetComponent<Health>();
             if (health != null) ApplyHealthDelta(health, item.addHP);
+        }
+
+        TryPlayConsumeSfx(item);
+    }
+
+    private void TryPlayConsumeSfx(QuickUseItemSO item)
+    {
+        float now = Time.unscaledTime;
+        float minInterval = Mathf.Max(0f, consumeSfxMinInterval);
+
+        bool isFood = item.resourceType == ResourceType.Food || item.resourceType == ResourceType.Potato || item.resourceType == ResourceType.Tomato;
+        bool isWater = item.resourceType == ResourceType.Water;
+
+        if (!isFood && !isWater)
+        {
+            if (item.addHunger > 0f && item.addThirst <= 0f) isFood = true;
+            else if (item.addThirst > 0f && item.addHunger <= 0f) isWater = true;
+            else if (item.addHunger > 0f && item.addThirst > 0f)
+            {
+                if (item.addHunger >= item.addThirst) isFood = true;
+                else isWater = true;
+            }
+        }
+
+        if (isFood)
+        {
+            if (now - _lastFoodEatSfxTime < minInterval) return;
+            _lastFoodEatSfxTime = now;
+            SfxPlayer.TryPlay(foodEatingSfxId, transform.position);
+            return;
+        }
+
+        if (isWater)
+        {
+            if (now - _lastWaterDrinkSfxTime < minInterval) return;
+            _lastWaterDrinkSfxTime = now;
+            SfxPlayer.TryPlay(waterDrinkingSfxId, transform.position);
         }
     }
 
