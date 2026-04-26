@@ -832,7 +832,7 @@ MonoBehaviour:
   wallDeathHandler: {fileID: 3243179422609684116}
   builtVisualRoot: {fileID: 1581092056185061903}
   rubbleVisualRoot: {fileID: 4501858339392982574}
-  wallMaxHP: 30
+  wallMaxHP: 36
   overrideHealthMaxOnAwake: 1
   fillToMaxOnAwake: 1
   forceHealthDestroyOnDeathFalse: 1

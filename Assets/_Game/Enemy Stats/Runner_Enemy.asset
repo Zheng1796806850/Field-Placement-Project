@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStatsSO
   baseStats:
     maxHP: 8
-    moveSpeed: 0.15
+    moveSpeed: 0.3
     wallDamage: 2

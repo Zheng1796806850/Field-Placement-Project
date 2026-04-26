@@ -15,24 +15,29 @@ MonoBehaviour:
   entries:
   - type: 0
     minAmount: 1
-    maxAmount: 5
-    chance: 0.3
-    maxSpawnsPerKill: 5
+    maxAmount: 1
+    chance: 0.55
+    maxSpawnsPerKill: 1
   - type: 1
     minAmount: 1
-    maxAmount: 3
-    chance: 0.3
-    maxSpawnsPerKill: 3
+    maxAmount: 1
+    chance: 0.25
+    maxSpawnsPerKill: 1
+  - type: 5
+    minAmount: 1
+    maxAmount: 1
+    chance: 0.15
+    maxSpawnsPerKill: 1
   - type: 4
     minAmount: 1
-    maxAmount: 3
-    chance: 0.3
-    maxSpawnsPerKill: 3
+    maxAmount: 1
+    chance: 0.15
+    maxSpawnsPerKill: 1
   - type: 6
     minAmount: 1
-    maxAmount: 3
-    chance: 0.3
-    maxSpawnsPerKill: 3
+    maxAmount: 1
+    chance: 0.15
+    maxSpawnsPerKill: 1
   rollsPerKill: 2
-  maxTotalDropsPerKill: 5
-  forceAtLeastOneDrop: 1
+  maxTotalDropsPerKill: 2
+  forceAtLeastOneDrop: 0

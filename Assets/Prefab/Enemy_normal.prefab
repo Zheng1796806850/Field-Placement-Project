@@ -293,7 +293,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 165243e365fcceb4ab8d82c47afda520, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHP: 10
+  maxHP: 9
   currentHP: 0
   destroyOnDeath: 0
   dead: 0
@@ -334,9 +334,9 @@ MonoBehaviour:
   repathInterval: 0.5
   nextWaypointDistance: 0.2
   lockYMovement: 0
-  damageToWall: 2
-  damageToPlayer: 2
-  damageToCore: 8
+  damageToWall: 3
+  damageToPlayer: 3
+  damageToCore: 3
   attackCooldown: 1
   attackWindup: 0.25
   useAnimationEventForHit: 1

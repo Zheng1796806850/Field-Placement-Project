@@ -2380,6 +2380,8 @@ MonoBehaviour:
   allowInNight: 1
   showDenyMessage: 1
   denyMessageByPhase: Cannot travel now.
+  useWaveBannerForDenyMessage: 1
+  denyWaveBannerHUD: {fileID: 0}
   promptText: Press E to Enter
   priority: 100
 --- !u!61 &103452727
@@ -33579,7 +33581,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameStateManager
   dayDuration: 180
-  nightDuration: 90
+  nightDuration: 100
   useUnscaledTime: 0
   startPhase: 0
   restorePhaseFromSceneTransition: 1
@@ -114031,6 +114033,8 @@ MonoBehaviour:
   allowInNight: 1
   showDenyMessage: 1
   denyMessageByPhase: Cannot travel now.
+  useWaveBannerForDenyMessage: 1
+  denyWaveBannerHUD: {fileID: 0}
   promptText: Press E to Enter
   priority: 100
 --- !u!61 &727522579
@@ -189022,10 +189026,10 @@ MonoBehaviour:
   enableNightContinuousSpawn: 1
   allowedSceneNames:
   - BaseScene
-  randomSpawnDelayMin: 5
-  randomSpawnDelayMax: 8
-  perDayHpBonus: 0.2
-  perDayDamageBonus: 0.2
+  randomSpawnDelayMin: 6
+  randomSpawnDelayMax: 9
+  perDayHpBonus: 0.15
+  perDayDamageBonus: 0.18
   normalEnemyPrefab: {fileID: 4297858224867008055, guid: 9b8b8ad7d104bcb4bb00b324c3d43411, type: 3}
   runnerEnemyPrefab: {fileID: 4297858224867008055, guid: 92fefb1faa525204ab7e65c54fa207d0, type: 3}
   normalWeight: 1
@@ -196332,6 +196336,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 15643289456012073, guid: e44703cebc2d97646936b1d4025741a6, type: 3}
   m_PrefabInstance: {fileID: 241832468}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1704229735 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8986345153160053458, guid: dfbaf3d9853c6c441b6dd03a0a303c3c, type: 3}
+  m_PrefabInstance: {fileID: 2754099909128622181}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f578e8d1b6c7de47a39572b7d2cd35d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimedActionHUD
 --- !u!1 &1704653007
 GameObject:
   m_ObjectHideFlags: 0
@@ -202840,6 +202855,8 @@ MonoBehaviour:
   allowInNight: 0
   showDenyMessage: 1
   denyMessageByPhase: Cannot travel now.
+  useWaveBannerForDenyMessage: 1
+  denyWaveBannerHUD: {fileID: 0}
   promptText: Press E to Go To Town
   priority: 100
 --- !u!212 &2000740190
@@ -206715,7 +206732,7 @@ PrefabInstance:
     - target: {fileID: 3689467099361804595, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
       propertyPath: hud
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1704229735}
     - target: {fileID: 4546242170312488274, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
       propertyPath: drawGizmo
       value: 0
@@ -206784,6 +206801,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6712024594513438194, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
+      propertyPath: axeUpgradeAnimatorController
+      value: 
+      objectReference: {fileID: 9100000, guid: 9743ec93fb681c64c9356e5df7666bf4, type: 2}
     - target: {fileID: 6971963633893343007, guid: 08b925de3144c9d46bb0c0b5f02434ff, type: 3}
       propertyPath: m_Controller
       value: 

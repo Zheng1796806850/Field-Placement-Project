@@ -410,12 +410,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fc8b014225efe641b1a3aa7dce6336e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackHitbox
-  damage: 2
+  damage: 3
   playHitConfirm: 1
   hitConfirmSfx: 21
   requireEnemyComponent: 1
   minHitConfirmInterval: 0.03
-  attackerRoot: {fileID: 0}
+  attackerRoot: {fileID: 8373775171781475959}
 --- !u!1 &6183623930596115304
 GameObject:
   m_ObjectHideFlags: 0
@@ -629,12 +629,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fc8b014225efe641b1a3aa7dce6336e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackHitbox
-  damage: 2
+  damage: 3
   playHitConfirm: 1
   hitConfirmSfx: 21
   requireEnemyComponent: 1
   minHitConfirmInterval: 0.03
-  attackerRoot: {fileID: 0}
+  attackerRoot: {fileID: 455702155853611516}
 --- !u!1 &8045471520859315944
 GameObject:
   m_ObjectHideFlags: 0
@@ -687,17 +687,15 @@ MonoBehaviour:
   dropResourcePrefab: {fileID: 240201751570076137, guid: 18adf4fc49352e14ebe5ba88fcd6650c, type: 3}
   defaultResources:
   - type: 0
-    amount: 5
+    amount: 10
   - type: 1
-    amount: 5
+    amount: 3
   - type: 2
-    amount: 5
+    amount: 2
   - type: 3
     amount: 5
   - type: 4
-    amount: 5
-  - type: 6
-    amount: 5
+    amount: 3
   saveKey: PLAYER_RESOURCE_INVENTORY_V1
   autoLoadOnAwake: 1
   dontDestroyOnLoad: 1
@@ -990,6 +988,9 @@ MonoBehaviour:
   attackKey: 323
   attackLockTime: 1.5
   localInputEnabled: 1
+  axeDamageMultiplier: 1
+  axeUpgradeGranted: 0
+  axeUpgradeAnimatorController: {fileID: 0}
 --- !u!114 &3917528503583871862
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1002,7 +1003,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 165243e365fcceb4ab8d82c47afda520, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHP: 100
+  maxHP: 80
   currentHP: 0
   destroyOnDeath: 0
   dead: 0
@@ -1098,6 +1099,9 @@ MonoBehaviour:
   cooldownMessage: On cooldown
   showEmptySlotMessage: 0
   emptySlotMessage: Empty slot
+  consumeSfxMinInterval: 0.15
+  foodEatingSfxId: 52
+  waterDrinkingSfxId: 53
   debugLogs: 1
   hunger: 0
   thirst: 0

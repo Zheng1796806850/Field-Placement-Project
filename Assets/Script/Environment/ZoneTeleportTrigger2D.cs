@@ -58,6 +58,9 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
     [Header("Denied Feedback")]
     public bool showDenyMessage = true;
     [TextArea] public string denyMessageByPhase = "Cannot travel now.";
+    [Tooltip("When true, denied message is shown via WaveEventBannerHUD first.")]
+    public bool useWaveBannerForDenyMessage = true;
+    public WaveEventBannerHUD denyWaveBannerHUD;
 
     [Header("Interaction")]
     [TextArea] public string promptText = "Press E to Enter";
@@ -175,6 +178,8 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
             return;
 
         string msg = string.IsNullOrWhiteSpace(denyMessageByPhase) ? "Cannot travel now." : denyMessageByPhase;
+        if (TryShowDenyOnBanner(msg))
+            return;
 
         var inv = interactor != null ? interactor.GetComponentInParent<PlayerResourceInventory>() : null;
         if (inv == null) inv = PlayerResourceInventory.Instance;
@@ -190,6 +195,9 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
 
     private static void PushStoryDenyFeedback(GameObject interactor, string msg)
     {
+        if (TryShowDenyOnBannerStatic(msg))
+            return;
+
         var inv = interactor != null ? interactor.GetComponentInParent<PlayerResourceInventory>() : null;
         if (inv == null) inv = PlayerResourceInventory.Instance;
 
@@ -200,6 +208,38 @@ public class ZoneTeleportTrigger2D : MonoBehaviour, IInteractable
         }
 
         Debug.Log(msg);
+    }
+
+    private bool TryShowDenyOnBanner(string msg)
+    {
+        if (!useWaveBannerForDenyMessage)
+            return false;
+        if (string.IsNullOrWhiteSpace(msg))
+            return false;
+
+        if (denyWaveBannerHUD == null)
+            denyWaveBannerHUD = FindFirstObjectByType<WaveEventBannerHUD>(FindObjectsInactive.Include);
+        if (denyWaveBannerHUD == null)
+            return false;
+
+        if (denyWaveBannerHUD.disableMessages)
+            denyWaveBannerHUD.disableMessages = false;
+        denyWaveBannerHUD.Show(msg);
+        return true;
+    }
+
+    private static bool TryShowDenyOnBannerStatic(string msg)
+    {
+        if (string.IsNullOrWhiteSpace(msg))
+            return false;
+        var banner = FindFirstObjectByType<WaveEventBannerHUD>(FindObjectsInactive.Include);
+        if (banner == null)
+            return false;
+
+        if (banner.disableMessages)
+            banner.disableMessages = false;
+        banner.Show(msg);
+        return true;
     }
 
     private void BeginSceneTransition()

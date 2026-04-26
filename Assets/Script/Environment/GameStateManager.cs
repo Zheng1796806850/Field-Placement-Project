@@ -120,8 +120,10 @@ public class GameStateManager : MonoBehaviour
         if (total <= 0f)
             total = 1f;
 
-        PhaseTimeRemaining = Mathf.Clamp(timeRemaining, 0f, total);
-        PhaseElapsed = Mathf.Clamp(elapsed, 0f, total);
+        // Keep transferred clock values as-is (non-negative) so cross-scene travel
+        // preserves exact remaining phase time instead of being capped by local scene defaults.
+        PhaseTimeRemaining = Mathf.Max(0f, timeRemaining);
+        PhaseElapsed = Mathf.Max(0f, elapsed);
 
         if (PhaseTimeRemaining <= 0f && PhaseElapsed <= 0f)
         {
@@ -130,11 +132,11 @@ public class GameStateManager : MonoBehaviour
         }
         else if (PhaseTimeRemaining <= 0f)
         {
-            PhaseTimeRemaining = Mathf.Clamp(total - PhaseElapsed, 0f, total);
+            PhaseTimeRemaining = Mathf.Max(0f, total - PhaseElapsed);
         }
         else if (PhaseElapsed <= 0f)
         {
-            PhaseElapsed = Mathf.Clamp(total - PhaseTimeRemaining, 0f, total);
+            PhaseElapsed = Mathf.Max(0f, total - PhaseTimeRemaining);
         }
 
         OnPhaseChanged?.Invoke(phase);
