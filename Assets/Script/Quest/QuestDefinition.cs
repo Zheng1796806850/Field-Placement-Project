@@ -8,4 +8,6 @@ public class QuestDefinition
     public string victoryReason;
     public bool parallelObjectives;
     public List<ObjectiveDefinition> objectives = new List<ObjectiveDefinition>();
+
+    public bool triggerGameFlowVictoryOnComplete = true;
 }

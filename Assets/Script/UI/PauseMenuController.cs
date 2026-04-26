@@ -37,6 +37,8 @@ public class PauseMenuController : MonoBehaviour
     [Header("ESC Toggle")]
     [SerializeField] private bool enableEscToggle = true;
     [SerializeField] private KeyCode escKey = KeyCode.Escape;
+    private bool _externalPauseBlocked;
+    private int _externalPauseLockDepth;
 
     [Header("Panel Pop Animation")]
     [SerializeField] private bool usePanelPopAnimation = true;
@@ -193,7 +195,7 @@ public class PauseMenuController : MonoBehaviour
 
     private void Update()
     {
-        if (!enableEscToggle)
+        if (!enableEscToggle || _externalPauseBlocked)
             return;
 
         if (!Input.GetKeyDown(escKey))
@@ -221,6 +223,36 @@ public class PauseMenuController : MonoBehaviour
 
         // If pause panel is open, ESC closes all pause UI.
         ClosePauseMenu();
+    }
+
+    /// <summary>与 <see cref="PopExternalPauseBlock"/> 配对；支持嵌套（剧情黑场 + 对话等）。</summary>
+    public void PushExternalPauseBlock()
+    {
+        _externalPauseLockDepth++;
+        if (_externalPauseLockDepth == 1)
+        {
+            _externalPauseBlocked = true;
+            if (_isOpen)
+                ClosePauseMenu();
+        }
+    }
+
+    public void PopExternalPauseBlock()
+    {
+        if (_externalPauseLockDepth <= 0)
+            return;
+        _externalPauseLockDepth--;
+        if (_externalPauseLockDepth == 0)
+            _externalPauseBlocked = false;
+    }
+
+    /// <summary>兼容旧调用：true 等价 Push，false 等价 Pop。</summary>
+    public void SetExternalPauseBlocked(bool blocked)
+    {
+        if (blocked)
+            PushExternalPauseBlock();
+        else
+            PopExternalPauseBlock();
     }
 
     private void LateUpdate()
@@ -396,7 +428,6 @@ public class PauseMenuController : MonoBehaviour
         if (_combat != null)
             _combat.SetInputEnabled(false);
 
-        // Keep references for restoration; do not overwrite prev values after first pause open.
     }
 
     private void RestorePlayerInput()
@@ -426,7 +457,6 @@ public class PauseMenuController : MonoBehaviour
 
     private void GoToMainMenu()
     {
-        // Close pause immediately so state is consistent.
         ClosePauseMenu();
 
         SceneLoadRequest.SetRequest(

@@ -295,6 +295,8 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
                     CropConfigSO crop = ResolveRequestedCrop(interactor);
                     if (crop == null) return false;
                     if (inv == null) return false;
+                    if (StoryRestrictionGate.TryGetPlantDeniedMessage(out _))
+                        return true;
                     return inv.CanSpend(GetPlantSeedResource(crop), GetPlantSeedCost(crop));
                 }
 
@@ -323,6 +325,11 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         switch (state)
         {
             case PlotState.Empty:
+                if (StoryRestrictionGate.TryGetPlantDeniedMessage(out var denied))
+                {
+                    PushFeedback(interactor, denied);
+                    return;
+                }
                 StartTimedPlant(interactor);
                 break;
 
@@ -412,6 +419,8 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
             SetState(PlotState.PlantedDry);
 
+            GameplayEventHub.RaiseCropPlanted(string.IsNullOrEmpty(plotId) ? name : plotId);
+
             var plantingController = ResolvePlantingController(interactor);
             plantingController?.NotifyPlantCompleted(inv);
 
@@ -495,6 +504,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
             wateredSinceLastDayStart = true;
             SetState(PlotState.PlantedWatered);
+            GameplayEventHub.RaisePlotWatered(string.IsNullOrEmpty(plotId) ? name : plotId);
             TryEmitQuestPlantAndWaterComplete();
 
             if (autoSaveInventoryOnAction) inv.SaveInMemory();
@@ -523,6 +533,8 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         SetState(PlotState.PlantedDry);
 
+        GameplayEventHub.RaiseCropPlanted(string.IsNullOrEmpty(plotId) ? name : plotId);
+
         SfxPlayer.TryPlay(requestedCrop.plantSfxId, transform.position);
 
         var plantingController = ResolvePlantingController(interactor);
@@ -546,6 +558,7 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
 
         wateredSinceLastDayStart = true;
         SetState(PlotState.PlantedWatered);
+        GameplayEventHub.RaisePlotWatered(string.IsNullOrEmpty(plotId) ? name : plotId);
         TryEmitQuestPlantAndWaterComplete();
 
         SfxPlayer.TryPlay(plantedCrop.waterSfxId, transform.position);
@@ -883,5 +896,20 @@ public class FarmlandPlot : MonoBehaviour, IInteractable
         }
 
         return sb.ToString();
+    }
+
+    private void PushFeedback(GameObject interactor, string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return;
+
+        var inv = ResolveInventory(interactor);
+        if (inv != null)
+        {
+            inv.PushMessage(message);
+            return;
+        }
+
+        Debug.Log(message);
     }
 }

@@ -53,6 +53,26 @@ public class PhaseClockHUD : MonoBehaviour
         if (swapClockSpritesByPhase)
             ApplyPhaseSprites(gameState.CurrentPhase);
 
+        if (gameState.StoryClockFrozen)
+        {
+            if (radialFill != null)
+            {
+                radialFill.fillClockwise = shrinkClockwise;
+                radialFill.fillAmount = invertFillAmount ? 0f : 1f;
+            }
+
+            if (timeLabel != null)
+                timeLabel.text = "00:00";
+
+            if (phaseLabel != null)
+            {
+                if (!showPhaseText) phaseLabel.text = "";
+                else phaseLabel.text = gameState.CurrentPhase == DayNightPhase.Day ? dayText : nightText;
+            }
+
+            return;
+        }
+
         float total = gameState.CurrentPhase == DayNightPhase.Day ? Mathf.Max(0.01f, gameState.dayDuration) : Mathf.Max(0.01f, gameState.nightDuration);
         float remaining = Mathf.Clamp(gameState.PhaseTimeRemaining, 0f, total);
         float elapsed = Mathf.Clamp(gameState.PhaseElapsed, 0f, total);

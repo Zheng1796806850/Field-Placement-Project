@@ -33,9 +33,13 @@ public class GameStateManager : MonoBehaviour
     public bool logPauseStateChanges = false;
 
     public DayNightPhase CurrentPhase { get; private set; }
+    public int CurrentDay { get; private set; } = 1;
     public float PhaseTimeRemaining { get; private set; }
     public float PhaseElapsed { get; private set; }
     public bool IsPaused { get; private set; }
+
+    /// <summary>为 true 时昼夜相位倒计时与相位切换检测不推进（与 <see cref="IsPaused"/> 独立；不要用暂停菜单代替此语义）。</summary>
+    public bool StoryClockFrozen { get; private set; }
 
     public event Action<DayNightPhase> OnPhaseChanged;
     public event Action OnDayStarted;
@@ -49,13 +53,14 @@ public class GameStateManager : MonoBehaviour
 
     private void Start()
     {
-        if (restorePhaseFromSceneTransition && SceneTransitionContext.TryGetClockSnapshot(out var phase, out var timeRemaining, out var elapsed))
+        if (restorePhaseFromSceneTransition && SceneTransitionContext.TryGetClockSnapshot(out var phase, out var timeRemaining, out var elapsed, out var day))
         {
             bool invokePhaseStartEvents = invokePhaseEventsOnRestore || SceneTransitionContext.ForceInvokePhaseStartEventOnRestore;
-            ApplyPhaseState(phase, timeRemaining, elapsed, invokePhaseStartEvents);
+            ApplyPhaseState(phase, timeRemaining, elapsed, day, invokePhaseStartEvents);
             return;
         }
 
+        CurrentDay = Mathf.Max(1, CurrentDay);
         SetPhaseInternal(startPhase, force: true);
     }
 
@@ -68,6 +73,7 @@ public class GameStateManager : MonoBehaviour
         }
 
         if (IsPaused) return;
+        if (StoryClockFrozen) return;
 
         float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
 
@@ -79,6 +85,11 @@ public class GameStateManager : MonoBehaviour
             if (CurrentPhase == DayNightPhase.Day) SetPhase(DayNightPhase.Night);
             else SetPhase(DayNightPhase.Day);
         }
+    }
+
+    public void SetStoryClockFrozen(bool frozen)
+    {
+        StoryClockFrozen = frozen;
     }
 
     public void TogglePhase()
@@ -97,7 +108,13 @@ public class GameStateManager : MonoBehaviour
 
     public void ApplyPhaseState(DayNightPhase phase, float timeRemaining, float elapsed, bool invokeEvents)
     {
+        ApplyPhaseState(phase, timeRemaining, elapsed, CurrentDay, invokeEvents);
+    }
+
+    public void ApplyPhaseState(DayNightPhase phase, float timeRemaining, float elapsed, int day, bool invokeEvents)
+    {
         CurrentPhase = phase;
+        CurrentDay = Mathf.Max(1, day);
 
         float total = phase == DayNightPhase.Day ? dayDuration : nightDuration;
         if (total <= 0f)
@@ -144,7 +161,10 @@ public class GameStateManager : MonoBehaviour
         {
             OnDayStarted?.Invoke();
             if (previous == DayNightPhase.Night)
+            {
+                CurrentDay = Mathf.Max(1, CurrentDay + 1);
                 GameplayEventHub.RaiseNightSurvived();
+            }
         }
         else
             OnNightStarted?.Invoke();

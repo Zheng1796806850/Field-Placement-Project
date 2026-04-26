@@ -66,6 +66,7 @@ public class QuickSlotDropTarget : MonoBehaviour, IDropHandler
         ResolveController();
         if (controller == null) return false;
         if (!BackpackSlotUI.DragPayload.active) return false;
+        if (BackpackSlotUI.DragPayload.sourceContainerType != BackpackSlotUI.DragContainerType.Backpack) return false;
         if (slotIndex < 0 || slotIndex >= controller.QuickSlotCount) return false;
 
         BackpackSlotUI.DragPayload.DropConsumedByValidTarget = true;

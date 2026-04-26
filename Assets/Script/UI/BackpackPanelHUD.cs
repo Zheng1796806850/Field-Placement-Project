@@ -47,7 +47,6 @@ public class BackpackPanelHUD : MonoBehaviour
     private bool _lastVisibleState;
     public bool IsOpen => panelRoot != null && panelRoot.activeSelf;
 
-    /// <summary>Resolved inventory for drag/drop helpers (e.g. BackpackSlotUI).</summary>
     public PlayerResourceInventory Inventory => inventory;
 
     private void Awake()
@@ -208,6 +207,33 @@ public class BackpackPanelHUD : MonoBehaviour
             return false;
 
         return inventory.TryGetBackpackSlotForQuickBind(displayIndex, out type, out backpackSlotIndex);
+    }
+
+    public bool HandleDropFromStorage(StoragePanelHUD sourceStoragePanel, int fromStorageSlotIndex, int toBackpackSlotIndex)
+    {
+        ResolveRefs();
+        if (inventory == null || sourceStoragePanel == null || sourceStoragePanel.BoundInventory == null)
+            return false;
+        if (fromStorageSlotIndex < 0 || toBackpackSlotIndex < 0)
+            return false;
+        if (toBackpackSlotIndex >= inventory.MaxSlots)
+            return false;
+
+        StorageInventory sourceInventory = sourceStoragePanel.BoundInventory;
+        if (fromStorageSlotIndex >= sourceInventory.SlotCount)
+            return false;
+
+        InventorySlot source = sourceInventory.GetSlot(fromStorageSlotIndex);
+        InventorySlot target = inventory.GetSlot(toBackpackSlotIndex);
+        bool changed = InventorySlotTransfer.TryTransfer(ref source, ref target, inventory.GetStackSize);
+        if (!changed)
+            return false;
+
+        sourceInventory.SetSlot(fromStorageSlotIndex, source);
+        inventory.SetSlot(toBackpackSlotIndex, target.type, target.amount);
+        Refresh();
+        sourceStoragePanel.Refresh();
+        return true;
     }
 
     public void HandleSlotDrop(int fromSlotIndex, int toSlotIndex)

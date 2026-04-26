@@ -97,6 +97,24 @@ public class QuestManager : MonoBehaviour
     }
 
     /// <summary>Starts or resumes a quest from definition (e.g. SO or legacy factory). Call from <see cref="PlaytestMilestoneController"/>.</summary>
+    /// <summary>清空当前任务与存档键（线性剧情开局等）。不删除其它 PlayerPrefs。</summary>
+    public void ClearActiveQuestAndDeleteSave()
+    {
+        RestoreWaveAutoVictoryOverride();
+        _questDef = null;
+        _state = null;
+        _questVictoryEmitted = false;
+
+        string key = BaseWorldSession.ScopePlayerPrefsKey(PrefsLocalKey);
+        if (PlayerPrefs.HasKey(key))
+        {
+            PlayerPrefs.DeleteKey(key);
+            PlayerPrefs.Save();
+        }
+
+        RefreshHUD();
+    }
+
     public void BeginQuest(QuestDefinition definition)
     {
         _questDef = definition;
@@ -373,7 +391,8 @@ public class QuestManager : MonoBehaviour
         RefreshHUD();
         SaveState();
 
-        if (GameFlowManager.Instance != null && !GameFlowManager.Instance.HasEnded)
+        bool triggerVictory = _questDef == null || _questDef.triggerGameFlowVictoryOnComplete;
+        if (triggerVictory && GameFlowManager.Instance != null && !GameFlowManager.Instance.HasEnded)
             GameFlowManager.Instance.TriggerVictory(reason);
     }
 
@@ -432,6 +451,8 @@ public class QuestManager : MonoBehaviour
         GameplayEventHub.OnPlayerEnteredArea -= HandlePlayerEnteredArea;
         GameplayEventHub.OnNightSurvived -= HandleNightSurvived;
         GameplayEventHub.OnCropPlantedAndWatered -= HandleCropPlantedAndWatered;
+        GameplayEventHub.OnCropPlanted -= HandleCropPlanted;
+        GameplayEventHub.OnPlotWatered -= HandlePlotWatered;
         _hubSubscribed = false;
     }
 
@@ -455,6 +476,12 @@ public class QuestManager : MonoBehaviour
 
     private void HandleCropPlantedAndWatered(string plotQuestId, string cropId) =>
         ProcessGameplayEvent(new GameplayEvent(GameplayEventKind.CropPlantedAndWatered, stringId: plotQuestId, stringId2: cropId));
+
+    private void HandleCropPlanted(string plotId) =>
+        ProcessGameplayEvent(new GameplayEvent(GameplayEventKind.CropPlanted, stringId: plotId));
+
+    private void HandlePlotWatered(string plotId) =>
+        ProcessGameplayEvent(new GameplayEvent(GameplayEventKind.PlotWatered, stringId: plotId));
 
     private void HandleGameEnded(GameResult result, string reason)
     {

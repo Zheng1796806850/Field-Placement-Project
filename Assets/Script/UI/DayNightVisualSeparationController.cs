@@ -7,6 +7,15 @@ using UnityEngine.UI;
 
 public class DayNightVisualSeparationController : MonoBehaviour
 {
+    private static readonly int CenterId = Shader.PropertyToID("_Center");
+    private static readonly int RadiusClearId = Shader.PropertyToID("_RadiusClear");
+    private static readonly int RadiusDarkId = Shader.PropertyToID("_RadiusDark");
+    private static readonly int FalloffSharpnessId = Shader.PropertyToID("_FalloffSharpness");
+    private static readonly int FalloffCurveId = Shader.PropertyToID("_FalloffCurve");
+    private static readonly int DarknessId = Shader.PropertyToID("_Darkness");
+    private static readonly int EnabledId = Shader.PropertyToID("_Enabled");
+    private static readonly int AspectId = Shader.PropertyToID("_Aspect");
+
     [Header("Refs")]
     public GameStateManager gameState;
     public Camera targetCamera;
@@ -16,6 +25,25 @@ public class DayNightVisualSeparationController : MonoBehaviour
     public Image overlayImage;
     public Color nightTintColor = new Color(0f, 0f, 0f, 1f);
     [Range(0f, 1f)] public float nightTintAlpha = 0.45f;
+
+    [Header("Night vision (UI circle)")]
+    [Tooltip("When enabled at night, only a circular area around the player stays clear; outside uses darknessAlpha on the overlay.")]
+    public bool enableNightVisionRestriction = true;
+    [Tooltip("Optional. If unset, the first PlayerMovementController in the scene is used.")]
+    public Transform playerTarget;
+    [Tooltip("Inside this radius (viewport-normalized, aspect-corrected) the overlay is fully transparent — fully clear vision.")]
+    [Min(0.0001f)] public float visibilityRadius = 0.1f;
+    [Tooltip("Distance from the clear edge to where the vignette reaches full darkness. Larger = longer, softer candle-like falloff.")]
+    [Min(0.0001f)] public float falloffToDarkDistance = 0.28f;
+    [Tooltip("Higher = contrastier falloff inside the band (still smooth). Lower = gentler, more washed transition.")]
+    [Min(0.05f)] public float falloffSharpness = 2.2f;
+    [Tooltip("Higher = darkness ramps up more slowly right outside the clear circle (more candle-like). 1 = neutral.")]
+    [Min(0.1f)] public float falloffCurve = 1.35f;
+    [Tooltip("Viewport-space offset added to the circle center (x right, y up). Use small values (e.g. ±0.02) to align with art.")]
+    public Vector2 circleViewportOffset = Vector2.zero;
+    [Range(0f, 1f)] public float darknessAlpha = 0.95f;
+    [Tooltip("Material using shader UI/NightVisionCircleMask. A runtime instance is created so shared assets are not modified.")]
+    public Material nightVisionMaterial;
 
     [Header("Transition Feedback")]
     public bool useBlackFlashOnNightStart = true;
@@ -58,6 +86,11 @@ public class DayNightVisualSeparationController : MonoBehaviour
 
     private readonly List<LightBinding> _lightBindings = new List<LightBinding>(8);
 
+    private Material _nightVisionMaterialInstance;
+    private Transform _cachedPlayerTransform;
+    private bool _loggedMissingNightVisionMaterial;
+    private bool _loggedMissingPlayer;
+
     private struct LightBinding
     {
         public Component component;
@@ -72,9 +105,24 @@ public class DayNightVisualSeparationController : MonoBehaviour
         if (gameState == null) gameState = GameStateManager.Instance != null ? GameStateManager.Instance : FindFirstObjectByType<GameStateManager>();
         if (targetCamera == null) targetCamera = Camera.main;
 
-        EnsureOverlayRefs();
+        EnsureOverlayRefs(forceHideOverlayAlpha: true);
+        EnsureNightVisionMaterial();
         EnsureAmbienceSource();
         RebuildLightBindings();
+    }
+
+    private void OnDestroy()
+    {
+        if (_nightVisionMaterialInstance != null)
+        {
+            Destroy(_nightVisionMaterialInstance);
+            _nightVisionMaterialInstance = null;
+        }
+    }
+
+    private void LateUpdate()
+    {
+        UpdateNightVisionCircle();
     }
 
     private void OnEnable()
@@ -86,6 +134,8 @@ public class DayNightVisualSeparationController : MonoBehaviour
             gameState.OnDayStarted += HandleDayStarted;
         }
 
+        EnsureOverlayRefs();
+        EnsureNightVisionMaterial();
         ApplyImmediate(gameState != null ? gameState.CurrentPhase : DayNightPhase.Day);
     }
 
@@ -106,7 +156,8 @@ public class DayNightVisualSeparationController : MonoBehaviour
         if (_ambienceRoutine != null) { StopCoroutine(_ambienceRoutine); _ambienceRoutine = null; }
     }
 
-    private void EnsureOverlayRefs()
+    /// <param name="forceHideOverlayAlpha">Only use from Awake: hide overlay before first ApplyImmediate. Must stay false during transitions or day fade will start from alpha 0.</param>
+    private void EnsureOverlayRefs(bool forceHideOverlayAlpha = false)
     {
         if (overlayGroup == null || overlayImage == null)
         {
@@ -119,7 +170,8 @@ public class DayNightVisualSeparationController : MonoBehaviour
 
         if (overlayGroup != null)
         {
-            overlayGroup.alpha = 0f;
+            if (forceHideOverlayAlpha)
+                overlayGroup.alpha = 0f;
             overlayGroup.blocksRaycasts = false;
             overlayGroup.interactable = false;
         }
@@ -128,6 +180,127 @@ public class DayNightVisualSeparationController : MonoBehaviour
         {
             overlayImage.raycastTarget = false;
         }
+    }
+
+    private void EnsureNightVisionMaterial()
+    {
+        if (overlayImage == null)
+            return;
+
+        if (!enableNightVisionRestriction)
+        {
+            if (_nightVisionMaterialInstance != null)
+            {
+                Destroy(_nightVisionMaterialInstance);
+                _nightVisionMaterialInstance = null;
+            }
+
+            overlayImage.material = null;
+            return;
+        }
+
+        Material sourceMaterial = nightVisionMaterial;
+        if (sourceMaterial == null && overlayImage.material != null)
+        {
+            Shader sh = overlayImage.material.shader;
+            if (sh != null && sh.name == "UI/NightVisionCircleMask")
+                sourceMaterial = overlayImage.material;
+        }
+
+        if (sourceMaterial == null)
+        {
+            if (!_loggedMissingNightVisionMaterial)
+            {
+                Debug.LogWarning($"{nameof(DayNightVisualSeparationController)}: enableNightVisionRestriction is true but nightVisionMaterial is not assigned (and NightOverlay Image has no UI/NightVisionCircleMask material).");
+                _loggedMissingNightVisionMaterial = true;
+            }
+
+            if (_nightVisionMaterialInstance != null)
+            {
+                Destroy(_nightVisionMaterialInstance);
+                _nightVisionMaterialInstance = null;
+            }
+
+            overlayImage.material = null;
+            return;
+        }
+
+        if (_nightVisionMaterialInstance == null || _nightVisionMaterialInstance.shader != sourceMaterial.shader)
+        {
+            if (_nightVisionMaterialInstance != null)
+                Destroy(_nightVisionMaterialInstance);
+
+            _nightVisionMaterialInstance = Instantiate(sourceMaterial);
+            _nightVisionMaterialInstance.name = $"{sourceMaterial.name} (Instance)";
+            overlayImage.material = _nightVisionMaterialInstance;
+        }
+    }
+
+    private Transform TryResolvePlayerTransform()
+    {
+        if (playerTarget != null)
+            return playerTarget;
+
+        if (_cachedPlayerTransform != null)
+            return _cachedPlayerTransform;
+
+        var pm = FindFirstObjectByType<PlayerMovementController>();
+        if (pm != null)
+        {
+            _cachedPlayerTransform = pm.transform;
+            return _cachedPlayerTransform;
+        }
+
+        if (!_loggedMissingPlayer)
+        {
+            Debug.LogWarning($"{nameof(DayNightVisualSeparationController)}: No playerTarget and no {nameof(PlayerMovementController)} found in scene.");
+            _loggedMissingPlayer = true;
+        }
+
+        return null;
+    }
+
+    private void UpdateNightVisionCircle()
+    {
+        EnsureNightVisionMaterial();
+
+        if (_nightVisionMaterialInstance == null || !enableNightVisionRestriction)
+            return;
+
+        DayNightPhase phase = gameState != null ? gameState.CurrentPhase : DayNightPhase.Day;
+        bool nightPhase = phase == DayNightPhase.Night;
+        // CurrentPhase flips to Day before OnDayStarted runs, but overlay alpha may still be lerping down.
+        // Keep shader mask enabled while overlay has strength so CanvasGroup.alpha can smoothly fade the night look.
+        float overlayStrength = overlayGroup != null ? overlayGroup.alpha : 0f;
+        bool shaderNightMaskEnabled = nightPhase || overlayStrength > 0.001f;
+
+        Camera cam = targetCamera != null ? targetCamera : Camera.main;
+        if (cam != null)
+            _nightVisionMaterialInstance.SetFloat(AspectId, Mathf.Max(0.0001f, cam.aspect));
+
+        float rClear = Mathf.Max(0.0001f, visibilityRadius);
+        float rDark = Mathf.Max(rClear + 0.0001f, rClear + Mathf.Max(0.0001f, falloffToDarkDistance));
+        _nightVisionMaterialInstance.SetFloat(RadiusClearId, rClear);
+        _nightVisionMaterialInstance.SetFloat(RadiusDarkId, rDark);
+        _nightVisionMaterialInstance.SetFloat(FalloffSharpnessId, falloffSharpness);
+        _nightVisionMaterialInstance.SetFloat(FalloffCurveId, falloffCurve);
+        _nightVisionMaterialInstance.SetFloat(DarknessId, darknessAlpha);
+        _nightVisionMaterialInstance.SetFloat(EnabledId, shaderNightMaskEnabled ? 1f : 0f);
+
+        if (!shaderNightMaskEnabled || cam == null)
+            return;
+
+        Transform playerTr = playerTarget != null ? playerTarget : TryResolvePlayerTransform();
+        if (playerTr == null)
+            return;
+
+        Vector3 vp = cam.WorldToViewportPoint(playerTr.position);
+        if (vp.z <= 0f)
+            return;
+
+        float cx = vp.x + circleViewportOffset.x;
+        float cy = vp.y + circleViewportOffset.y;
+        _nightVisionMaterialInstance.SetVector(CenterId, new Vector4(cx, cy, 0f, 0f));
     }
 
     private void EnsureAmbienceSource()
@@ -244,6 +417,7 @@ public class DayNightVisualSeparationController : MonoBehaviour
     private IEnumerator RunVisualTransition(DayNightPhase targetPhase)
     {
         EnsureOverlayRefs();
+        EnsureNightVisionMaterial();
 
         if (overlayImage != null)
             overlayImage.color = nightTintColor;
@@ -438,6 +612,7 @@ public class DayNightVisualSeparationController : MonoBehaviour
     private void ApplyImmediate(DayNightPhase phase)
     {
         EnsureOverlayRefs();
+        EnsureNightVisionMaterial();
         EnsureAmbienceSource();
         RebuildLightBindings();
 
@@ -486,5 +661,7 @@ public class DayNightVisualSeparationController : MonoBehaviour
                 ambienceSource.clip = null;
             }
         }
+
+        UpdateNightVisionCircle();
     }
 }

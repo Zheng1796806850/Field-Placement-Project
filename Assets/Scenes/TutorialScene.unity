@@ -178,7 +178,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: ab6b01e9793af9c4eb817202b71063db, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4829,7 +4829,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: ab6b01e9793af9c4eb817202b71063db, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9602,15 +9602,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.4}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -5177388603050735206, guid: 8884154dfe85442a3a3578be807dbcdf, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 4460523360529384044, guid: 10980386db1b39f4ea7c16fcd44d9c76, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -9953,6 +9953,82 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1000084317}
     m_Modifications:
+    - target: {fileID: 72961095606694199, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 826213621596100356, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2477417075352900357, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2515554665246061196, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2523407399505618483, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2530067646016704357, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3090090953491495755, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3658608101783700167, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3721107185679392421, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4056572115307805176, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4535207754572589319, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4749807378231701864, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4773637604158566866, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 6115348632413349083, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 6292578568071296258, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986171493009940320, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7448776965441754154, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7601563371156440503, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7668224875965399071, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
       value: FarmlandPlot_01
@@ -10010,6 +10086,62 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1000084317}
     m_Modifications:
+    - target: {fileID: 72961095606694199, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 826213621596100356, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2477417075352900357, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2515554665246061196, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2523407399505618483, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2530067646016704357, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3090090953491495755, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3658608101783700167, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3721107185679392421, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4056572115307805176, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4535207754572589319, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4749807378231701864, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4773637604158566866, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 6115348632413349083, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: plotId
       value: plot_03
@@ -10021,6 +10153,26 @@ PrefabInstance:
     - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: questPlantWaterCompleteEventId
       value: backyard_wheat_plot
+      objectReference: {fileID: 0}
+    - target: {fileID: 6292578568071296258, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986171493009940320, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7448776965441754154, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7601563371156440503, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7668224875965399071, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
@@ -10170,7 +10322,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: ab6b01e9793af9c4eb817202b71063db, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -15139,8 +15291,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TutorialStep
   stepId: Step05_QuickSlotUseMode
   title: Quick Slot Use Mode
-  description: "Press 1\u20134 to use items. /n Press the hotkey corresponding to
-    the item to enter or exit planting and wall placement mode."
+  description: "Press 1\u20134 to use items. Press the hotkey corresponding to the
+    item to enter or exit planting and wall placement mode."
   allowMovement: 1
   allowCombat: 1
   allowInteraction: 1
@@ -15380,15 +15532,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.4}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -5177388603050735206, guid: 8884154dfe85442a3a3578be807dbcdf, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 3597274058106651935, guid: 10980386db1b39f4ea7c16fcd44d9c76, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -16086,6 +16238,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1854656026}
     m_Modifications:
+    - target: {fileID: 3125651829959158979, guid: 9b8b8ad7d104bcb4bb00b324c3d43411, type: 3}
+      propertyPath: hitAggroDuration
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3125651829959158979, guid: 9b8b8ad7d104bcb4bb00b324c3d43411, type: 3}
+      propertyPath: playerAggroRange
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3125651829959158979, guid: 9b8b8ad7d104bcb4bb00b324c3d43411, type: 3}
+      propertyPath: hitAggroMaxDistance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3125651829959158979, guid: 9b8b8ad7d104bcb4bb00b324c3d43411, type: 3}
+      propertyPath: playerDisengageRange
+      value: 2.2
+      objectReference: {fileID: 0}
     - target: {fileID: 4297858224867008055, guid: 9b8b8ad7d104bcb4bb00b324c3d43411, type: 3}
       propertyPath: m_Name
       value: Enemy_normal
@@ -16252,11 +16420,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7545031342684364423, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 13.472
+      value: 13.681
       objectReference: {fileID: 0}
     - target: {fileID: 7545031342684364423, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -15.426
+      value: -15.315
       objectReference: {fileID: 0}
     - target: {fileID: 7545031342684364423, guid: ecd88ff4c1fcb3e409d468cc9f4ca095, type: 3}
       propertyPath: m_LocalPosition.z
@@ -16303,6 +16471,62 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1000084317}
     m_Modifications:
+    - target: {fileID: 72961095606694199, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 826213621596100356, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2477417075352900357, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2515554665246061196, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2523407399505618483, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2530067646016704357, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3090090953491495755, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3658608101783700167, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3721107185679392421, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4056572115307805176, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4535207754572589319, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4749807378231701864, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4773637604158566866, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 6115348632413349083, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: plotId
       value: plot_02
@@ -16314,6 +16538,26 @@ PrefabInstance:
     - target: {fileID: 6153541903881104707, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: questPlantWaterCompleteEventId
       value: backyard_wheat_plot
+      objectReference: {fileID: 0}
+    - target: {fileID: 6292578568071296258, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986171493009940320, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7448776965441754154, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7601563371156440503, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7668224875965399071, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
+      propertyPath: m_SortingOrder
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 8927187983997006849, guid: 229a5df2243e43f43b69f35fb9767260, type: 3}
       propertyPath: m_Name
@@ -16542,8 +16786,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -20, y: -20}
+  m_AnchoredPosition: {x: -1.129303, y: 2.2586}
+  m_SizeDelta: {x: -62.914, y: -44.8449}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &992106886
 MonoBehaviour:
@@ -16567,8 +16811,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: d3b20686905c5fb4e9dd2d6c463dbaa5, type: 2}
+  m_sharedMaterial: {fileID: -3420322645040745660, guid: d3b20686905c5fb4e9dd2d6c463dbaa5, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -16696,7 +16940,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TutorialStep
   stepId: Step06_Plant
   title: Plant
-  description: Enter the plant mode, keep prees "E" to plant the specified crops./n
+  description: Enter the plant mode, keep prees "E" to plant the specified crops.
     Exit the plant mode, keep prees "E" to watering them.
   allowMovement: 1
   allowCombat: 1
@@ -16776,7 +17020,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: ab6b01e9793af9c4eb817202b71063db, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -21873,7 +22117,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: ab6b01e9793af9c4eb817202b71063db, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -94053,7 +94297,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: ab6b01e9793af9c4eb817202b71063db, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -98704,7 +98948,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: ab6b01e9793af9c4eb817202b71063db, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -103582,8 +103826,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -20, y: -20}
+  m_AnchoredPosition: {x: -0.56469727, y: 1.694107}
+  m_SizeDelta: {x: -57.2674, y: -59.5258}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1295382854
 MonoBehaviour:
@@ -103607,8 +103851,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: d3b20686905c5fb4e9dd2d6c463dbaa5, type: 2}
+  m_sharedMaterial: {fileID: -3420322645040745660, guid: d3b20686905c5fb4e9dd2d6c463dbaa5, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -104005,7 +104249,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: ab6b01e9793af9c4eb817202b71063db, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -109093,15 +109337,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.4}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -5177388603050735206, guid: 8884154dfe85442a3a3578be807dbcdf, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 3597274058106651935, guid: 10980386db1b39f4ea7c16fcd44d9c76, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -109909,7 +110153,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: ab6b01e9793af9c4eb817202b71063db, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -115197,8 +115441,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Attack
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: d3b20686905c5fb4e9dd2d6c463dbaa5, type: 2}
+  m_sharedMaterial: {fileID: -3420322645040745660, guid: d3b20686905c5fb4e9dd2d6c463dbaa5, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

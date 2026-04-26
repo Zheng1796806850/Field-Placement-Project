@@ -257,6 +257,9 @@ public class PlayerHungerThirst : MonoBehaviour
             atkMult *= thirstAttackMultiplier;
         }
 
+        if (combat != null)
+            atkMult *= combat.AxeDamageMultiplier;
+
         if (movement != null)
         {
             movement.speed = _baseMoveSpeed * moveMult;
@@ -277,6 +280,11 @@ public class PlayerHungerThirst : MonoBehaviour
         }
 
         OnDebuffChanged?.Invoke(moveMult, atkMult);
+    }
+
+    public void RefreshDebuffsNow()
+    {
+        ApplyDebuffs();
     }
 
     private void CacheAttackHitboxes()

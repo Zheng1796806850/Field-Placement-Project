@@ -7,11 +7,19 @@ public class TimedActionHUD : MonoBehaviour
     public CanvasGroup canvasGroup;
     public Image fillImage;
     public TextMeshProUGUI actionLabel;
+    public LayoutElement layoutElement;
+    RectTransform _layoutRoot;
 
     private void Awake()
     {
         if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null) canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        if (layoutElement == null && canvasGroup != null)
+            layoutElement = canvasGroup.GetComponent<LayoutElement>();
+        if (layoutElement == null && canvasGroup != null)
+            layoutElement = canvasGroup.gameObject.AddComponent<LayoutElement>();
+        if (layoutElement != null)
+            _layoutRoot = layoutElement.transform.parent as RectTransform;
         SetVisible(false);
         SetProgress(0f);
     }
@@ -22,6 +30,10 @@ public class TimedActionHUD : MonoBehaviour
         canvasGroup.alpha = visible ? 1f : 0f;
         canvasGroup.interactable = false;
         canvasGroup.blocksRaycasts = false;
+        if (layoutElement != null)
+            layoutElement.ignoreLayout = !visible;
+        if (_layoutRoot != null)
+            LayoutRebuilder.MarkLayoutForRebuild(_layoutRoot);
     }
 
     public void SetProgress(float t01)

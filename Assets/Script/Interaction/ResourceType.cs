@@ -7,5 +7,8 @@ public enum ResourceType
     PotatoSeed,
     Potato,
     TomatoSeed,
-    Tomato
+    Tomato,
+    Flashlight,
+    /// <summary>消炎药 — Day2 线性剧情 NPC 交付用。</summary>
+    AntiInflammatory
 }

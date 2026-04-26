@@ -11,6 +11,7 @@ public class PlayerMovementController : MonoBehaviour
 
     /// <summary>Last horizontal facing for 2-way (left/right) animations: -1 or +1. Pure vertical movement keeps this.</summary>
     public float FacingSignX { get; private set; } = 1f;
+    public bool CanMove => canMove;
 
     //private Vector3 offset;
 
