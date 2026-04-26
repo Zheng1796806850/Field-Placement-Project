@@ -129,6 +129,8 @@ public class TutorialManager : MonoBehaviour
         if (teleporter == null) teleporter = FindFirstObjectByType<TutorialStepTeleporter>(FindObjectsInactive.Include);
         if (fader == null) fader = FindFirstObjectByType<TutorialScreenFader>(FindObjectsInactive.Include);
         if (waveBannerHUD == null) waveBannerHUD = FindFirstObjectByType<WaveEventBannerHUD>(FindObjectsInactive.Include);
+        if (waveBannerHUD != null && waveBannerHUD.disableMessages)
+            waveBannerHUD.disableMessages = false;
 
         if (player == null)
         {
@@ -467,10 +469,31 @@ public class TutorialManager : MonoBehaviour
     private IEnumerator ShowBannerForSeconds(string message, float seconds)
     {
         float hold = Mathf.Max(0f, seconds);
-        if (waveBannerHUD == null || string.IsNullOrWhiteSpace(message))
+        if (string.IsNullOrWhiteSpace(message))
         {
             if (hold > 0f)
                 yield return new WaitForSecondsRealtime(hold);
+            yield break;
+        }
+
+        if (waveBannerHUD == null)
+            waveBannerHUD = FindFirstObjectByType<WaveEventBannerHUD>(FindObjectsInactive.Include);
+
+        if (waveBannerHUD == null)
+        {
+            var fallbackLabel = stepTitleLabel != null ? stepTitleLabel : objectiveProgressLabel;
+            if (fallbackLabel == null)
+            {
+                if (hold > 0f)
+                    yield return new WaitForSecondsRealtime(hold);
+                yield break;
+            }
+
+            string oldText = fallbackLabel.text;
+            fallbackLabel.text = message;
+            if (hold > 0f)
+                yield return new WaitForSecondsRealtime(hold);
+            fallbackLabel.text = oldText;
             yield break;
         }
 

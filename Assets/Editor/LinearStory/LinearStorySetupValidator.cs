@@ -50,6 +50,7 @@ public static class LinearStorySetupValidator
         ValidateZoneTeleports(scene, list);
         ValidatePit(scene, list);
         ValidateDialogue(scene, list);
+        ValidateDialogueSteps(scene, list);
         ValidateSfxLibrary(list);
         ValidateBackpackRules(list);
         ValidateWaterCollectors(scene, list);
@@ -240,6 +241,66 @@ public static class LinearStorySetupValidator
         {
             if (!hud.npcNameText.font.name.Contains("typewriter", StringComparison.OrdinalIgnoreCase))
                 list.Add(new Entry(Level.Info, $"NpcDialoguePanelHUD.npcNameText 字体为「{hud.npcNameText.font.name}」，若不是 AA_typewriter 请替换。"));
+        }
+    }
+
+    static void ValidateDialogueSteps(Scene scene, List<Entry> list)
+    {
+        var dir = UnityEngine.Object.FindFirstObjectByType<LinearStoryDirector>(FindObjectsInactive.Include);
+        if (dir == null)
+            return;
+
+        if (dir.dialogueSteps == null || dir.dialogueSteps.Count == 0)
+        {
+            list.Add(new Entry(Level.Error, "LinearStoryDirector.dialogueSteps 为空。请运行 Setup 或手动填充。"));
+            return;
+        }
+
+        var map = new Dictionary<string, StoryDialogueStepDefinition>(StringComparer.Ordinal);
+        foreach (var step in dir.dialogueSteps)
+        {
+            if (step == null || string.IsNullOrWhiteSpace(step.stepId))
+                continue;
+            map[step.stepId.Trim()] = step;
+        }
+
+        foreach (var required in LinearStoryDirector.RequiredDialogueStepIds)
+        {
+            if (!map.TryGetValue(required, out var step) || step == null || step.lines == null || step.lines.Count == 0)
+            {
+                list.Add(new Entry(Level.Error, $"缺少剧情对话 stepId 或无内容：{required}"));
+                continue;
+            }
+
+            for (int i = 0; i < step.lines.Count; i++)
+            {
+                var line = step.lines[i];
+                if (line == null)
+                {
+                    list.Add(new Entry(Level.Warning, $"{required} 第 {i + 1} 句为空引用。"));
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(line.text))
+                    list.Add(new Entry(Level.Warning, $"{required} 第 {i + 1} 句 text 为空。"));
+                if (string.IsNullOrWhiteSpace(line.speaker))
+                    list.Add(new Entry(Level.Warning, $"{required} 第 {i + 1} 句 speaker 为空。"));
+            }
+        }
+
+        foreach (var kv in map)
+        {
+            var stepId = kv.Key;
+            var step = kv.Value;
+            if (step?.lines == null) continue;
+            for (int i = 0; i < step.lines.Count; i++)
+            {
+                var line = step.lines[i];
+                if (line == null) continue;
+                if (!line.playSfxOnLineStart || line.onLineStartSfxId != SfxId.Story_DistantGrowl) continue;
+                if (!string.Equals(stepId, "step2_growl_line_only", StringComparison.Ordinal))
+                    list.Add(new Entry(Level.Warning, $"Story_DistantGrowl 建议仅绑定 step2_growl_line_only，当前在 {stepId} 第 {i + 1} 句。"));
+            }
         }
     }
 

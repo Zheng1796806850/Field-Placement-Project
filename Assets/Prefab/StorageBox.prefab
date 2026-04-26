@@ -310,7 +310,7 @@ MonoBehaviour:
   storageInventory: {fileID: 4148852459020212733}
   storagePanelHUD: {fileID: 0}
   simpleHintObject: {fileID: 2019736227840938551}
-  rulesOverride: {fileID: 0}
+  rulesOverride: {fileID: 11400000, guid: 6814f7017dadd3246b4824404d5ff0bc, type: 2}
   useSimpleHintToggle: 1
   playerTag: Player
   autoFindPlayerByTag: 1

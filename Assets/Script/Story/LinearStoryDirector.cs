@@ -73,6 +73,10 @@ public class LinearStoryDirector : MonoBehaviour
     [Tooltip("These UI roots are hidden at game start and restored right after the first opening dialogue finishes.")]
     public GameObject[] openingHideTargets = Array.Empty<GameObject>();
 
+    [Header("Dialogue Authoring (Inspector editable)")]
+    [Tooltip("All linear-story dialogue content is authored here by stepId.")]
+    public List<StoryDialogueStepDefinition> dialogueSteps = new List<StoryDialogueStepDefinition>();
+
     [Header("Ending trigger")]
     [Tooltip("Project currently uses 1-based day counting (GameStateManager.CurrentDay starts at 1). Ending checks CurrentDay >= endingTriggerDay on Day start.")]
     [Min(1)] public int endingTriggerDay = 4;
@@ -98,6 +102,21 @@ public class LinearStoryDirector : MonoBehaviour
     bool _endingTriggered;
     EndingType _endingType = EndingType.None;
     bool _boundToGameStateDayStarted;
+    Dictionary<string, StoryDialogueStepDefinition> _dialogueLookup;
+
+    const string StepId_Opening = "step_opening";
+    const string StepId_2_PreGrowl = "step2_pre_growl";
+    const string StepId_2_GrowlOnly = "step2_growl_line_only";
+    const string StepId_2_PostGrowl = "step2_post_growl";
+    const string StepId_3_WellBuilt = "step3_well_built";
+    const string StepId_4_Planted = "step4_planted";
+    const string StepId_5_Watered = "step5_watered";
+    const string StepId_6_FrontYardNight = "step6_frontyard_night";
+    const string StepId_7_Day2Morning = "step7_day2_morning";
+    const string StepId_8_Observation = "step8_observation";
+    const string StepId_8_Intro = "step8_intro";
+    const string StepId_PitSilent = "pit_silent";
+    const string StepId_PitReward = "pit_reward";
 
     public bool IsLinearStoryActive => enableLinearStory && isActiveAndEnabled && !_endingTriggered;
     public int CurrentCheckpoint => _checkpoint;
@@ -119,6 +138,8 @@ public class LinearStoryDirector : MonoBehaviour
         }
 
         ResolveRefs();
+        EnsureDefaultDialogueStepsIfEmpty();
+        RebuildDialogueLookup();
         ApplyStoryFontIfAny();
         _checkpoint = StoryProgressStore.LoadCheckpoint(0);
         _day2HandoffGranted = StoryProgressStore.LoadDay2HandoffComplete();
@@ -144,6 +165,12 @@ public class LinearStoryDirector : MonoBehaviour
         if (gameStateManager != null)
             gameStateManager.SetStoryClockFrozen(_checkpoint > 0 && _checkpoint < 5);
         TryBindDayStarted();
+    }
+
+    void OnValidate()
+    {
+        if (dialogueSteps == null)
+            dialogueSteps = new List<StoryDialogueStepDefinition>();
     }
 
     void OnDestroy()
@@ -359,7 +386,7 @@ public class LinearStoryDirector : MonoBehaviour
 
             SnapMainCameraToStoryPlayer();
             HideDialogueTargetsForOpening();
-            yield return RunStoryDialogueLines("Narrator", "Survivor", StoryLines.Step1, freezeTimeScale: false);
+            yield return RunStoryDialogueStep("Narrator", "Survivor", StepId_Opening, freezeTimeScale: false);
             RevealDialogueTargetsAfterOpening();
 
             UnlockPlayerHard();
@@ -380,10 +407,9 @@ public class LinearStoryDirector : MonoBehaviour
         }
 
         _checkpoint = -1;
-        yield return RunStoryDialogueLines("Narrator", "Survivor", StoryLines.Step2_PreGrowl, freezeTimeScale: true);
-        SfxPlayer.TryPlay(SfxId.Story_DistantGrowl, playerMovement != null ? playerMovement.transform.position : Vector3.zero);
-        yield return RunStoryDialogueLines("Narrator", "Survivor", StoryLines.Step2_GrowlLineOnly, freezeTimeScale: true);
-        yield return RunStoryDialogueLines("Narrator", "Survivor", StoryLines.Step2_PostGrowl, freezeTimeScale: true);
+        yield return RunStoryDialogueStep("Narrator", "Survivor", StepId_2_PreGrowl, freezeTimeScale: true);
+        yield return RunStoryDialogueStep("Narrator", "Survivor", StepId_2_GrowlOnly, freezeTimeScale: true);
+        yield return RunStoryDialogueStep("Narrator", "Survivor", StepId_2_PostGrowl, freezeTimeScale: true);
         BeginQuestOrLog(questBuildWell, "questBuildWell");
         StoryRestrictionGate.SetFrontYardBlocked(true, denyFrontYardThirsty);
         _checkpoint = 2;
@@ -406,7 +432,7 @@ public class LinearStoryDirector : MonoBehaviour
     {
         if (_checkpoint != 2) yield break;
         _checkpoint = -1;
-        yield return RunStoryDialogueLines("Narrator", "Survivor", StoryLines.Step3, freezeTimeScale: false);
+        yield return RunStoryDialogueStep("Narrator", "Survivor", StepId_3_WellBuilt, freezeTimeScale: false);
         BeginQuestOrLog(questTillSoil, "questTillSoil");
         StoryRestrictionGate.SetFrontYardBlocked(true, denyFrontYardFarm);
         _checkpoint = 3;
@@ -425,7 +451,7 @@ public class LinearStoryDirector : MonoBehaviour
     {
         if (_checkpoint != 3) yield break;
         _checkpoint = -1;
-        yield return RunStoryDialogueLines("Narrator", "Survivor", StoryLines.Step4, freezeTimeScale: false);
+        yield return RunStoryDialogueStep("Narrator", "Survivor", StepId_4_Planted, freezeTimeScale: false);
         BeginQuestOrLog(questWaterOnce, "questWaterOnce");
         StoryRestrictionGate.SetFrontYardBlocked(true, denyFrontYardWater);
         _checkpoint = 4;
@@ -444,7 +470,7 @@ public class LinearStoryDirector : MonoBehaviour
     {
         if (_checkpoint != 4) yield break;
         _checkpoint = -1;
-        yield return RunStoryDialogueLines("Narrator", "Survivor", StoryLines.Step5, freezeTimeScale: false);
+        yield return RunStoryDialogueStep("Narrator", "Survivor", StepId_5_Watered, freezeTimeScale: false);
 
         BeginQuestOrLog(questSurviveFirstNight, "questSurviveFirstNight");
         if (gameStateManager != null)
@@ -468,7 +494,7 @@ public class LinearStoryDirector : MonoBehaviour
         }
 
         _checkpoint = -1;
-        yield return RunStoryDialogueLines("Narrator", "Survivor", StoryLines.Step6, freezeTimeScale: true);
+        yield return RunStoryDialogueStep("Narrator", "Survivor", StepId_6_FrontYardNight, freezeTimeScale: true);
         _checkpoint = 6;
         Persist();
         _stepBusy = false;
@@ -528,7 +554,7 @@ public class LinearStoryDirector : MonoBehaviour
 
         LockPlayerHard();
         LockBackpackToggle(true);
-        yield return RunStoryDialogueLines("Narrator", "Survivor", StoryLines.Step7, freezeTimeScale: true);
+        yield return RunStoryDialogueStep("Narrator", "Survivor", StepId_7_Day2Morning, freezeTimeScale: true);
         UnlockPlayerHard();
         LockBackpackToggle(false);
 
@@ -556,7 +582,7 @@ public class LinearStoryDirector : MonoBehaviour
     {
         if (_processingStep8) yield break;
         _processingStep8 = true;
-        yield return RunStoryDialogueLines("Narrator", "Survivor", StoryLines.Step8Observation, freezeTimeScale: true);
+        yield return RunStoryDialogueStep("Narrator", "Survivor", StepId_8_Observation, freezeTimeScale: true);
         _hasTriggeredBackyardPitObservation = true;
         if (_checkpoint < 8) _checkpoint = 8;
         Persist();
@@ -588,7 +614,7 @@ public class LinearStoryDirector : MonoBehaviour
         {
             if (!_hasPlayedPitIntroDialogue)
             {
-                yield return RunStoryDialogueLines("???", "Survivor", StoryLines.Step8Intro, freezeTimeScale: true);
+                yield return RunStoryDialogueStep("???", "Survivor", StepId_8_Intro, freezeTimeScale: true);
                 _hasPlayedPitIntroDialogue = true;
                 BeginQuestOrLog(questTownFetchSupplies, "questTownFetchSupplies");
                 StoryRestrictionGate.SetTownBlocked(false, denyTownBackyard);
@@ -599,7 +625,7 @@ public class LinearStoryDirector : MonoBehaviour
 
             if (_day2HandoffGranted || _checkpoint >= 9)
             {
-                yield return RunStoryDialogueLines("???", "Survivor", StoryLines.PitSilent, freezeTimeScale: true);
+                yield return RunStoryDialogueStep("???", "Survivor", StepId_PitSilent, freezeTimeScale: true);
                 yield break;
             }
 
@@ -607,7 +633,7 @@ public class LinearStoryDirector : MonoBehaviour
             bool hasLight = playerInventory.Get(ResourceType.Flashlight) >= 1;
             if (!hasMed || !hasLight)
             {
-                yield return RunStoryDialogueLines("???", "Survivor", StoryLines.PitSilent, freezeTimeScale: true);
+                yield return RunStoryDialogueStep("???", "Survivor", StepId_PitSilent, freezeTimeScale: true);
                 yield break;
             }
 
@@ -622,7 +648,7 @@ public class LinearStoryDirector : MonoBehaviour
             if (playerCombat != null)
                 playerCombat.GrantAxeUpgrade(day2AxeDamageMultiplier, day2AxeAnimatorOverride);
 
-            yield return RunStoryDialogueLines("???", "Survivor", StoryLines.PitReward, freezeTimeScale: true);
+            yield return RunStoryDialogueStep("???", "Survivor", StepId_PitReward, freezeTimeScale: true);
 
             _day2HandoffGranted = true;
             _checkpoint = 9;
@@ -655,6 +681,49 @@ public class LinearStoryDirector : MonoBehaviour
             dialogueHud.freezeTimeScaleDuringDialogue = true;
             bool done = false;
             dialogueHud.BeginDialogue(npcName, playerDisplayName, lines, () => done = true);
+
+            while (!done && dialogueHud.IsRunning)
+                yield return null;
+
+            while (dialogueHud.IsRunning)
+                yield return null;
+        }
+        finally
+        {
+            pauseMenuController?.PopExternalPauseBlock();
+            if (playerMovement != null)
+                playerMovement.SetCanMove(hadMovement);
+            if (gameStateManager != null)
+                gameStateManager.SetStoryClockFrozen(oldStoryFrozen);
+        }
+    }
+
+    IEnumerator RunStoryDialogueStep(string npcName, string playerDisplayName, string stepId, bool freezeTimeScale)
+    {
+        if (!TryGetDialogueStep(stepId, out var step))
+        {
+            Debug.LogWarning($"[LinearStoryDirector] Missing dialogue stepId '{stepId}'.");
+            yield break;
+        }
+
+        ResolveRefs();
+        if (dialogueHud == null || step.lines == null || step.lines.Count == 0)
+            yield break;
+
+        bool oldStoryFrozen = gameStateManager != null && gameStateManager.StoryClockFrozen;
+        bool hadMovement = playerMovement != null && playerMovement.CanMove;
+        if (playerMovement != null)
+            playerMovement.SetCanMove(false);
+        pauseMenuController?.PushExternalPauseBlock();
+
+        try
+        {
+            if (gameStateManager != null)
+                gameStateManager.SetStoryClockFrozen(true);
+
+            dialogueHud.freezeTimeScaleDuringDialogue = true;
+            bool done = false;
+            dialogueHud.BeginDialogue(npcName, playerDisplayName, step.lines, () => done = true);
 
             while (!done && dialogueHud.IsRunning)
                 yield return null;
@@ -821,96 +890,146 @@ public class LinearStoryDirector : MonoBehaviour
         }
     }
 
-    static class StoryLines
+    bool TryGetDialogueStep(string stepId, out StoryDialogueStepDefinition step)
     {
-        public static readonly string[] Step1 =
+        step = null;
+        if (string.IsNullOrWhiteSpace(stepId))
+            return false;
+        if (_dialogueLookup == null)
+            RebuildDialogueLookup();
+        return _dialogueLookup != null && _dialogueLookup.TryGetValue(stepId, out step) && step != null;
+    }
+
+    void RebuildDialogueLookup()
+    {
+        _dialogueLookup = new Dictionary<string, StoryDialogueStepDefinition>(StringComparer.Ordinal);
+        if (dialogueSteps == null)
+            return;
+        for (int i = 0; i < dialogueSteps.Count; i++)
         {
-            "S: ...Consciousness shreds and stitches itself back together. You slowly open your eyes.",
-            "S: The air is heavy with rot.",
-            "I: ...Where am I? Who am I..."
+            var step = dialogueSteps[i];
+            if (step == null || string.IsNullOrWhiteSpace(step.stepId))
+                continue;
+            _dialogueLookup[step.stepId.Trim()] = step;
+        }
+    }
+
+    public void EnsureDefaultDialogueStepsIfEmpty()
+    {
+        if (dialogueSteps != null && dialogueSteps.Count > 0)
+            return;
+        dialogueSteps = CreateDefaultDialogueSteps();
+    }
+
+    public static string[] RequiredDialogueStepIds => new[]
+    {
+        StepId_Opening,
+        StepId_2_PreGrowl,
+        StepId_2_GrowlOnly,
+        StepId_2_PostGrowl,
+        StepId_3_WellBuilt,
+        StepId_4_Planted,
+        StepId_5_Watered,
+        StepId_6_FrontYardNight,
+        StepId_7_Day2Morning,
+        StepId_8_Observation,
+        StepId_8_Intro,
+        StepId_PitSilent,
+        StepId_PitReward
+    };
+
+    static StoryDialogueLineDefinition Line(string speaker, string text, StoryDialogueLineStyle style = StoryDialogueLineStyle.Default, bool playSfx = false, SfxId sfxId = SfxId.Story_DistantGrowl)
+    {
+        return new StoryDialogueLineDefinition
+        {
+            speaker = speaker,
+            text = text,
+            style = style,
+            playSfxOnLineStart = playSfx,
+            onLineStartSfxId = sfxId
         };
+    }
 
-        public static readonly string[] Step2_PreGrowl =
+    static StoryDialogueStepDefinition Step(string stepId, params StoryDialogueLineDefinition[] lines)
+    {
+        return new StoryDialogueStepDefinition
         {
-            "I: Nobody here..."
+            stepId = stepId,
+            lines = new List<StoryDialogueLineDefinition>(lines)
         };
+    }
 
-        public static readonly string[] Step2_GrowlLineOnly =
+    static List<StoryDialogueStepDefinition> CreateDefaultDialogueSteps()
+    {
+        return new List<StoryDialogueStepDefinition>
         {
-            "S: A low growl rolls in from far away."
-        };
-
-        public static readonly string[] Step2_PostGrowl =
-        {
-            "P: Who's there??",
-            "S: Only silence answers you.",
-            "I: So thirsty... I need water.",
-            "S: A dry well site (buildable).",
-            "I: Maybe I can build a well."
-        };
-
-        public static readonly string[] Step3 =
-        {
-            "I: ...It worked.",
-            "I: Oh—I still have my backpack.",
-            "S: You open the pack and rummage through it.",
-            "I: ...Did I bring these seeds? Maybe I can try planting them."
-        };
-
-        public static readonly string[] Step4 =
-        {
-            "S: The soil is cracked; barely a trace of life.",
-            "I: Maybe it needs water."
-        };
-
-        public static readonly string[] Step5 =
-        {
-            "S: Water seeps into the ground with a soft sound.",
-            "S: Night draws closer. Distant growling.",
-            "I: What was that? Maybe I should go out front and look."
-        };
-
-        public static readonly string[] Step6 =
-        {
-            "I: ...People? No—things shaped like people?",
-            "S: The well and the field come to mind.",
-            "I: Then this place... I have to hold it."
-        };
-
-        public static readonly string[] Step7 =
-        {
-            "I: I... I survived. What the hell are those things!?",
-            "S: Something moves in the backyard—go see what's going on."
-        };
-
-        public static readonly string[] Step8Observation =
-        {
-            "I: A pit gapes beside the well."
-        };
-
-        public static readonly string[] Step8Intro =
-        {
-            "S: A pit gapes beside the well.",
-            "M: ...Hey, you up there. Voice from the sewer.",
-            "P:?!??!",
-            "M: Oh... called it. Relax. If they haven't eaten you yet, you might still be useful.",
-            "P: Who are you?",
-            "M: Doesn't matter. What matters is a deal. I can't leave this hole—go to town and get me a few things. Will you?",
-            "P: Why?",
-            "M: The things shambling out there have noticed you. Without my help you won't last long. I've got a better weapon—you'll last a few more days with it.",
-            "P: What are they?",
-            "M: The things above? Zombies, walking dead—call them whatever. Look, I'm busy. Are we doing this or not?",
-            "P: ...What do you need?",
-            "M: Good. Bring me anti-inflammatory meds. Oh—and something to see by; it's dark as hell down here. Hand those over and we're square."
-        };
-
-        public static readonly string[] PitSilent = { "M: ...Nothing but silence." };
-
-        public static readonly string[] PitReward =
-        {
-            "M: That's it! Here's your cut.",
-            "M: Well then—so long. Try to stay alive.",
-            "S: The voice from the pit fades away."
+            Step(StepId_Opening,
+                Line("Narrator", "...Consciousness shreds and stitches itself back together. You slowly open your eyes.", StoryDialogueLineStyle.Narration),
+                Line("Narrator", "The air is heavy with rot.", StoryDialogueLineStyle.Narration),
+                Line("Survivor", "...Where am I? Who am I...", StoryDialogueLineStyle.InnerThought)
+            ),
+            Step(StepId_2_PreGrowl,
+                Line("Survivor", "Nobody here...", StoryDialogueLineStyle.InnerThought)
+            ),
+            Step(StepId_2_GrowlOnly,
+                Line("Narrator", "A low growl rolls in from far away.", StoryDialogueLineStyle.Narration, true, SfxId.Story_DistantGrowl)
+            ),
+            Step(StepId_2_PostGrowl,
+                Line("Survivor", "Who's there??", StoryDialogueLineStyle.Player),
+                Line("Narrator", "Only silence answers you.", StoryDialogueLineStyle.Narration),
+                Line("Survivor", "So thirsty... I need water.", StoryDialogueLineStyle.InnerThought),
+                Line("Narrator", "A dry well site (buildable).", StoryDialogueLineStyle.Narration),
+                Line("Survivor", "Maybe I can build a well.", StoryDialogueLineStyle.InnerThought)
+            ),
+            Step(StepId_3_WellBuilt,
+                Line("Survivor", "...It worked.", StoryDialogueLineStyle.InnerThought),
+                Line("Survivor", "Oh—I still have my backpack.", StoryDialogueLineStyle.InnerThought),
+                Line("Narrator", "You open the pack and rummage through it.", StoryDialogueLineStyle.Narration),
+                Line("Survivor", "...Did I bring these seeds? Maybe I can try planting them.", StoryDialogueLineStyle.InnerThought)
+            ),
+            Step(StepId_4_Planted,
+                Line("Narrator", "The soil is cracked; barely a trace of life.", StoryDialogueLineStyle.Narration),
+                Line("Survivor", "Maybe it needs water.", StoryDialogueLineStyle.InnerThought)
+            ),
+            Step(StepId_5_Watered,
+                Line("Narrator", "Water seeps into the ground with a soft sound.", StoryDialogueLineStyle.Narration),
+                Line("Narrator", "Night draws closer. Distant growling.", StoryDialogueLineStyle.Narration),
+                Line("Survivor", "What was that? Maybe I should go out front and look.", StoryDialogueLineStyle.InnerThought)
+            ),
+            Step(StepId_6_FrontYardNight,
+                Line("Survivor", "...People? No—things shaped like people?", StoryDialogueLineStyle.InnerThought),
+                Line("Narrator", "The well and the field come to mind.", StoryDialogueLineStyle.Narration),
+                Line("Survivor", "Then this place... I have to hold it.", StoryDialogueLineStyle.InnerThought)
+            ),
+            Step(StepId_7_Day2Morning,
+                Line("Survivor", "I... I survived. What the hell are those things!?", StoryDialogueLineStyle.InnerThought),
+                Line("Narrator", "Something moves in the backyard—go see what's going on.", StoryDialogueLineStyle.Narration)
+            ),
+            Step(StepId_8_Observation,
+                Line("Survivor", "A pit gapes beside the well.", StoryDialogueLineStyle.InnerThought)
+            ),
+            Step(StepId_8_Intro,
+                Line("Narrator", "A pit gapes beside the well.", StoryDialogueLineStyle.Narration),
+                Line("???", "...Hey, you up there. Voice from the sewer.", StoryDialogueLineStyle.Mystery),
+                Line("Survivor", "?!??!", StoryDialogueLineStyle.Player),
+                Line("???", "Oh... called it. Relax. If they haven't eaten you yet, you might still be useful.", StoryDialogueLineStyle.Mystery),
+                Line("Survivor", "Who are you?", StoryDialogueLineStyle.Player),
+                Line("???", "Doesn't matter. What matters is a deal. I can't leave this hole—go to town and get me a few things. Will you?", StoryDialogueLineStyle.Mystery),
+                Line("Survivor", "Why?", StoryDialogueLineStyle.Player),
+                Line("???", "The things shambling out there have noticed you. Without my help you won't last long. I've got a better weapon—you'll last a few more days with it.", StoryDialogueLineStyle.Mystery),
+                Line("Survivor", "What are they?", StoryDialogueLineStyle.Player),
+                Line("???", "The things above? Zombies, walking dead—call them whatever. Look, I'm busy. Are we doing this or not?", StoryDialogueLineStyle.Mystery),
+                Line("Survivor", "...What do you need?", StoryDialogueLineStyle.Player),
+                Line("???", "Good. Bring me anti-inflammatory meds. Oh—and something to see by; it's dark as hell down here. Hand those over and we're square.", StoryDialogueLineStyle.Mystery)
+            ),
+            Step(StepId_PitSilent,
+                Line("???", "...Nothing but silence.", StoryDialogueLineStyle.Mystery)
+            ),
+            Step(StepId_PitReward,
+                Line("???", "That's it! Here's your cut.", StoryDialogueLineStyle.Mystery),
+                Line("???", "Well then—so long. Try to stay alive.", StoryDialogueLineStyle.Mystery),
+                Line("Narrator", "The voice from the pit fades away.", StoryDialogueLineStyle.Narration)
+            )
         };
     }
 }

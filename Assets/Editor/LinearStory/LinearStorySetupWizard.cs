@@ -48,6 +48,7 @@ public static class LinearStorySetupWizard
             var fade = GetOrCreateStoryFade(storyRoot, director, warnings);
 
             BindQuestsToDirector(director, warnings);
+            EnsureDefaultDialogueAuthoring(director);
             AutoWireDirectorRefs(director, warnings);
 
             EnsureAreaTriggers(scene, storyRoot, warnings);
@@ -262,6 +263,13 @@ public static class LinearStorySetupWizard
         if (director.pauseMenuController == null)
             director.pauseMenuController = UnityEngine.Object.FindFirstObjectByType<PauseMenuController>(FindObjectsInactive.Include);
 
+        EditorUtility.SetDirty(director);
+    }
+
+    static void EnsureDefaultDialogueAuthoring(LinearStoryDirector director)
+    {
+        Undo.RecordObject(director, "Linear Story: default dialogue config");
+        director.EnsureDefaultDialogueStepsIfEmpty();
         EditorUtility.SetDirty(director);
     }
 

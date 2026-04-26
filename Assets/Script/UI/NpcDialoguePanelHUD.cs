@@ -11,6 +11,8 @@ public class NpcDialoguePanelHUD : MonoBehaviour
     {
         public string speaker;
         public string content;
+        public bool playSfxOnLineStart;
+        public SfxId lineStartSfxId;
     }
 
     public static NpcDialoguePanelHUD Instance { get; private set; }
@@ -150,6 +152,46 @@ public class NpcDialoguePanelHUD : MonoBehaviour
         ApplyLine();
     }
 
+    public void BeginDialogue(string npcName, string playerDisplayName, IReadOnlyList<StoryDialogueLineDefinition> lines, Action onComplete)
+    {
+        if (lines == null || lines.Count == 0)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        _onComplete = onComplete;
+        _lines.Clear();
+        _defaultNpcName = string.IsNullOrWhiteSpace(npcName) ? "NPC" : npcName;
+        _playerDisplayName = string.IsNullOrWhiteSpace(playerDisplayName) ? "Player" : playerDisplayName;
+
+        for (int i = 0; i < lines.Count; i++)
+        {
+            var line = lines[i];
+            if (line == null || string.IsNullOrWhiteSpace(line.text))
+                continue;
+            _lines.Add(ParseConfiguredLine(line));
+        }
+
+        if (_lines.Count == 0)
+        {
+            _onComplete?.Invoke();
+            _onComplete = null;
+            return;
+        }
+
+        ResolveRefs();
+        EnterDialogueMode();
+
+        _isRunning = true;
+        _lineIndex = 0;
+
+        if (panelRoot != null && !panelRoot.activeSelf)
+            panelRoot.SetActive(true);
+
+        ApplyLine();
+    }
+
     private void ResolveRefs()
     {
         if (playerInteractor == null)
@@ -235,6 +277,8 @@ public class NpcDialoguePanelHUD : MonoBehaviour
         ParsedDialogueLine line = _lines[_lineIndex];
         if (npcNameText != null)
             npcNameText.text = line.speaker;
+        if (line.playSfxOnLineStart)
+            SfxPlayer.TryPlay(line.lineStartSfxId, transform.position);
 
         if (_typeRoutine != null)
         {
@@ -336,7 +380,24 @@ public class NpcDialoguePanelHUD : MonoBehaviour
         return new ParsedDialogueLine
         {
             speaker = speaker,
-            content = content
+            content = content,
+            playSfxOnLineStart = false,
+            lineStartSfxId = SfxId.Story_DistantGrowl
+        };
+    }
+
+    private ParsedDialogueLine ParseConfiguredLine(StoryDialogueLineDefinition src)
+    {
+        // Dialogue authoring now treats step line speaker as source-of-truth.
+        // Style is kept for future UI styling, not for speaker name remapping.
+        string speaker = string.IsNullOrWhiteSpace(src.speaker) ? _defaultNpcName : src.speaker.Trim();
+
+        return new ParsedDialogueLine
+        {
+            speaker = speaker,
+            content = src.text ?? "",
+            playSfxOnLineStart = src.playSfxOnLineStart,
+            lineStartSfxId = src.onLineStartSfxId
         };
     }
 
